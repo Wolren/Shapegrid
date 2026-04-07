@@ -8,6 +8,7 @@ import { getCountryPolygon, isValidCountryCode } from './countries.js';
 
 export type Point = [number, number];
 export type Polygon = Point[];
+export type CoordinateSystem = 'auto' | 'planar' | 'wgs84' | 'mercator';
 
 // ─── Preset shapes ──────────────────────────────────────────────────────────
 
@@ -60,6 +61,63 @@ function normaliseRaw(pts: Point[]): Polygon {
   return normalisePolygon(pts);
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function isLikelyLonLat(poly: Polygon): boolean {
+  const xs = poly.map(([x]) => x);
+  const ys = poly.map(([, y]) => y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+
+  const withinGeoBounds = minX >= -180 && maxX <= 180 && minY >= -90 && maxY <= 90;
+  if (!withinGeoBounds) return false;
+
+  // Avoid misclassifying already-normalised 0..1 shapes as geographic coordinates.
+  const spanX = maxX - minX;
+  const spanY = maxY - minY;
+  const magnitudeSuggestsDegrees = Math.max(Math.abs(minX), Math.abs(maxX), Math.abs(minY), Math.abs(maxY)) > 1.5;
+  return magnitudeSuggestsDegrees || spanX > 2 || spanY > 2;
+}
+
+function projectWgs84(poly: Polygon): Polygon {
+  const ys = poly.map(([, y]) => y);
+  const refLat = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const cosRef = Math.cos((refLat * Math.PI) / 180) || 1;
+  return poly.map(([lon, lat]) => [lon * cosRef, lat]);
+}
+
+function projectMercator(poly: Polygon): Polygon {
+  return poly.map(([lon, lat]) => {
+    const clampedLat = clamp(lat, -85.05112878, 85.05112878);
+    const latRad = (clampedLat * Math.PI) / 180;
+    return [lon, Math.log(Math.tan(Math.PI / 4 + latRad / 2))];
+  });
+}
+
+function normaliseWithCoordinateSystem(poly: Polygon, coordinateSystem: CoordinateSystem = 'auto'): Polygon {
+  const resolved: Exclude<CoordinateSystem, 'auto'> =
+    coordinateSystem === 'auto'
+      ? (isLikelyLonLat(poly) ? 'wgs84' : 'planar')
+      : coordinateSystem;
+
+  switch (resolved) {
+    case 'planar':
+      return normalisePolygon(poly);
+    case 'wgs84': {
+      const normalized = normalisePolygon(projectWgs84(poly));
+      // Flip Y for geographic coords (latitude increases north, screen Y increases down)
+      return normalized.map(([x, y]) => [x, 1 - y]);
+    }
+    case 'mercator': {
+      const normalized = normalisePolygon(projectMercator(poly));
+      // Flip Y for geographic coords (latitude increases north, screen Y increases down)
+      return normalized.map(([x, y]) => [x, 1 - y]);
+    }
+  }
+}
+
 // ─── SVG path parser (M/L/Z subset, absolute coords only) ────────────────────
 
 export function parseSvgPath(d: string): Polygon {
@@ -91,19 +149,22 @@ export function parseSvgPath(d: string): Polygon {
 
 // ─── GeoJSON polygon ─────────────────────────────────────────────────────────
 
-export function parseGeoJsonPolygon(coords: [number, number][]): Polygon {
-  return normalisePolygon(coords as Polygon);
+export function parseGeoJsonPolygon(
+  coords: [number, number][],
+  coordinateSystem: CoordinateSystem = 'auto'
+): Polygon {
+  return normaliseWithCoordinateSystem(coords as Polygon, coordinateSystem);
 }
 
 // ─── Universal loader ────────────────────────────────────────────────────────
 
 export type BoundarySource =
   | { type: 'preset'; name: string }
-  | { type: 'polygon'; points: Point[] }
+  | { type: 'polygon'; points: Point[]; coordinateSystem?: CoordinateSystem }
   | { type: 'svgPath'; d: string }
-  | { type: 'geojson'; coordinates: [number, number][] }
+  | { type: 'geojson'; coordinates: [number, number][]; coordinateSystem?: CoordinateSystem }
   | { type: 'country'; code: string }
-  | { type: 'file'; path: string; format?: 'geojson' | 'svg' };
+  | { type: 'file'; path: string; format?: 'geojson' | 'svg'; coordinateSystem?: CoordinateSystem };
 
 export function loadBoundary(src: BoundarySource): Polygon {
   switch (src.type) {
@@ -113,11 +174,11 @@ export function loadBoundary(src: BoundarySource): Polygon {
       return p;
     }
     case 'polygon':
-      return normalisePolygon(src.points);
+      return normaliseWithCoordinateSystem(src.points, src.coordinateSystem);
     case 'svgPath':
       return parseSvgPath(src.d);
     case 'geojson':
-      return parseGeoJsonPolygon(src.coordinates);
+      return parseGeoJsonPolygon(src.coordinates, src.coordinateSystem);
     case 'country': {
       const poly = getCountryPolygon(src.code);
       if (!poly) {
@@ -190,7 +251,10 @@ export function polygonArea(poly: Polygon): number {
 /**
  * Parse GeoJSON content and extract the first polygon
  */
-export function parseGeoJsonFile(content: string): Polygon {
+export function parseGeoJsonFile(
+  content: string,
+  coordinateSystem: CoordinateSystem = 'auto'
+): Polygon {
   const data = JSON.parse(content);
   
   let coordinates: [number, number][] | undefined;
@@ -239,7 +303,7 @@ export function parseGeoJsonFile(content: string): Polygon {
     throw new Error('Could not extract polygon coordinates from GeoJSON');
   }
   
-  return normalisePolygon(coordinates as Polygon);
+  return normaliseWithCoordinateSystem(coordinates as Polygon, coordinateSystem);
 }
 
 /**
@@ -272,9 +336,13 @@ export function parseSvgFile(content: string): Polygon {
 /**
  * Load boundary from file content (for use in browser or after file read)
  */
-export function loadBoundaryFromContent(content: string, format: 'geojson' | 'svg'): Polygon {
+export function loadBoundaryFromContent(
+  content: string,
+  format: 'geojson' | 'svg',
+  coordinateSystem: CoordinateSystem = 'auto'
+): Polygon {
   if (format === 'geojson') {
-    return parseGeoJsonFile(content);
+    return parseGeoJsonFile(content, coordinateSystem);
   } else {
     return parseSvgFile(content);
   }

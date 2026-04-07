@@ -203,12 +203,64 @@ export function mapContributionsToCells(
 
 // ─── Colour scales ────────────────────────────────────────────────────────────
 
-export type ColorScale = 'github' | 'warm' | 'cool' | 'mono' | 'neon';
+export type ColorScale = 'github' | 'warm' | 'cool' | 'mono' | 'neon' | 'forest' | 'sunset' | 'ocean' | 'fire' | 'pastel' | 'arctic' | 'gold';
+
+export interface PaletteDefinition {
+  name: string;
+  colors: string[];
+}
+
+export const BUILTIN_PALETTES: Record<string, PaletteDefinition> = {
+  github: { name: 'GitHub', colors: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'] },
+  warm:   { name: 'Warm',   colors: ['#1a0a00', '#7a2e00', '#c05000', '#e88030', '#ffe0b0'] },
+  cool:   { name: 'Cool',   colors: ['#0a0a1a', '#0d3060', '#1560a8', '#40a0e0', '#b0e0ff'] },
+  mono:   { name: 'Mono',   colors: ['#1a1a1a', '#3a3a3a', '#666666', '#a0a0a0', '#e0e0e0'] },
+  neon:   { name: 'Neon',   colors: ['#050510', '#1a0040', '#4400cc', '#8800ff', '#cc44ff'] },
+  forest: { name: 'Forest', colors: ['#0d1a0d', '#1a3d1a', '#2d6e2d', '#4caf50', '#a8e6a3'] },
+  sunset: { name: 'Sunset', colors: ['#1a0010', '#6b0030', '#c0005a', '#ff4090', '#ffb0d0'] },
+  ocean:  { name: 'Ocean',  colors: ['#000d1a', '#003060', '#0070b0', '#00aad0', '#80e8ff'] },
+  fire:   { name: 'Fire',   colors: ['#1a0000', '#6b1000', '#c04000', '#ff8000', '#ffee00'] },
+  pastel: { name: 'Pastel', colors: ['#1a1a2e', '#6a4c93', '#c9a0dc', '#f4c6e0', '#fff5f0'] },
+  arctic: { name: 'Arctic', colors: ['#001020', '#003080', '#0080d0', '#60c8f0', '#e0f8ff'] },
+  gold:   { name: 'Gold',   colors: ['#1a1200', '#5a3c00', '#b07000', '#e0a800', '#ffe060'] },
+};
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16),
+  } : null;
+}
 
 /** Returns a CSS hex colour for intensity 0–1 */
 export function intensityToColor(intensity: number, scale: ColorScale = 'github'): string {
   const t = Math.max(0, Math.min(1, intensity));
+  
+  // If palette is a built-in one, use interpolated colors
+  const palette = BUILTIN_PALETTES[scale];
+  if (palette) {
+    const colors = palette.colors;
+    if (t === 0) return colors[0];
+    
+    // Interpolate between color stops
+    const segments = colors.length - 1;
+    const segment = Math.min(Math.floor(t * segments), segments - 1);
+    const localT = (t * segments) - segment;
+    
+    const c1 = hexToRgb(colors[segment]);
+    const c2 = hexToRgb(colors[segment + 1]);
+    
+    if (c1 && c2) {
+      const r = Math.round(c1.r + (c2.r - c1.r) * localT);
+      const g = Math.round(c1.g + (c2.g - c1.g) * localT);
+      const b = Math.round(c1.b + (c2.b - c1.b) * localT);
+      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+  }
 
+  // Fallback to legacy step-based rendering
   const lerp = (a: number, b: number) => Math.round(a + (b - a) * t);
   const hex = (r: number, g: number, b: number) =>
     `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
@@ -239,9 +291,11 @@ export function intensityToColor(intensity: number, scale: ColorScale = 'github'
       return hex(lerp(0x16, 0xff), lerp(0x16, 0xff), lerp(0x16, 0xff));
 
     case 'neon':
-      if (t === 0) return '#0a0a0a';
-      if (t < 0.5) return `#${Math.round(lerp(0, 255)).toString(16).padStart(2,'0')}00${Math.round(lerp(0,180)).toString(16).padStart(2,'0')}`;
-      return `#ff${Math.round(lerp(0,80)).toString(16).padStart(2,'0')}${Math.round(lerp(180,255)).toString(16).padStart(2,'0')}`;
+      if (t === 0) return '#050510';
+      if (t < 0.25) return '#1a0040';
+      if (t < 0.5)  return '#4400cc';
+      if (t < 0.75) return '#8800ff';
+      return '#cc44ff';
 
     default:
       return '#39d353';

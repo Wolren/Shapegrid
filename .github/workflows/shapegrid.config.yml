@@ -42,6 +42,8 @@ boundary:
   #   - [1.0, 0.5]
   #   - [0.5, 1.0]
   #   - [0.0, 0.5]
+  # coordinateSystem: auto  # auto | planar | wgs84 | mercator
+  #                        # Use wgs84/mercator for lon/lat GeoJSON to avoid warping.
 
 # ─── Grid layout ──────────────────────────────────────────────────────────────
 grid:

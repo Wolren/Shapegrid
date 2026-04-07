@@ -17,9 +17,9 @@ github:
 boundary:
   # Use one of:
   #
-  # 1. Named preset: circle | shield | star | diamond | heart | rectangle
-  type: preset
-  name: shield
+  # 1. Named preset: circle | shield | star | diamond | heart | rectangle | hexagon | arrow | cross
+  # type: preset
+  # name: shield
 
   # 2. Country/region by ISO 3166-1 alpha-2 code (e.g., US, GB, FR, DE, JP, AU)
   # type: country
@@ -46,11 +46,14 @@ boundary:
   #   - [1.0, 0.5]
   #   - [0.5, 1.0]
   #   - [0.0, 0.5]
+  # coordinateSystem: auto  # auto | planar | wgs84 | mercator
+  #                        # Use wgs84/mercator for lon/lat GeoJSON to avoid warping.
 
   # 6. External file (GeoJSON or SVG)
-  # type: file
-  # path: ./boundary.geojson
-  # format: geojson   # or "svg" (auto-detected from extension if omitted)
+  type: file
+  path: ./poland.json
+  format: geojson   # or "svg" (auto-detected from extension if omitted)
+  coordinateSystem: wgs84  # only used for GeoJSON files
 
 # ─── Grid layout ──────────────────────────────────────────────────────────────
 grid:
@@ -59,7 +62,7 @@ grid:
 
   # Exact number of cells to place. Must equal your date range in days
   # if you want one cell per day (e.g. 365 for one year).
-  count: 365
+  count: 730
 
   # How much of a cell must be inside the boundary to be included (0–1).
   # Lower values allow more border cells; higher values are stricter.
@@ -67,37 +70,82 @@ grid:
 
 # ─── Camera / projection ──────────────────────────────────────────────────────
 camera:
-  # Horizontal rotation in degrees (0 = front, 90 = right side)
+  # Horizontal rotation in degrees (-180 to 180, 0 = front, 90 = right side)
   yaw: 30
 
-  # Vertical tilt in degrees (0 = top-down flat, 60 = steep isometric, 90 = side)
-  pitch: 45
+  # Vertical tilt in degrees (5 to 89, 0 = top-down flat, 60 = steep isometric, 90 = side)
+  pitch: 50
 
-# ─── Visual style ─────────────────────────────────────────────────────────────
+  # Zoom level for SVG export (0.5 to 3.0, lower = more zoomed in)
+  # This controls how tightly the grid is framed in the output
+  zoom: 0.5
+
+# ─── Visual style / Theme ─────────────────────────────────────────────────────
+theme:
+  # Colour palette: github | warm | cool | mono | neon | forest | sunset | ocean | fire | pastel | arctic | gold
+  # Or define custom palette with colors array (minimum 2 colors, will be interpolated)
+  palette: ocean
+  
+  # Border color for empty days (no contributions). When set, empty days render
+  # as border-only instead of filled. Useful on light backgrounds.
+  # Example: "#cccccc" for light gray on white, "#ffffff" for white on dark
+  dayBorder: "#ffffff"
+  
+  # Custom palette example (uncomment to use instead of built-in palette):
+  # customPalette:
+  #   name: "My Custom Theme"
+  #   colors:
+  #     - "#1a0a00"
+  #     - "#7a2e00"
+  #     - "#c05000"
+  #     - "#e88030"
+  #     - "#ffe0b0"
+
+# ─── Coordinate Axes (for geographic data) ───────────────────────────────────
+axes:
+  # Show coordinate axes (longitude/latitude labels)
+  # If omitted, defaults to true when using wgs84/mercator coordinate systems
+  enabled: true
+  
+  # Position axes outside or inside the grid boundary
+  # Options: outside | inside
+  position: outside
+  
+  # Distance from grid edge to axis line (in normalized grid units, 0.01 to 0.2)
+  # Higher values push axes further from the grid
+  distance: 0.06
+  
+  # Axis line color (CSS hex)
+  lineColor: "#666666"
+  
+  # Label text color (CSS hex)
+  labelColor: "#888888"
+  
+  # Font family for axis labels
+  labelFont: "IBM Plex Mono, monospace"
+  
+  # Label size scale multiplier (0.3 to 3.0, default: 1.0)
+  labelScale: 1.0
+
+# ─── Render settings ──────────────────────────────────────────────────────────
 render:
-  # Colour scheme: github | warm | cool | mono | neon
-  colorScale: warm
 
-  # Height extrusion multiplier. 0 = flat, 1 = normal, 2 = tall bars
+  # Height extrusion multiplier. 0 = flat, 1 = normal, 2 = tall bars (0 to 3)
   heightScale: 1.0
 
   # Draw the boundary polygon as a wireframe outline
   showBoundary: false
 
-  # Canvas background colour (CSS hex)
+  # Canvas / SVG background colour (CSS hex). Omit or set to "" for transparent.
   background: "#0d1117"
 
-  # Gap between cells (fraction of cell size, 0.0–0.3)
+  # Gap between cells (fraction of cell size, 0.0–0.4)
   gap: 0.05
-
-  # Output image dimensions
-  width: 1200
-  height: 630
 
 # ─── Date range ───────────────────────────────────────────────────────────────
 dateRange:
   # Last N days ending today (most common)
-  last: 365
+  last: 730
 
   # Or specify explicit dates:
   # start: "2024-01-01"
@@ -110,4 +158,9 @@ output:
 
   # Filenames (omit any you don't need)
   svgFilename: shapegrid.svg
+  pngFilename: shapegrid.png
   jsonFilename: shapegrid-data.json
+
+  # Export dimensions for PNG/SVG (200 to 4096)
+  width: 1200
+  height: 630

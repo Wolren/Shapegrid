@@ -5,9 +5,12 @@
   "description": "GitHub activity visualizer — fit exact-count square/hex grids inside any boundary, rendered in 3D WebGL",
   "scripts": {
     "build": "pnpm -r build",
+    "build:web": "pnpm --filter @shapegrid/web build",
     "dev": "pnpm --filter @shapegrid/cli dev",
+    "dev:web": "pnpm --filter @shapegrid/web dev",
     "generate": "pnpm --filter @shapegrid/cli start",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "typecheck:web": "pnpm --filter @shapegrid/web typecheck"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
