@@ -1,0 +1,110 @@
+# .github/workflows/shapegrid.yml
+#
+# Regenerates the activity grid on a daily schedule,
+# on push to main, or manually via workflow_dispatch.
+#
+# Prerequisites:
+#   1. Create a GitHub PAT with `read:user` scope
+#   2. Add it as a repository secret named SHAPEGRID_TOKEN
+#   3. Make sure GitHub Pages is enabled (Settings → Pages → Branch: main, Folder: /docs)
+#   4. Copy shapegrid.config.yml to your repo root and customise it
+
+name: 🌿 shapegrid — Regenerate Activity Grid
+
+on:
+  schedule:
+    # Runs daily at 01:00 UTC
+    - cron: '0 1 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'shapegrid.config.yml'
+      - '.github/workflows/shapegrid.yml'
+  workflow_dispatch:
+    inputs:
+      username:
+        description: 'GitHub username to visualise (leave blank to use config)'
+        required: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  generate:
+    name: Generate activity grid
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Generate activity grid
+        env:
+          SHAPEGRID_TOKEN: ${{ secrets.SHAPEGRID_TOKEN }}
+          GITHUB_USERNAME: ${{ github.event.inputs.username || github.repository_owner }}
+        run: |
+          node packages/cli/dist/index.js generate \
+            --config shapegrid.config.yml \
+            --user "$GITHUB_USERNAME" \
+            --token SHAPEGRID_TOKEN
+
+      - name: Copy web viewer to output
+        run: |
+          mkdir -p docs
+          cp web/index.html docs/index.html
+          cp -r dist/ docs/assets/ 2>/dev/null || true
+          # Embed the generated data path into the viewer
+          sed -i "s|__DATA_URL__|assets/shapegrid-data.json|g" docs/index.html
+
+      - name: Commit generated assets
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add docs/ dist/
+          git diff --staged --quiet || git commit -m "chore: update shapegrid activity grid [skip ci]
+
+          Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          Runner: github-actions"
+          git push
+
+      - name: Upload Pages artifact
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: generate
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

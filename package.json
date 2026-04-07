@@ -1,0 +1,26 @@
+{
+  "name": "shapegrid",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub activity visualizer — fit exact-count square/hex grids inside any boundary, rendered in 3D WebGL",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --filter @shapegrid/cli dev",
+    "generate": "pnpm --filter @shapegrid/cli start",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "js-yaml": "^4.1.1",
+    "three": "^0.183.2",
+    "yargs": "^18.0.0"
+  }
+}

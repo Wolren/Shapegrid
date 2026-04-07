@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>shapegrid — Activity Grid Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"/>
+
+<style>
+/* ── Design system ─────────────────────────────────────────────────────────── */
+:root {
+  --bg:        #080c10;
+  --surface:   #0d1117;
+  --surface2:  #161b22;
+  --surface3:  #21262d;
+  --border:    #30363d;
+  --text:      #e6edf3;
+  --muted:     #8b949e;
+  --accent:    #39d353;
+  --accent2:   #1f6feb;
+  --danger:    #f85149;
+  --mono:      'IBM Plex Mono', 'Courier New', monospace;
+  --sans:      'IBM Plex Sans', system-ui, sans-serif;
+  --panel-w:   280px;
+  --radius:    6px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  overflow: hidden;
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+#app {
+  display: grid;
+  grid-template-columns: var(--panel-w) 1fr;
+  grid-template-rows: 48px 1fr 44px;
+  grid-template-areas:
+    "header header"
+    "panel  canvas"
+    "footer footer";
+  height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+#header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+}
+
+#logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+#logo svg { flex-shrink: 0; }
+
+#header-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+#btn-export {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+#btn-export:hover { border-color: var(--accent); background: #1a2d1a; color: var(--accent); }
+
+/* ── Panel ──────────────────────────────────────────────────────────────────── */
+#panel {
+  grid-area: panel;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#panel::-webkit-scrollbar { width: 4px; }
+#panel::-webkit-scrollbar-track { background: transparent; }
+#panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.section {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+}
+
+.section-title {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+/* Input row */
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.row:last-child { margin-bottom: 0; }
+
+.row label {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+.row label span { color: var(--accent); }
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 8px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus { border-color: var(--accent2); }
+select option { background: var(--surface2); }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--surface3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  background: var(--accent);
+  border-radius: 50%;
+  transition: transform 0.1s;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.row-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  left: 2px; top: 2px;
+  background: var(--muted);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle input:checked + .toggle-slider { background: #1a3a1a; border-color: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(14px); background: var(--accent); }
+
+/* Boundary presets grid */
+#preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.preset-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+.preset-btn.active { border-color: var(--accent); background: #0e2a0e; color: var(--accent); }
+.preset-btn svg { width: 28px; height: 28px; }
+
+/* Boundary tabs */
+.boundary-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.boundary-tab {
+  flex: 1;
+  padding: 6px 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  transition: all 0.15s;
+  text-align: center;
+}
+.boundary-tab:hover { border-color: var(--accent); color: var(--accent); }
+.boundary-tab.active { border-color: var(--accent); background: #0e2a0e; color: var(--accent); }
+
+.boundary-panel { display: none; }
+.boundary-panel.active { display: block; }
+
+/* Country search */
+#country-search-container {
+  position: relative;
+  margin-bottom: 8px;
+}
+#country-search {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 11px;
+  box-sizing: border-box;
+}
+#country-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+#country-search::placeholder { color: var(--muted); }
+
+#country-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  z-index: 100;
+  display: none;
+}
+#country-dropdown.visible { display: block; }
+.country-option {
+  padding: 8px 10px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg);
+  display: flex;
+  justify-content: space-between;
+}
+.country-option:hover { background: var(--surface2); }
+.country-option.selected { background: #0e2a0e; color: var(--accent); }
+.country-code { color: var(--muted); font-size: 10px; }
+
+#country-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.country-btn {
+  padding: 6px 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  transition: all 0.15s;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.country-btn:hover { border-color: var(--accent); color: var(--accent); }
+.country-btn.active { border-color: var(--accent); background: #0e2a0e; color: var(--accent); }
+
+/* File upload */
+#file-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+#file-upload-area:hover { border-color: var(--accent); }
+#file-upload-area.dragover { border-color: var(--accent); background: #0e2a0e; }
+#file-upload-area p { margin: 0; color: var(--muted); font-size: 11px; }
+#file-upload-area .upload-icon { font-size: 24px; margin-bottom: 8px; }
+#file-input { display: none; }
+#file-name { margin-top: 8px; color: var(--accent); font-size: 10px; font-family: var(--mono); }
+
+/* Colour scale pills */
+#scale-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.scale-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.scale-btn:hover { border-color: var(--accent); color: var(--text); }
+.scale-btn.active { border-color: var(--accent); color: var(--text); }
+.scale-preview {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+.scale-swatch {
+  height: 10px;
+  flex: 1;
+  border-radius: 2px;
+}
+
+/* Fetch button */
+#btn-fetch {
+  width: 100%;
+  padding: 8px;
+  background: var(--accent2);
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-top: 4px;
+}
+#btn-fetch:hover { opacity: 0.85; }
+#btn-fetch:active { transform: scale(0.98); }
+#btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+
+#status-line {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 6px;
+  min-height: 14px;
+  text-align: center;
+}
+#status-line.error { color: var(--danger); }
+#status-line.ok    { color: var(--accent); }
+
+/* ── Canvas ──────────────────────────────────────────────────────────────────── */
+#canvas-wrap {
+  grid-area: canvas;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+#canvas-main {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Loading overlay */
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: var(--bg);
+  z-index: 5;
+  transition: opacity 0.4s;
+}
+#overlay.hidden { opacity: 0; pointer-events: none; }
+
+.spinner {
+  width: 36px; height: 36px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#overlay-text {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Camera drag hint */
+#drag-hint {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 9px;
+  color: var(--muted);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Tooltip */
+#tooltip {
+  position: absolute;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  z-index: 10;
+}
+#tooltip.visible { opacity: 1; }
+
+/* ── Legend ──────────────────────────────────────────────────────────────────── */
+#legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  color: var(--muted);
+}
+#legend-swatches {
+  display: flex;
+  gap: 2px;
+}
+.legend-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* ── Stats bar ───────────────────────────────────────────────────────────────── */
+#stats-bar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 16px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.stat-item { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.stat-value { font-size: 15px; color: var(--text); font-weight: 500; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────────── */
+#footer {
+  grid-area: footer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 9px;
+  color: var(--muted);
+}
+#footer a { color: var(--muted); text-decoration: none; }
+#footer a:hover { color: var(--accent); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  #app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 48px auto 1fr 44px;
+    grid-template-areas: "header" "panel" "canvas" "footer";
+  }
+  #panel { max-height: 50vh; }
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header id="header">
+    <div id="logo">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <rect x="1" y="1" width="8" height="8" rx="1.5" fill="#39d353" opacity="0.9"/>
+        <rect x="13" y="1" width="8" height="8" rx="1.5" fill="#39d353" opacity="0.5"/>
+        <rect x="1" y="13" width="8" height="8" rx="1.5" fill="#39d353" opacity="0.3"/>
+        <rect x="13" y="13" width="8" height="8" rx="1.5" fill="#39d353" opacity="0.7"/>
+      </svg>
+      shapegrid
+    </div>
+    <span id="header-meta">boundary-fit activity grid · WebGL renderer</span>
+    <button id="btn-export">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/>
+        <path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.97a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.779a.749.749 0 1 1 1.06-1.06l1.97 1.97Z"/>
+      </svg>
+      Export PNG
+    </button>
+  </header>
+
+  <!-- ── Left panel ─────────────────────────────────────────────────────── -->
+  <aside id="panel">
+
+    <!-- GitHub credentials -->
+    <div class="section">
+      <div class="section-title">GitHub Data</div>
+      <div class="row">
+        <label>Username</label>
+        <input type="text" id="inp-user" placeholder="octocat" value=""/>
+      </div>
+      <div class="row">
+        <label>Personal Access Token <span title="Needs read:user scope">ⓘ</span></label>
+        <input type="password" id="inp-token" placeholder="ghp_…"/>
+      </div>
+      <div class="row">
+        <label>Date range <span id="val-days">365</span> days</label>
+        <input type="range" id="inp-days" min="7" max="365" value="365" step="7"/>
+      </div>
+      <button id="btn-fetch">Load Contributions</button>
+      <div id="status-line"></div>
+    </div>
+
+    <!-- Boundary -->
+    <div class="section">
+      <div class="section-title">Boundary Shape</div>
+      <div class="boundary-tabs">
+        <button class="boundary-tab active" data-tab="presets">Presets</button>
+        <button class="boundary-tab" data-tab="countries">Countries</button>
+        <button class="boundary-tab" data-tab="file">File</button>
+      </div>
+      <div id="panel-presets" class="boundary-panel active">
+        <div id="preset-grid">
+          <button class="preset-btn active" data-preset="shield">
+            <svg viewBox="0 0 28 28" fill="none">
+              <path d="M14 2L26 7v8c0 7-5.5 11-12 13C7.5 26 2 22 2 15V7z" stroke="#39d353" stroke-width="1.5" fill="none"/>
+            </svg>
+            shield
+          </button>
+          <button class="preset-btn" data-preset="circle">
+            <svg viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="11" stroke="#39d353" stroke-width="1.5" fill="none"/>
+            </svg>
+            circle
+          </button>
+          <button class="preset-btn" data-preset="star">
+            <svg viewBox="0 0 28 28" fill="none">
+              <polygon points="14,2 17.5,10 26,11 20,17 22,25 14,21 6,25 8,17 2,11 10.5,10" stroke="#39d353" stroke-width="1.2" fill="none"/>
+            </svg>
+            star
+          </button>
+          <button class="preset-btn" data-preset="diamond">
+            <svg viewBox="0 0 28 28" fill="none">
+              <polygon points="14,2 26,14 14,26 2,14" stroke="#39d353" stroke-width="1.5" fill="none"/>
+            </svg>
+            diamond
+          </button>
+          <button class="preset-btn" data-preset="heart">
+            <svg viewBox="0 0 28 28" fill="none">
+              <path d="M14 24s-12-7-12-14a7 7 0 0 1 12-4.9A7 7 0 0 1 26 10c0 7-12 14-12 14z" stroke="#39d353" stroke-width="1.5" fill="none"/>
+            </svg>
+            heart
+          </button>
+          <button class="preset-btn" data-preset="rectangle">
+            <svg viewBox="0 0 28 28" fill="none">
+              <rect x="3" y="7" width="22" height="14" rx="2" stroke="#39d353" stroke-width="1.5" fill="none"/>
+            </svg>
+            rect
+          </button>
+        </div>
+      </div>
+      <div id="panel-countries" class="boundary-panel">
+        <div id="country-search-container">
+          <input type="text" id="country-search" placeholder="Search countries..." autocomplete="off"/>
+          <div id="country-dropdown"></div>
+        </div>
+        <div id="country-grid"></div>
+      </div>
+      <div id="panel-file" class="boundary-panel">
+        <div id="file-upload-area">
+          <div class="upload-icon">📁</div>
+          <p>Drop GeoJSON or SVG file here<br/>or click to browse</p>
+          <input type="file" id="file-input" accept=".geojson,.json,.svg"/>
+          <div id="file-name"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid type + count -->
+    <div class="section">
+      <div class="section-title">Grid Layout</div>
+      <div class="row">
+        <label>Cell type</label>
+        <select id="inp-grid-type">
+          <option value="hex">Hexagonal</option>
+          <option value="square">Square</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Cell count <span id="val-count">365</span></label>
+        <input type="range" id="inp-count" min="20" max="730" value="365" step="5"/>
+      </div>
+      <div class="row">
+        <label>Cell gap <span id="val-gap">0.08</span></label>
+        <input type="range" id="inp-gap" min="0" max="0.4" value="0.08" step="0.01"/>
+      </div>
+      <div class="row-inline">
+        <label style="font-size:10px;color:var(--muted);flex:1">Show boundary</label>
+        <label class="toggle">
+          <input type="checkbox" id="inp-boundary"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Camera -->
+    <div class="section">
+      <div class="section-title">Camera</div>
+      <div class="row">
+        <label>Yaw <span id="val-yaw">30°</span></label>
+        <input type="range" id="inp-yaw" min="-180" max="180" value="30"/>
+      </div>
+      <div class="row">
+        <label>Pitch <span id="val-pitch">45°</span></label>
+        <input type="range" id="inp-pitch" min="5" max="89" value="45"/>
+      </div>
+    </div>
+
+    <!-- Visual style -->
+    <div class="section">
+      <div class="section-title">Visual Style</div>
+      <div class="row">
+        <label>Height scale <span id="val-height">1.0×</span></label>
+        <input type="range" id="inp-height" min="0" max="3" value="1" step="0.1"/>
+      </div>
+      <div id="scale-grid"></div>
+    </div>
+
+  </aside>
+
+  <!-- ── Canvas area ────────────────────────────────────────────────────── -->
+  <main id="canvas-wrap">
+    <canvas id="canvas-main"></canvas>
+
+    <div id="overlay">
+      <div class="spinner"></div>
+      <div id="overlay-text">Loading Three.js…</div>
+    </div>
+
+    <div id="legend">
+      <span>Less</span>
+      <div id="legend-swatches"></div>
+      <span>More</span>
+    </div>
+
+    <div id="stats-bar">
+      <div class="stat-item">
+        <span class="stat-value" id="stat-contrib">—</span>
+        <span>contributions</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-cells">—</span>
+        <span>cells</span>
+      </div>
+    </div>
+
+    <div id="tooltip"></div>
+    <div id="drag-hint">drag to rotate · scroll to zoom</div>
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer id="footer">
+    <span>shapegrid</span>
+    <span style="color:var(--border)">·</span>
+    <a href="https://github.com/YOUR_USERNAME/shapegrid" target="_blank">GitHub</a>
+    <span style="color:var(--border)">·</span>
+    <span>boundary-fit · WebGL · Three.js</span>
+    <span style="margin-left:auto" id="footer-gen"></span>
+  </footer>
+
+</div>
+
+<!-- Three.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script type="module">
+// ══════════════════════════════════════════════════════════════════════════════
+// shapegrid Web App
+// Inlined geometry engine + Three.js renderer — no bundler required
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ─── Boundary engine ─────────────────────────────────────────────────────────
+
+const PRESETS = {
+  shield: norm([[50,0],[100,20],[100,60],[50,100],[0,60],[0,20]]),
+  circle: Array.from({length:32},(_,i)=>{const a=(i/32)*Math.PI*2;return[50+50*Math.cos(a),50+50*Math.sin(a)]}),
+  star:   Array.from({length:10},(_,i)=>{const a=(i/10)*Math.PI*2-Math.PI/2,r=i%2===0?50:20;return[50+r*Math.cos(a),50+r*Math.sin(a)]}),
+  diamond: norm([[50,0],[100,50],[50,100],[0,50]]),
+  heart:  (()=>{const p=[];for(let i=0;i<=32;i++){const t=(i/32)*Math.PI*2;p.push([16*Math.sin(t)**3,-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))]);}return norm(p);})(),
+  rectangle: norm([[0,0],[100,0],[100,60],[0,60]]),
+};
+
+// ─── Country boundaries (simplified polygons) ────────────────────────────────
+const COUNTRIES = {
+  US: { name: 'United States', coords: [[0.17,0.52],[0.19,0.48],[0.17,0.43],[0.14,0.42],[0.11,0.43],[0.08,0.41],[0.06,0.43],[0.04,0.47],[0.03,0.52],[0.04,0.57],[0.07,0.60],[0.05,0.64],[0.06,0.68],[0.08,0.71],[0.12,0.72],[0.15,0.70],[0.19,0.71],[0.23,0.69],[0.27,0.71],[0.31,0.70],[0.35,0.72],[0.39,0.71],[0.43,0.73],[0.47,0.72],[0.50,0.74],[0.54,0.73],[0.57,0.75],[0.61,0.73],[0.65,0.74],[0.69,0.72],[0.72,0.73],[0.76,0.71],[0.79,0.72],[0.82,0.70],[0.85,0.71],[0.88,0.69],[0.91,0.70],[0.94,0.68],[0.96,0.64],[0.97,0.59],[0.96,0.54],[0.94,0.50],[0.91,0.47],[0.87,0.45],[0.83,0.44],[0.79,0.46],[0.75,0.45],[0.71,0.47],[0.67,0.46],[0.63,0.48],[0.59,0.47],[0.55,0.49],[0.51,0.48],[0.47,0.50],[0.43,0.49],[0.39,0.51],[0.35,0.50],[0.31,0.52],[0.27,0.51],[0.23,0.53],[0.20,0.52]] },
+  CA: { name: 'Canada', coords: [[0.12,0.85],[0.08,0.82],[0.05,0.78],[0.03,0.73],[0.02,0.68],[0.04,0.63],[0.03,0.58],[0.05,0.53],[0.08,0.49],[0.12,0.46],[0.17,0.44],[0.22,0.43],[0.27,0.45],[0.32,0.44],[0.37,0.46],[0.42,0.45],[0.47,0.47],[0.52,0.46],[0.57,0.48],[0.62,0.47],[0.67,0.49],[0.72,0.48],[0.77,0.50],[0.82,0.49],[0.87,0.51],[0.91,0.54],[0.94,0.58],[0.96,0.63],[0.97,0.68],[0.95,0.73],[0.92,0.77],[0.88,0.80],[0.83,0.82],[0.78,0.83],[0.73,0.81],[0.68,0.83],[0.63,0.82],[0.58,0.84],[0.53,0.83],[0.48,0.85],[0.43,0.84],[0.38,0.86],[0.33,0.85],[0.28,0.87],[0.23,0.86],[0.18,0.87]] },
+  MX: { name: 'Mexico', coords: [[0.23,0.78],[0.18,0.75],[0.14,0.71],[0.11,0.66],[0.10,0.60],[0.12,0.54],[0.16,0.49],[0.21,0.45],[0.27,0.42],[0.33,0.40],[0.39,0.39],[0.45,0.41],[0.51,0.40],[0.57,0.42],[0.62,0.45],[0.66,0.49],[0.69,0.54],[0.71,0.60],[0.70,0.66],[0.67,0.71],[0.63,0.75],[0.58,0.78],[0.52,0.80],[0.46,0.81],[0.40,0.80],[0.34,0.81],[0.28,0.80]] },
+  GB: { name: 'United Kingdom', coords: [[0.42,0.95],[0.35,0.92],[0.30,0.86],[0.28,0.78],[0.31,0.70],[0.36,0.63],[0.42,0.58],[0.48,0.55],[0.54,0.54],[0.60,0.56],[0.65,0.60],[0.68,0.66],[0.70,0.73],[0.69,0.80],[0.65,0.86],[0.59,0.91],[0.52,0.94],[0.47,0.95]] },
+  FR: { name: 'France', coords: [[0.28,0.92],[0.22,0.86],[0.18,0.78],[0.17,0.69],[0.20,0.60],[0.26,0.52],[0.34,0.46],[0.43,0.42],[0.53,0.41],[0.62,0.44],[0.70,0.50],[0.76,0.58],[0.79,0.67],[0.80,0.76],[0.77,0.84],[0.71,0.90],[0.63,0.94],[0.54,0.96],[0.45,0.95],[0.36,0.94]] },
+  DE: { name: 'Germany', coords: [[0.38,0.96],[0.30,0.91],[0.24,0.83],[0.22,0.74],[0.24,0.65],[0.30,0.57],[0.38,0.51],[0.47,0.48],[0.57,0.48],[0.66,0.52],[0.73,0.59],[0.78,0.68],[0.79,0.77],[0.77,0.86],[0.71,0.92],[0.63,0.96],[0.54,0.97],[0.46,0.97]] },
+  IT: { name: 'Italy', coords: [[0.35,0.98],[0.38,0.92],[0.43,0.87],[0.49,0.82],[0.54,0.76],[0.57,0.69],[0.58,0.61],[0.56,0.53],[0.52,0.46],[0.46,0.40],[0.39,0.36],[0.31,0.35],[0.24,0.37],[0.18,0.42],[0.14,0.49],[0.12,0.57],[0.13,0.65],[0.17,0.73],[0.22,0.80],[0.28,0.86],[0.32,0.92]] },
+  ES: { name: 'Spain', coords: [[0.10,0.68],[0.08,0.60],[0.10,0.52],[0.15,0.45],[0.22,0.39],[0.31,0.35],[0.41,0.33],[0.51,0.34],[0.60,0.38],[0.68,0.44],[0.74,0.52],[0.78,0.61],[0.79,0.70],[0.77,0.79],[0.72,0.86],[0.64,0.91],[0.55,0.94],[0.45,0.94],[0.36,0.92],[0.27,0.88],[0.19,0.82],[0.13,0.75]] },
+  PT: { name: 'Portugal', coords: [[0.32,0.97],[0.25,0.92],[0.20,0.84],[0.18,0.75],[0.20,0.65],[0.25,0.56],[0.33,0.49],[0.42,0.44],[0.52,0.42],[0.62,0.44],[0.70,0.50],[0.76,0.58],[0.79,0.68],[0.78,0.78],[0.74,0.86],[0.67,0.92],[0.58,0.96],[0.48,0.98],[0.40,0.98]] },
+  NL: { name: 'Netherlands', coords: [[0.30,0.95],[0.22,0.88],[0.18,0.78],[0.19,0.67],[0.25,0.57],[0.35,0.50],[0.47,0.47],[0.59,0.49],[0.69,0.56],[0.76,0.66],[0.79,0.77],[0.77,0.87],[0.70,0.94],[0.60,0.98],[0.48,0.98],[0.38,0.97]] },
+  BE: { name: 'Belgium', coords: [[0.18,0.82],[0.15,0.72],[0.18,0.62],[0.26,0.53],[0.37,0.47],[0.50,0.46],[0.62,0.50],[0.72,0.58],[0.78,0.69],[0.80,0.80],[0.76,0.90],[0.67,0.96],[0.55,0.98],[0.43,0.96],[0.32,0.91],[0.23,0.87]] },
+  CH: { name: 'Switzerland', coords: [[0.15,0.70],[0.12,0.60],[0.15,0.50],[0.23,0.42],[0.34,0.36],[0.47,0.35],[0.59,0.39],[0.69,0.47],[0.77,0.58],[0.80,0.69],[0.78,0.80],[0.71,0.88],[0.60,0.94],[0.48,0.96],[0.36,0.93],[0.25,0.86],[0.18,0.78]] },
+  AT: { name: 'Austria', coords: [[0.08,0.58],[0.10,0.48],[0.17,0.39],[0.28,0.33],[0.41,0.31],[0.54,0.34],[0.66,0.41],[0.75,0.51],[0.81,0.63],[0.82,0.75],[0.78,0.85],[0.69,0.92],[0.57,0.96],[0.44,0.96],[0.32,0.92],[0.21,0.84],[0.13,0.73],[0.09,0.65]] },
+  PL: { name: 'Poland', coords: [[0.12,0.72],[0.10,0.62],[0.13,0.52],[0.20,0.43],[0.30,0.36],[0.42,0.32],[0.55,0.32],[0.67,0.36],[0.77,0.44],[0.84,0.54],[0.88,0.65],[0.87,0.76],[0.82,0.85],[0.73,0.92],[0.61,0.96],[0.48,0.97],[0.36,0.94],[0.25,0.88],[0.16,0.80]] },
+  SE: { name: 'Sweden', coords: [[0.45,0.98],[0.38,0.94],[0.33,0.88],[0.30,0.80],[0.29,0.72],[0.31,0.64],[0.35,0.56],[0.40,0.49],[0.46,0.43],[0.52,0.38],[0.58,0.34],[0.64,0.32],[0.70,0.33],[0.75,0.37],[0.79,0.43],[0.82,0.50],[0.84,0.58],[0.84,0.66],[0.82,0.74],[0.78,0.81],[0.73,0.87],[0.67,0.92],[0.60,0.95],[0.52,0.97]] },
+  NO: { name: 'Norway', coords: [[0.55,0.97],[0.48,0.94],[0.42,0.89],[0.38,0.82],[0.36,0.74],[0.36,0.66],[0.38,0.58],[0.42,0.50],[0.47,0.43],[0.53,0.37],[0.60,0.32],[0.67,0.29],[0.74,0.28],[0.80,0.30],[0.85,0.35],[0.89,0.42],[0.91,0.50],[0.91,0.58],[0.89,0.66],[0.85,0.74],[0.80,0.81],[0.74,0.87],[0.67,0.92],[0.60,0.95]] },
+  FI: { name: 'Finland', coords: [[0.50,0.98],[0.42,0.94],[0.36,0.88],[0.32,0.80],[0.30,0.71],[0.31,0.62],[0.35,0.54],[0.41,0.46],[0.48,0.40],[0.56,0.36],[0.64,0.34],[0.72,0.36],[0.78,0.41],[0.83,0.48],[0.86,0.57],[0.86,0.66],[0.84,0.75],[0.79,0.83],[0.72,0.89],[0.64,0.94],[0.56,0.97]] },
+  DK: { name: 'Denmark', coords: [[0.35,0.95],[0.28,0.88],[0.24,0.78],[0.25,0.67],[0.31,0.57],[0.40,0.50],[0.52,0.47],[0.63,0.50],[0.73,0.57],[0.79,0.67],[0.81,0.78],[0.78,0.88],[0.70,0.94],[0.60,0.98],[0.48,0.98],[0.40,0.97]] },
+  IE: { name: 'Ireland', coords: [[0.35,0.95],[0.27,0.89],[0.22,0.80],[0.21,0.70],[0.25,0.60],[0.32,0.52],[0.42,0.46],[0.53,0.44],[0.64,0.47],[0.73,0.54],[0.79,0.63],[0.81,0.74],[0.79,0.84],[0.73,0.91],[0.64,0.96],[0.53,0.98],[0.43,0.97]] },
+  GR: { name: 'Greece', coords: [[0.32,0.96],[0.25,0.90],[0.21,0.82],[0.20,0.73],[0.23,0.64],[0.29,0.56],[0.37,0.49],[0.47,0.45],[0.57,0.44],[0.67,0.47],[0.75,0.54],[0.80,0.62],[0.82,0.72],[0.81,0.81],[0.76,0.89],[0.68,0.94],[0.58,0.97],[0.47,0.98],[0.38,0.97]] },
+  CZ: { name: 'Czech Republic', coords: [[0.12,0.62],[0.15,0.52],[0.22,0.43],[0.33,0.37],[0.46,0.35],[0.58,0.38],[0.69,0.45],[0.77,0.55],[0.81,0.66],[0.80,0.77],[0.74,0.86],[0.64,0.92],[0.52,0.95],[0.40,0.94],[0.29,0.89],[0.20,0.81],[0.14,0.72]] },
+  RO: { name: 'Romania', coords: [[0.10,0.60],[0.12,0.50],[0.19,0.41],[0.29,0.34],[0.41,0.31],[0.54,0.32],[0.66,0.38],[0.76,0.47],[0.83,0.58],[0.86,0.70],[0.84,0.81],[0.77,0.90],[0.66,0.95],[0.53,0.97],[0.40,0.95],[0.29,0.89],[0.19,0.80],[0.12,0.70]] },
+  UA: { name: 'Ukraine', coords: [[0.05,0.55],[0.08,0.45],[0.15,0.36],[0.25,0.29],[0.37,0.25],[0.50,0.25],[0.63,0.29],[0.74,0.36],[0.83,0.46],[0.89,0.58],[0.91,0.70],[0.88,0.81],[0.80,0.90],[0.69,0.96],[0.55,0.98],[0.42,0.96],[0.29,0.90],[0.19,0.81],[0.11,0.69],[0.06,0.62]] },
+  RU: { name: 'Russia', coords: [[0.02,0.50],[0.05,0.42],[0.10,0.35],[0.17,0.29],[0.25,0.24],[0.34,0.20],[0.44,0.18],[0.54,0.18],[0.64,0.20],[0.73,0.24],[0.81,0.30],[0.87,0.38],[0.92,0.47],[0.95,0.57],[0.96,0.67],[0.94,0.76],[0.90,0.84],[0.83,0.90],[0.74,0.94],[0.64,0.96],[0.53,0.96],[0.43,0.94],[0.33,0.90],[0.24,0.84],[0.16,0.76],[0.10,0.67],[0.05,0.58]] },
+  JP: { name: 'Japan', coords: [[0.35,0.90],[0.28,0.84],[0.24,0.76],[0.23,0.67],[0.26,0.58],[0.32,0.50],[0.40,0.44],[0.50,0.40],[0.60,0.40],[0.70,0.44],[0.78,0.51],[0.84,0.60],[0.87,0.70],[0.86,0.80],[0.81,0.88],[0.73,0.93],[0.63,0.96],[0.52,0.96],[0.43,0.94]] },
+  CN: { name: 'China', coords: [[0.08,0.55],[0.10,0.46],[0.15,0.38],[0.22,0.31],[0.31,0.25],[0.41,0.21],[0.52,0.19],[0.63,0.20],[0.73,0.24],[0.82,0.31],[0.88,0.40],[0.92,0.50],[0.94,0.61],[0.92,0.72],[0.87,0.81],[0.79,0.88],[0.69,0.93],[0.58,0.96],[0.46,0.96],[0.35,0.93],[0.25,0.87],[0.16,0.79],[0.10,0.69],[0.07,0.62]] },
+  KR: { name: 'South Korea', coords: [[0.38,0.95],[0.30,0.90],[0.24,0.82],[0.22,0.73],[0.24,0.63],[0.30,0.54],[0.39,0.47],[0.50,0.43],[0.61,0.44],[0.71,0.49],[0.78,0.58],[0.82,0.68],[0.82,0.78],[0.78,0.87],[0.70,0.93],[0.60,0.97],[0.49,0.98]] },
+  IN: { name: 'India', coords: [[0.40,0.98],[0.32,0.94],[0.25,0.88],[0.20,0.80],[0.17,0.71],[0.17,0.62],[0.20,0.53],[0.25,0.44],[0.33,0.37],[0.42,0.31],[0.52,0.28],[0.62,0.28],[0.72,0.32],[0.80,0.39],[0.86,0.48],[0.89,0.58],[0.89,0.68],[0.86,0.78],[0.80,0.86],[0.71,0.92],[0.61,0.96],[0.50,0.98]] },
+  TH: { name: 'Thailand', coords: [[0.42,0.97],[0.34,0.93],[0.28,0.86],[0.24,0.77],[0.23,0.68],[0.26,0.59],[0.32,0.50],[0.40,0.43],[0.50,0.39],[0.60,0.39],[0.70,0.43],[0.77,0.50],[0.82,0.59],[0.84,0.68],[0.83,0.78],[0.78,0.86],[0.70,0.92],[0.61,0.96],[0.51,0.98]] },
+  VN: { name: 'Vietnam', coords: [[0.48,0.98],[0.40,0.94],[0.34,0.88],[0.30,0.80],[0.29,0.71],[0.31,0.62],[0.36,0.53],[0.43,0.46],[0.51,0.40],[0.60,0.37],[0.68,0.38],[0.75,0.43],[0.80,0.50],[0.83,0.59],[0.83,0.68],[0.80,0.77],[0.75,0.85],[0.67,0.91],[0.58,0.95]] },
+  SG: { name: 'Singapore', coords: [[0.30,0.85],[0.22,0.78],[0.18,0.68],[0.20,0.58],[0.27,0.49],[0.38,0.42],[0.50,0.40],[0.62,0.43],[0.72,0.50],[0.79,0.60],[0.82,0.71],[0.79,0.81],[0.72,0.89],[0.62,0.94],[0.50,0.96],[0.39,0.93]] },
+  ID: { name: 'Indonesia', coords: [[0.05,0.52],[0.10,0.45],[0.18,0.40],[0.28,0.37],[0.39,0.36],[0.50,0.38],[0.61,0.42],[0.71,0.48],[0.79,0.56],[0.85,0.65],[0.88,0.75],[0.87,0.84],[0.82,0.91],[0.73,0.95],[0.62,0.97],[0.50,0.96],[0.39,0.92],[0.28,0.86],[0.19,0.78],[0.12,0.68],[0.07,0.60]] },
+  PH: { name: 'Philippines', coords: [[0.45,0.97],[0.37,0.93],[0.31,0.86],[0.27,0.78],[0.26,0.69],[0.29,0.60],[0.35,0.52],[0.43,0.45],[0.52,0.41],[0.62,0.40],[0.71,0.44],[0.78,0.51],[0.83,0.60],[0.85,0.70],[0.83,0.79],[0.78,0.87],[0.70,0.93],[0.60,0.96],[0.52,0.98]] },
+  MY: { name: 'Malaysia', coords: [[0.08,0.58],[0.12,0.49],[0.20,0.42],[0.30,0.37],[0.42,0.35],[0.54,0.37],[0.65,0.42],[0.75,0.50],[0.82,0.60],[0.86,0.71],[0.85,0.82],[0.80,0.90],[0.70,0.95],[0.59,0.98],[0.47,0.97],[0.35,0.93],[0.25,0.86],[0.16,0.76],[0.10,0.67]] },
+  IL: { name: 'Israel', coords: [[0.42,0.98],[0.35,0.94],[0.30,0.88],[0.27,0.80],[0.27,0.71],[0.30,0.62],[0.36,0.54],[0.44,0.47],[0.53,0.43],[0.62,0.42],[0.71,0.45],[0.78,0.52],[0.82,0.61],[0.84,0.70],[0.82,0.79],[0.77,0.87],[0.69,0.92],[0.60,0.96],[0.50,0.98]] },
+  AE: { name: 'UAE', coords: [[0.10,0.62],[0.14,0.52],[0.22,0.44],[0.33,0.38],[0.46,0.36],[0.58,0.38],[0.70,0.44],[0.79,0.53],[0.86,0.64],[0.88,0.75],[0.85,0.85],[0.77,0.92],[0.66,0.96],[0.53,0.97],[0.41,0.95],[0.29,0.89],[0.20,0.80],[0.13,0.71]] },
+  SA: { name: 'Saudi Arabia', coords: [[0.08,0.55],[0.12,0.46],[0.19,0.38],[0.29,0.32],[0.40,0.28],[0.52,0.27],[0.64,0.30],[0.75,0.36],[0.83,0.45],[0.89,0.55],[0.92,0.66],[0.90,0.77],[0.84,0.86],[0.74,0.93],[0.63,0.97],[0.50,0.98],[0.38,0.95],[0.27,0.89],[0.18,0.80],[0.11,0.69],[0.07,0.62]] },
+  AU: { name: 'Australia', coords: [[0.15,0.72],[0.12,0.64],[0.12,0.55],[0.15,0.46],[0.21,0.38],[0.29,0.31],[0.39,0.26],[0.50,0.24],[0.61,0.26],[0.71,0.31],[0.79,0.39],[0.85,0.48],[0.88,0.58],[0.88,0.68],[0.85,0.77],[0.79,0.85],[0.70,0.91],[0.60,0.95],[0.49,0.96],[0.38,0.94],[0.28,0.89],[0.20,0.81]] },
+  NZ: { name: 'New Zealand', coords: [[0.45,0.97],[0.38,0.93],[0.33,0.86],[0.30,0.78],[0.30,0.69],[0.33,0.60],[0.39,0.52],[0.47,0.45],[0.56,0.41],[0.65,0.40],[0.73,0.43],[0.80,0.50],[0.84,0.59],[0.85,0.68],[0.83,0.77],[0.78,0.85],[0.70,0.91],[0.61,0.95],[0.52,0.97]] },
+  BR: { name: 'Brazil', coords: [[0.25,0.92],[0.18,0.86],[0.13,0.78],[0.10,0.69],[0.10,0.60],[0.13,0.51],[0.19,0.43],[0.27,0.36],[0.36,0.30],[0.47,0.27],[0.58,0.27],[0.69,0.30],[0.78,0.36],[0.85,0.44],[0.90,0.54],[0.92,0.64],[0.91,0.74],[0.87,0.83],[0.79,0.90],[0.69,0.95],[0.58,0.97],[0.46,0.97],[0.35,0.95]] },
+  AR: { name: 'Argentina', coords: [[0.42,0.98],[0.35,0.95],[0.29,0.89],[0.25,0.82],[0.23,0.74],[0.23,0.65],[0.26,0.56],[0.31,0.48],[0.38,0.41],[0.46,0.35],[0.55,0.32],[0.64,0.32],[0.72,0.36],[0.79,0.43],[0.84,0.52],[0.86,0.62],[0.86,0.72],[0.82,0.81],[0.76,0.88],[0.67,0.93],[0.57,0.97],[0.49,0.98]] },
+  CL: { name: 'Chile', coords: [[0.42,0.98],[0.36,0.94],[0.32,0.88],[0.30,0.80],[0.30,0.72],[0.32,0.64],[0.36,0.56],[0.41,0.48],[0.47,0.41],[0.54,0.35],[0.61,0.31],[0.68,0.30],[0.74,0.32],[0.79,0.38],[0.82,0.46],[0.83,0.54],[0.82,0.63],[0.79,0.71],[0.74,0.79],[0.67,0.86],[0.59,0.91],[0.50,0.95]] },
+  CO: { name: 'Colombia', coords: [[0.30,0.95],[0.23,0.89],[0.19,0.81],[0.17,0.72],[0.19,0.63],[0.24,0.54],[0.32,0.47],[0.41,0.42],[0.52,0.40],[0.62,0.42],[0.71,0.48],[0.78,0.56],[0.83,0.66],[0.84,0.76],[0.81,0.85],[0.74,0.92],[0.65,0.96],[0.54,0.98],[0.43,0.97],[0.35,0.96]] },
+  PE: { name: 'Peru', coords: [[0.28,0.95],[0.21,0.89],[0.17,0.81],[0.15,0.72],[0.17,0.62],[0.22,0.53],[0.30,0.45],[0.40,0.40],[0.51,0.38],[0.62,0.40],[0.72,0.46],[0.79,0.55],[0.84,0.65],[0.85,0.75],[0.82,0.84],[0.76,0.91],[0.66,0.95],[0.55,0.97],[0.44,0.97],[0.35,0.96]] },
+  ZA: { name: 'South Africa', coords: [[0.12,0.62],[0.15,0.53],[0.22,0.45],[0.31,0.39],[0.42,0.36],[0.53,0.36],[0.64,0.40],[0.73,0.47],[0.80,0.56],[0.85,0.66],[0.86,0.76],[0.83,0.85],[0.76,0.92],[0.66,0.96],[0.55,0.98],[0.44,0.96],[0.33,0.92],[0.24,0.84],[0.17,0.74],[0.12,0.68]] },
+  EG: { name: 'Egypt', coords: [[0.08,0.58],[0.12,0.49],[0.20,0.42],[0.30,0.37],[0.42,0.35],[0.54,0.37],[0.65,0.43],[0.74,0.51],[0.81,0.61],[0.84,0.72],[0.83,0.82],[0.77,0.90],[0.68,0.95],[0.56,0.98],[0.44,0.97],[0.33,0.93],[0.23,0.86],[0.15,0.76],[0.10,0.67]] },
+  NG: { name: 'Nigeria', coords: [[0.10,0.60],[0.14,0.51],[0.22,0.44],[0.32,0.38],[0.44,0.36],[0.56,0.38],[0.67,0.44],[0.76,0.52],[0.82,0.62],[0.85,0.73],[0.83,0.83],[0.77,0.91],[0.67,0.96],[0.55,0.98],[0.43,0.97],[0.32,0.93],[0.22,0.85],[0.14,0.75],[0.10,0.67]] },
+  KE: { name: 'Kenya', coords: [[0.30,0.95],[0.23,0.89],[0.19,0.81],[0.18,0.72],[0.21,0.63],[0.27,0.54],[0.36,0.47],[0.46,0.42],[0.57,0.41],[0.67,0.44],[0.76,0.51],[0.82,0.60],[0.85,0.70],[0.84,0.80],[0.79,0.88],[0.71,0.93],[0.61,0.96],[0.50,0.97],[0.40,0.96]] },
+  MA: { name: 'Morocco', coords: [[0.10,0.62],[0.14,0.53],[0.21,0.45],[0.31,0.39],[0.43,0.36],[0.55,0.37],[0.66,0.42],[0.75,0.50],[0.82,0.60],[0.85,0.71],[0.84,0.81],[0.78,0.89],[0.69,0.94],[0.58,0.97],[0.46,0.97],[0.35,0.94],[0.25,0.87],[0.17,0.78],[0.11,0.70]] },
+};
+
+// Featured countries shown in quick-select grid
+const FEATURED_COUNTRIES = ['US','CA','GB','FR','DE','IT','ES','JP','CN','KR','IN','AU','BR','MX','NL','SE'];
+
+function getCountryList() {
+  return Object.entries(COUNTRIES)
+    .map(([code, data]) => ({ code, name: data.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function searchCountries(query) {
+  const lq = query.toLowerCase();
+  return getCountryList().filter(c =>
+    c.name.toLowerCase().includes(lq) || c.code.toLowerCase().includes(lq)
+  );
+}
+
+// ─── File parsing ────────────────────────────────────────────────────────────
+function parseGeoJsonFile(content) {
+  const data = JSON.parse(content);
+  let coordinates;
+
+  if (data.type === 'Polygon') {
+    coordinates = data.coordinates[0];
+  } else if (data.type === 'Feature' && data.geometry?.type === 'Polygon') {
+    coordinates = data.geometry.coordinates[0];
+  } else if (data.type === 'FeatureCollection' && data.features?.length > 0) {
+    const feat = data.features.find(f =>
+      f.geometry?.type === 'Polygon' || f.geometry?.type === 'MultiPolygon'
+    );
+    if (feat?.geometry?.type === 'Polygon') {
+      coordinates = feat.geometry.coordinates[0];
+    } else if (feat?.geometry?.type === 'MultiPolygon') {
+      let largest = feat.geometry.coordinates[0][0];
+      let maxArea = 0;
+      for (const poly of feat.geometry.coordinates) {
+        const ring = poly[0];
+        const area = Math.abs(polyArea(ring));
+        if (area > maxArea) { maxArea = area; largest = ring; }
+      }
+      coordinates = largest;
+    }
+  } else if (data.type === 'MultiPolygon') {
+    let largest = data.coordinates[0][0];
+    let maxArea = 0;
+    for (const poly of data.coordinates) {
+      const ring = poly[0];
+      const area = Math.abs(polyArea(ring));
+      if (area > maxArea) { maxArea = area; largest = ring; }
+    }
+    coordinates = largest;
+  }
+
+  if (!coordinates || coordinates.length < 3) {
+    throw new Error('Could not extract polygon from GeoJSON');
+  }
+  return norm(coordinates);
+}
+
+function parseSvgFile(content) {
+  const pathMatch = content.match(/<path[^>]*\sd=["']([^"']+)["']/i);
+  if (pathMatch) return parseSvgPath(pathMatch[1]);
+
+  const polygonMatch = content.match(/<polygon[^>]*\spoints=["']([^"']+)["']/i);
+  if (polygonMatch) {
+    const nums = polygonMatch[1].trim().split(/[\s,]+/).map(Number);
+    const pts = [];
+    for (let i = 0; i < nums.length; i += 2) pts.push([nums[i], nums[i+1]]);
+    return norm(pts);
+  }
+  throw new Error('Could not extract polygon from SVG');
+}
+
+function parseSvgPath(d) {
+  const points = [];
+  const tokens = d.trim().split(/[\s,]+|(?=[MLZmlz])/);
+  let cx = 0, cy = 0;
+  for (let i = 0; i < tokens.length; ) {
+    const cmd = tokens[i++];
+    if (!cmd) continue;
+    if (cmd === 'M' || cmd === 'L') {
+      cx = parseFloat(tokens[i++]); cy = parseFloat(tokens[i++]);
+      points.push([cx, cy]);
+    } else if (cmd === 'm' || cmd === 'l') {
+      cx += parseFloat(tokens[i++]); cy += parseFloat(tokens[i++]);
+      points.push([cx, cy]);
+    }
+  }
+  return norm(points);
+}
+
+function norm(pts) {
+  const xs=pts.map(([x])=>x), ys=pts.map(([,y])=>y);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const span=Math.max(maxX-minX,maxY-minY)||1;
+  return pts.map(([x,y])=>[(x-minX)/span,(y-minY)/span]);
+}
+
+function pip(px,py,poly) { // ray casting
+  let inside=false,n=poly.length;
+  for(let i=0,j=n-1;i<n;j=i++){
+    const[xi,yi]=poly[i],[xj,yj]=poly[j];
+    if((yi>py)!==(yj>py)&&px<((xj-xi)*(py-yi))/(yj-yi)+xi)inside=!inside;
+  }
+  return inside;
+}
+
+function cellCov(cx,cy,hw,hh,poly,s=4){
+  let hits=0;
+  for(let si=0;si<s;si++)for(let sj=0;sj<s;sj++){
+    const px=cx-hw+(hw*2*(si+.5))/s, py=cy-hh+(hh*2*(sj+.5))/s;
+    if(pip(px,py,poly))hits++;
+  }
+  return hits/(s*s);
+}
+
+function bbox(poly){
+  const xs=poly.map(([x])=>x),ys=poly.map(([,y])=>y);
+  return{minX:Math.min(...xs),minY:Math.min(...ys),maxX:Math.max(...xs),maxY:Math.max(...ys)};
+}
+
+function polyArea(poly){
+  let a=0,n=poly.length;
+  for(let i=0,j=n-1;i<n;j=i++)a+=(poly[j][0]+poly[i][0])*(poly[j][1]-poly[i][1]);
+  return Math.abs(a)/2;
+}
+
+function genSquare(poly,cs,thr=0.3){
+  const{minX,minY,maxX,maxY}=bbox(poly),h=cs/2,cells=[];
+  const cols=Math.ceil((maxX-minX)/cs)+2,rows=Math.ceil((maxY-minY)/cs)+2;
+  for(let col=-1;col<cols;col++)for(let row=-1;row<rows;row++){
+    const cx=minX+(col+.5)*cs,cy=minY+(row+.5)*cs;
+    const cov=cellCov(cx,cy,h,h,poly);
+    if(cov>=thr)cells.push({cx,cy,col,row,coverage:cov});
+  }
+  return cells;
+}
+
+function genHex(poly,cs,thr=0.3){
+  const{minX,minY,maxX,maxY}=bbox(poly);
+  const hw=cs/2,hh=cs*Math.sqrt(3)/2,cells=[];
+  const cols=Math.ceil((maxX-minX)/(cs*.75))+3,rows=Math.ceil((maxY-minY)/(hh*2))+3;
+  for(let col=-1;col<cols;col++)for(let row=-1;row<rows;row++){
+    const cx=minX+col*cs*.75,cy=minY+(col%2===0?row:row+.5)*hh*2;
+    const cov=cellCov(cx,cy,hw,hh,poly);
+    if(cov>=thr)cells.push({cx,cy,col,row,coverage:cov});
+  }
+  return cells;
+}
+
+function countCells(poly,cs,type){
+  return (type==='square'?genSquare:genHex)(poly,cs).length;
+}
+
+function findSize(poly,N,type){
+  const area=polyArea(poly);
+  let lo=Math.sqrt(area/N)*.05,hi=Math.sqrt(area)*3;
+  for(let i=0;i<20;i++){if(countCells(poly,hi,type)<N)break;hi*=2;}
+  for(let i=0;i<60;i++){
+    const mid=(lo+hi)/2;
+    if(hi-lo<1e-9)break;
+    countCells(poly,mid,type)>=N?lo=mid:hi=mid;
+  }
+  return lo;
+}
+
+function generateGrid(poly,{count,type,thr=0.3}){
+  const cs=findSize(poly,count,type);
+  const cands=(type==='square'?genSquare:genHex)(poly,cs,thr);
+  const cx0=cands.reduce((s,c)=>s+c.cx,0)/cands.length;
+  const cy0=cands.reduce((s,c)=>s+c.cy,0)/cands.length;
+  const ranked=cands.slice().sort((a,b)=>{
+    if(b.coverage!==a.coverage)return b.coverage-a.coverage;
+    return((a.cx-cx0)**2+(a.cy-cy0)**2)-((b.cx-cx0)**2+(b.cy-cy0)**2);
+  }).slice(0,count);
+  ranked.sort((a,b)=>{const d=Math.round((a.cy-b.cy)/(cs*.5));return d||a.cx-b.cx;});
+  return{cells:ranked,cellSize:cs,gridType:type};
+}
+
+// ─── Colour scales ────────────────────────────────────────────────────────────
+
+const SCALES = {
+  github: t => t===0?'#161b22':t<.25?'#0e4429':t<.5?'#006d32':t<.75?'#26a641':'#39d353',
+  warm:   t => {const r=Math.round(.1*255+(t*.9*255));const g=Math.round(t*100);return`rgb(${r},${g},0)`;},
+  cool:   t => {const b=Math.round(.1*255+t*.9*255);const g=Math.round(t*100);return`rgb(0,${g},${b})`;},
+  mono:   t => {const v=Math.round(0x16+(0xff-0x16)*t);return`rgb(${v},${v},${v})`;},
+  neon:   t => t===0?'#0a0a0a':`hsl(${130-t*130},100%,${20+t*45}%)`,
+};
+
+function colToHex(css) {
+  const c=document.createElement('canvas');c.width=c.height=1;
+  const ctx=c.getContext('2d');ctx.fillStyle=css;ctx.fillRect(0,0,1,1);
+  const[r,g,b]=ctx.getImageData(0,0,1,1).data;
+  return[r/255,g/255,b/255];
+}
+
+// ─── GitHub API ───────────────────────────────────────────────────────────────
+
+async function fetchContributions(username,from,to,token){
+  const q=`query($login:String!,$from:DateTime!,$to:DateTime!){user(login:$login){contributionsCollection(from:$from,to:$to){contributionCalendar{totalContributions weeks{contributionDays{date contributionCount color weekday}}}}}}`;
+  const r=await fetch('https://api.github.com/graphql',{
+    method:'POST',
+    headers:{Authorization:`bearer ${token}`,'Content-Type':'application/json'},
+    body:JSON.stringify({query:q,variables:{login:username,from:from.toISOString(),to:to.toISOString()}}),
+  });
+  if(!r.ok)throw new Error(`GitHub API ${r.status}`);
+  const j=await r.json();
+  if(j.errors?.length)throw new Error(j.errors[0].message);
+  const cal=j.data?.user?.contributionsCollection?.contributionCalendar;
+  if(!cal)throw new Error(`User "${username}" not found`);
+  return{username,total:cal.totalContributions,days:cal.weeks.flatMap(w=>w.contributionDays)};
+}
+
+// ─── App state ────────────────────────────────────────────────────────────────
+
+let state = {
+  poly:     PRESETS.shield,
+  preset:   'shield',
+  country:  null,
+  boundaryType: 'preset', // 'preset' | 'country' | 'file'
+  gridType: 'hex',
+  count:    365,
+  gap:      0.08,
+  showBoundary: false,
+  yaw:      30,
+  pitch:    45,
+  heightScale: 1.0,
+  colorScale: 'github',
+  background: '#0d1117',
+  // data
+  contributions: null,
+  grid:      null,
+  cellData:  [],
+};
+
+// ─── Three.js scene ───────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('canvas-main');
+let renderer, scene, camera, dirLight, mesh, boundaryLine, groundMesh;
+let rafId;
+
+function initThree() {
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false, preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  scene = new THREE.Scene();
+
+  const W=canvas.clientWidth, H=canvas.clientHeight;
+  const asp=W/H, fs=1.3;
+  camera = new THREE.OrthographicCamera(-fs*asp/2,fs*asp/2,fs/2,-fs/2,0.01,100);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff,0.55));
+  dirLight = new THREE.DirectionalLight(0xffffff,1.1);
+  dirLight.position.set(2,4,3);
+  dirLight.castShadow=true;
+  dirLight.shadow.mapSize.set(1024,1024);
+  scene.add(dirLight);
+  const fill=new THREE.DirectionalLight(0x6688cc,0.25);
+  fill.position.set(-2,2,-3);
+  scene.add(fill);
+
+  // Ground
+  const gGeo=new THREE.PlaneGeometry(4,4);
+  const gMat=new THREE.ShadowMaterial({opacity:0.12});
+  groundMesh=new THREE.Mesh(gGeo,gMat);
+  groundMesh.rotation.x=-Math.PI/2;
+  groundMesh.receiveShadow=true;
+  scene.add(groundMesh);
+
+  loop();
+}
+
+function posCamera(){
+  const yaw=(state.yaw*Math.PI)/180;
+  const pitch=(state.pitch*Math.PI)/180;
+  const dist=2.5;
+  camera.position.set(
+    dist*Math.sin(yaw)*Math.cos(pitch),
+    dist*Math.sin(pitch),
+    dist*Math.cos(yaw)*Math.cos(pitch)
+  );
+  camera.lookAt(0,0,0);
+  camera.up.set(0,1,0);
+
+  // Resize ortho cam to match canvas
+  const W=canvas.clientWidth,H=canvas.clientHeight,asp=W/H,fs=1.3;
+  camera.left=-fs*asp/2; camera.right=fs*asp/2;
+  camera.top=fs/2; camera.bottom=-fs/2;
+  camera.updateProjectionMatrix();
+}
+
+function buildMesh(){
+  if(mesh){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();mesh=null;}
+  if(boundaryLine){scene.remove(boundaryLine);boundaryLine.geometry.dispose();boundaryLine=null;}
+
+  if(!state.grid)return;
+
+  const {cells,cellSize,gridType}=state.grid;
+  const N=cells.length;
+  const sc=state.colorScale;
+  const scaleFn=SCALES[sc]||SCALES.github;
+  const hs=state.heightScale;
+  const gap=state.gap;
+
+  // Geometry
+  let geo;
+  if(gridType==='square'){
+    const s=cellSize*(1-gap);
+    geo=new THREE.BoxGeometry(s,1,s);
+  } else {
+    const r=cellSize*.5*(1-gap);
+    geo=new THREE.CylinderGeometry(r,r,1,6);
+  }
+
+  const mat=new THREE.MeshLambertMaterial();
+  mesh=new THREE.InstancedMesh(geo,mat,N);
+  mesh.castShadow=true;
+
+  const dummy=new THREE.Object3D();
+  const col=new THREE.Color();
+
+  cells.forEach((cell,i)=>{
+    const d=state.cellData[i]||{intensity:0,count:0};
+    const h=Math.max(0.008,d.intensity*hs*0.12+0.008);
+    dummy.position.set(cell.cx-.5, h/2, cell.cy-.5);
+    dummy.scale.set(1,h,1);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i,dummy.matrix);
+
+    const css=scaleFn(d.intensity);
+    const[r,g,b]=colToHex(css);
+    col.setRGB(r,g,b);
+    mesh.setColorAt(i,col);
+  });
+  mesh.instanceMatrix.needsUpdate=true;
+  if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+  scene.add(mesh);
+
+  // Boundary outline
+  if(state.showBoundary){
+    const pts=state.poly.map(([x,y])=>new THREE.Vector3(x-.5,0.02,y-.5));
+    const bGeo=new THREE.BufferGeometry().setFromPoints(pts);
+    const bMat=new THREE.LineBasicMaterial({color:0x666666});
+    boundaryLine=new THREE.LineLoop(bGeo,bMat);
+    scene.add(boundaryLine);
+  }
+}
+
+let needsRebuild=false;
+
+function loop(){
+  rafId=requestAnimationFrame(loop);
+  const W=canvas.clientWidth,H=canvas.clientHeight;
+  if(renderer.domElement.width!==W||renderer.domElement.height!==H){
+    renderer.setSize(W,H,false);
+    posCamera();
+  }
+  if(needsRebuild){
+    buildMesh();
+    needsRebuild=false;
+  }
+  renderer.setClearColor(state.background,1);
+  renderer.render(scene,camera);
+}
+
+function scheduleRebuild(){needsRebuild=true;}
+
+// ─── Camera drag ──────────────────────────────────────────────────────────────
+
+let drag={active:false,lx:0,ly:0};
+
+canvas.addEventListener('mousedown',e=>{drag={active:true,lx:e.clientX,ly:e.clientY};});
+window.addEventListener('mouseup',()=>{drag.active=false;});
+window.addEventListener('mousemove',e=>{
+  if(!drag.active)return;
+  const dx=e.clientX-drag.lx, dy=e.clientY-drag.ly;
+  drag.lx=e.clientX; drag.ly=e.clientY;
+  state.yaw=(state.yaw+dx*.4+360)%360;
+  state.pitch=Math.max(5,Math.min(89,state.pitch-dy*.3));
+  sync('yaw'); sync('pitch');
+  posCamera();
+});
+
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const fs=1.3, scale=camera.right-camera.left;
+  const delta=e.deltaY>0?1.08:0.93;
+  const newScale=Math.max(0.5,Math.min(4,scale*delta));
+  const asp=canvas.clientWidth/canvas.clientHeight;
+  camera.left=-newScale*asp/2; camera.right=newScale*asp/2;
+  camera.top=newScale/2; camera.bottom=-newScale/2;
+  camera.updateProjectionMatrix();
+},{passive:false});
+
+// ─── Data fetch ───────────────────────────────────────────────────────────────
+
+async function loadData(){
+  const user=document.getElementById('inp-user').value.trim();
+  const token=document.getElementById('inp-token').value.trim();
+  if(!user||!token){setStatus('Enter username and token','error');return;}
+
+  const days=+document.getElementById('inp-days').value;
+  const end=new Date();
+  const start=new Date(); start.setDate(start.getDate()-days+1);
+
+  setStatus('Fetching contributions…','');
+  document.getElementById('btn-fetch').disabled=true;
+
+  try {
+    const contrib=await fetchContributions(user,start,end,token);
+    state.contributions=contrib;
+    document.getElementById('stat-contrib').textContent=contrib.total.toLocaleString();
+
+    const startStr=start.toISOString().slice(0,10);
+    const endStr=end.toISOString().slice(0,10);
+    const filtered=contrib.days.filter(d=>d.date>=startStr&&d.date<=endStr);
+    const maxC=Math.max(1,...filtered.map(d=>d.contributionCount));
+
+    // Recompute grid if needed
+    computeGrid();
+
+    // Map contributions to cells
+    const N=state.grid?.cells.length||state.count;
+    state.cellData=Array.from({length:N},(_,i)=>{
+      const d=filtered[i];
+      return d?{date:d.date,count:d.contributionCount,intensity:d.contributionCount/maxC}:{date:'',count:0,intensity:0};
+    });
+
+    setStatus(`✓ ${contrib.total} contributions · @${user}`,'ok');
+    scheduleRebuild();
+    document.getElementById('footer-gen').textContent=`generated ${new Date().toLocaleDateString()}`;
+  } catch(e){
+    setStatus(e.message,'error');
+  } finally {
+    document.getElementById('btn-fetch').disabled=false;
+  }
+}
+
+function computeGrid(){
+  state.grid=generateGrid(state.poly,{count:state.count,type:state.gridType});
+  document.getElementById('stat-cells').textContent=state.grid.cells.length;
+}
+
+function setStatus(msg,cls){
+  const el=document.getElementById('status-line');
+  el.textContent=msg;
+  el.className=cls||'';
+}
+
+// ─── Demo data ────────────────────────────────────────────────────────────────
+
+function loadDemo(){
+  const N=state.count;
+  const max=15;
+  state.cellData=Array.from({length:N},(_,i)=>{
+    const noise=Math.sin(i*0.3)*Math.cos(i*0.07)*0.5+0.5;
+    const count=Math.round(noise*max);
+    return{date:'',count,intensity:count/max};
+  });
+  state.contributions={username:'demo',total:state.cellData.reduce((s,d)=>s+d.count,0)};
+  document.getElementById('stat-contrib').textContent=state.contributions.total.toLocaleString();
+}
+
+// ─── UI wiring ────────────────────────────────────────────────────────────────
+
+function sync(key){
+  const map={
+    yaw:'inp-yaw', pitch:'inp-pitch',
+    count:'inp-count', gap:'inp-gap', heightScale:'inp-height', days:'inp-days',
+  };
+  if(map[key]){
+    const el=document.getElementById(map[key]);
+    if(el)el.value=state[key];
+  }
+  updateLabels();
+}
+
+function updateLabels(){
+  document.getElementById('val-yaw').textContent=Math.round(state.yaw)+'°';
+  document.getElementById('val-pitch').textContent=Math.round(state.pitch)+'°';
+  document.getElementById('val-count').textContent=state.count;
+  document.getElementById('val-gap').textContent=(+state.gap).toFixed(2);
+  document.getElementById('val-height').textContent=(+state.heightScale).toFixed(1)+'×';
+  document.getElementById('val-days').textContent=document.getElementById('inp-days').value;
+}
+
+// Sliders
+const sliders=[
+  ['inp-yaw',     v=>{state.yaw=+v;posCamera();}],
+  ['inp-pitch',   v=>{state.pitch=+v;posCamera();}],
+  ['inp-count',   v=>{state.count=+v;computeGrid();scheduleRebuild();}],
+  ['inp-gap',     v=>{state.gap=+v;scheduleRebuild();}],
+  ['inp-height',  v=>{state.heightScale=+v;scheduleRebuild();}],
+  ['inp-days',    v=>{updateLabels();}],
+];
+sliders.forEach(([id,fn])=>{
+  document.getElementById(id).addEventListener('input',e=>{fn(e.target.value);updateLabels();});
+});
+
+// Grid type
+document.getElementById('inp-grid-type').addEventListener('change',e=>{
+  state.gridType=e.target.value;
+  computeGrid();
+  if(state.contributions)loadDemo(); // re-map demo data
+  scheduleRebuild();
+});
+
+// Boundary toggle
+document.getElementById('inp-boundary').addEventListener('change',e=>{
+  state.showBoundary=e.target.checked;
+  scheduleRebuild();
+});
+
+// Preset buttons
+document.querySelectorAll('.preset-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.country-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const name=btn.dataset.preset;
+    state.preset=name;
+    state.country=null;
+    state.boundaryType='preset';
+    state.poly=PRESETS[name];
+    computeGrid();
+    loadDemo();
+    scheduleRebuild();
+  });
+});
+
+// Boundary tabs
+document.querySelectorAll('.boundary-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.boundary-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.boundary-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel=document.getElementById('panel-'+tab.dataset.tab);
+    if(panel)panel.classList.add('active');
+  });
+});
+
+// Country search
+const countrySearch=document.getElementById('country-search');
+const countryDropdown=document.getElementById('country-dropdown');
+const countryGrid=document.getElementById('country-grid');
+
+function selectCountry(code){
+  const c=COUNTRIES[code];
+  if(!c)return;
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.country-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll(`.country-btn[data-country="${code}"]`).forEach(b=>b.classList.add('active'));
+  state.country=code;
+  state.preset=null;
+  state.boundaryType='country';
+  state.poly=c.coords;
+  countrySearch.value=c.name;
+  countryDropdown.classList.remove('visible');
+  computeGrid();
+  loadDemo();
+  scheduleRebuild();
+}
+
+countrySearch.addEventListener('input',()=>{
+  const q=countrySearch.value.trim();
+  if(q.length<1){
+    countryDropdown.classList.remove('visible');
+    return;
+  }
+  const results=searchCountries(q).slice(0,10);
+  countryDropdown.innerHTML='';
+  results.forEach(c=>{
+    const opt=document.createElement('div');
+    opt.className='country-option'+(state.country===c.code?' selected':'');
+    opt.innerHTML=`<span>${c.name}</span><span class="country-code">${c.code}</span>`;
+    opt.addEventListener('click',()=>selectCountry(c.code));
+    countryDropdown.appendChild(opt);
+  });
+  countryDropdown.classList.toggle('visible',results.length>0);
+});
+
+countrySearch.addEventListener('blur',()=>{
+  setTimeout(()=>countryDropdown.classList.remove('visible'),150);
+});
+
+// Build featured country grid
+FEATURED_COUNTRIES.forEach(code=>{
+  const c=COUNTRIES[code];
+  if(!c)return;
+  const btn=document.createElement('button');
+  btn.className='country-btn';
+  btn.dataset.country=code;
+  btn.textContent=code;
+  btn.title=c.name;
+  btn.addEventListener('click',()=>selectCountry(code));
+  countryGrid.appendChild(btn);
+});
+
+// File upload
+const fileInput=document.getElementById('file-input');
+const fileUploadArea=document.getElementById('file-upload-area');
+const fileName=document.getElementById('file-name');
+
+function handleFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      let poly;
+      if(ext==='svg'){
+        poly=parseSvgFile(e.target.result);
+      }else{
+        poly=parseGeoJsonFile(e.target.result);
+      }
+      document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.country-btn').forEach(b=>b.classList.remove('active'));
+      state.preset=null;
+      state.country=null;
+      state.boundaryType='file';
+      state.poly=poly;
+      fileName.textContent=file.name;
+      computeGrid();
+      loadDemo();
+      scheduleRebuild();
+    }catch(err){
+      fileName.textContent='Error: '+err.message;
+    }
+  };
+  reader.readAsText(file);
+}
+
+fileInput.addEventListener('change',e=>{
+  if(e.target.files[0])handleFile(e.target.files[0]);
+});
+
+fileUploadArea.addEventListener('click',()=>fileInput.click());
+
+fileUploadArea.addEventListener('dragover',e=>{
+  e.preventDefault();
+  fileUploadArea.classList.add('dragover');
+});
+
+fileUploadArea.addEventListener('dragleave',()=>{
+  fileUploadArea.classList.remove('dragover');
+});
+
+fileUploadArea.addEventListener('drop',e=>{
+  e.preventDefault();
+  fileUploadArea.classList.remove('dragover');
+  if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);
+});
+
+// Fetch button
+document.getElementById('btn-fetch').addEventListener('click',loadData);
+
+// Export PNG
+document.getElementById('btn-export').addEventListener('click',()=>{
+  const url=canvas.toDataURL('image/png');
+  const a=document.createElement('a');
+  a.href=url; a.download='shapegrid.png'; a.click();
+});
+
+// Colour scale buttons
+function buildScaleUI(){
+  const container=document.getElementById('scale-grid');
+  const scales=['github','warm','cool','mono','neon'];
+  const labels={github:'GitHub',warm:'Warm',cool:'Cool',mono:'Mono',neon:'Neon'};
+
+  container.innerHTML='';
+  scales.forEach(sc=>{
+    const fn=SCALES[sc];
+    const btn=document.createElement('button');
+    btn.className='scale-btn'+(state.colorScale===sc?' active':'');
+    btn.dataset.scale=sc;
+
+    const preview=document.createElement('div');
+    preview.className='scale-preview';
+    [0,.2,.4,.6,.8,1].forEach(t=>{
+      const s=document.createElement('div');
+      s.className='scale-swatch';
+      s.style.background=fn(t);
+      preview.appendChild(s);
+    });
+
+    const label=document.createElement('span');
+    label.textContent=labels[sc];
+
+    btn.appendChild(preview);
+    btn.appendChild(label);
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.scale-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.colorScale=sc;
+      scheduleRebuild();
+      buildLegend();
+    });
+    container.appendChild(btn);
+  });
+}
+
+function buildLegend(){
+  const cont=document.getElementById('legend-swatches');
+  cont.innerHTML='';
+  const fn=SCALES[state.colorScale]||SCALES.github;
+  [0,.25,.5,.75,1].forEach(t=>{
+    const d=document.createElement('div');
+    d.className='legend-cell';
+    d.style.background=fn(t);
+    cont.appendChild(d);
+  });
+}
+
+// ─── Tooltip on canvas hover ─────────────────────────────────────────────────
+
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+const tooltip=document.getElementById('tooltip');
+
+canvas.addEventListener('mousemove',e=>{
+  if(!mesh||drag.active){tooltip.classList.remove('visible');return;}
+  const rect=canvas.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObject(mesh);
+  if(hits.length>0){
+    const idx=hits[0].instanceId;
+    const d=state.cellData[idx];
+    if(d){
+      tooltip.innerHTML=d.date
+        ?`<strong>${d.date}</strong><br/>${d.count} contribution${d.count!==1?'s':''}`
+        :`<span style="color:var(--muted)">No data</span>`;
+      tooltip.style.left=(e.clientX-rect.left+12)+'px';
+      tooltip.style.top=(e.clientY-rect.top-28)+'px';
+      tooltip.classList.add('visible');
+      return;
+    }
+  }
+  tooltip.classList.remove('visible');
+});
+canvas.addEventListener('mouseleave',()=>tooltip.classList.remove('visible'));
+
+// ─── Bootstrap ───────────────────────────────────────────────────────────────
+
+// Check for pre-generated data embedded via GitHub Actions
+const DATA_URL='__DATA_URL__';
+
+async function bootstrap(){
+  const overlay=document.getElementById('overlay');
+  const overlayText=document.getElementById('overlay-text');
+
+  overlayText.textContent='Initialising WebGL…';
+  initThree();
+
+  // Try to load pre-generated JSON data
+  if(DATA_URL && DATA_URL!=='__DATA_URL__'){
+    overlayText.textContent='Loading contribution data…';
+    try{
+      const resp=await fetch(DATA_URL);
+      const data=await resp.json();
+
+      state.poly=data.boundary||PRESETS.shield;
+      state.count=data.grid.count;
+      state.gridType=data.grid.type;
+
+      // Rehydrate grid from saved cell positions
+      state.grid={
+        cells:data.grid.cells.map(c=>({cx:c.cx,cy:c.cy,col:0,row:0,coverage:1})),
+        cellSize:data.grid.cellSize,
+        gridType:data.grid.type,
+      };
+      state.cellData=data.grid.cells.map(c=>({date:c.date,count:c.count,intensity:c.intensity}));
+
+      if(data.config?.camera){
+        state.yaw=data.config.camera.yaw||30;
+        state.pitch=data.config.camera.pitch||45;
+      }
+      if(data.config?.render){
+        state.colorScale=data.config.render.colorScale||'github';
+        state.heightScale=data.config.render.heightScale||1;
+        state.gap=data.config.render.gap||0.08;
+        state.background=data.config.render.background||'#0d1117';
+      }
+
+      document.getElementById('stat-contrib').textContent=(data.totalContributions||0).toLocaleString();
+      document.getElementById('stat-cells').textContent=state.grid.cells.length;
+      document.getElementById('footer-gen').textContent=`generated ${new Date(data.generated).toLocaleDateString()}`;
+
+      sync('yaw'); sync('pitch'); sync('count'); sync('gap'); sync('height');
+    }catch(e){
+      console.warn('Could not load pre-generated data, using demo',e);
+    }
+  }
+
+  // Initialise with demo data if no pre-generated data
+  if(!state.grid){
+    computeGrid();
+    loadDemo();
+  }
+
+  posCamera();
+  buildScaleUI();
+  buildLegend();
+  scheduleRebuild();
+  updateLabels();
+
+  // Hide overlay
+  setTimeout(()=>{overlay.classList.add('hidden');},400);
+}
+
+bootstrap();
+</script>
+</body>
+</html>

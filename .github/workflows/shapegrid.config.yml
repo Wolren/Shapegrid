@@ -1,0 +1,104 @@
+# shapegrid.config.yml
+# Full configuration reference for the shapegrid activity grid generator.
+# Copy this file to your repository root and customise the values below.
+
+# ─── GitHub credentials ───────────────────────────────────────────────────────
+github:
+  # Your GitHub username
+  username: octocat
+
+  # Personal Access Token with `read:user` scope.
+  # Value can be:
+  #   - The name of an environment variable (e.g. "SHAPEGRID_TOKEN")  ← recommended
+  #   - A literal token string (not recommended — use secrets instead)
+  token: SHAPEGRID_TOKEN
+
+# ─── Boundary shape ───────────────────────────────────────────────────────────
+boundary:
+  # Use one of:
+  #
+  # 1. Named preset: circle | shield | star | diamond | heart | rectangle
+  type: preset
+  name: shield
+
+  # 2. Raw polygon points (normalised 0–1 coordinates)
+  # type: polygon
+  # points:
+  #   - [0.5, 0.0]
+  #   - [1.0, 0.25]
+  #   - [1.0, 0.75]
+  #   - [0.5, 1.0]
+  #   - [0.0, 0.75]
+  #   - [0.0, 0.25]
+
+  # 3. SVG path string (M/L/Z commands, absolute coordinates)
+  # type: svgPath
+  # d: "M 50 0 L 100 25 L 100 75 L 50 100 L 0 75 L 0 25 Z"
+
+  # 4. GeoJSON polygon ring
+  # type: geojson
+  # coordinates:
+  #   - [0.5, 0.0]
+  #   - [1.0, 0.5]
+  #   - [0.5, 1.0]
+  #   - [0.0, 0.5]
+
+# ─── Grid layout ──────────────────────────────────────────────────────────────
+grid:
+  # Cell shape: square | hex
+  type: hex
+
+  # Exact number of cells to place. Must equal your date range in days
+  # if you want one cell per day (e.g. 365 for one year).
+  count: 365
+
+  # How much of a cell must be inside the boundary to be included (0–1).
+  # Lower values allow more border cells; higher values are stricter.
+  coverageThreshold: 0.4
+
+# ─── Camera / projection ──────────────────────────────────────────────────────
+camera:
+  # Horizontal rotation in degrees (0 = front, 90 = right side)
+  yaw: 30
+
+  # Vertical tilt in degrees (0 = top-down flat, 60 = steep isometric, 90 = side)
+  pitch: 45
+
+# ─── Visual style ─────────────────────────────────────────────────────────────
+render:
+  # Colour scheme: github | warm | cool | mono | neon
+  colorScale: github
+
+  # Height extrusion multiplier. 0 = flat, 1 = normal, 2 = tall bars
+  heightScale: 1.0
+
+  # Draw the boundary polygon as a wireframe outline
+  showBoundary: false
+
+  # Canvas background colour (CSS hex)
+  background: "#0d1117"
+
+  # Gap between cells (fraction of cell size, 0.0–0.3)
+  gap: 0.08
+
+  # Output image dimensions
+  width: 1200
+  height: 630
+
+# ─── Date range ───────────────────────────────────────────────────────────────
+dateRange:
+  # Last N days ending today (most common)
+  last: 365
+
+  # Or specify explicit dates:
+  # start: "2024-01-01"
+  # end:   "2024-12-31"
+
+# ─── Output ───────────────────────────────────────────────────────────────────
+output:
+  # Directory for generated files (relative to project root)
+  dir: dist
+
+  # Filenames (omit any you don't need)
+  svgFilename: shapegrid.svg
+  jsonFilename: shapegrid-data.json
