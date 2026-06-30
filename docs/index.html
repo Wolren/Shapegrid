@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>shapegrid — Activity Grid Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"/>
+
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header id="header">
+    <div id="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="4" height="4" rx="0.5" fill="#39d353" stroke="#39d353"/>
+        <rect x="10" y="3" width="4" height="4" rx="0.5" fill="#39d353" stroke="#39d353" opacity="0.7"/>
+        <rect x="17" y="3" width="4" height="4" rx="0.5" fill="#39d353" stroke="#39d353" opacity="0.4"/>
+        <rect x="3" y="10" width="4" height="4" rx="0.5" fill="#39d353" stroke="#39d353" opacity="0.5"/>
+        <rect x="10" y="10" width="4" height="4" rx="0.5" fill="#39d353" stroke="#39d353" opacity="0.9"/>
+        <rect x="3" y="17" width="4" height="4" rx="0.5" fill="#39d353" stroke="#39d353" opacity="0.3"/>
+        <rect x="10" y="17" width="4" height="4" rx="0.5" fill="#39d353" stroke="#39d353" opacity="0.6"/>
+        <rect x="17" y="17" width="4" height="4" rx="0.5" fill="#39d353" stroke="#39d353" opacity="0.8"/>
+      </svg>
+      shapegrid
+    </div>
+    <span id="header-meta">boundary-fit activity grid · WebGL renderer</span>
+    <button id="btn-export">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/>
+        <path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.97a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.779a.749.749 0 1 1 1.06-1.06l1.97 1.97Z"/>
+      </svg>
+      Export PNG
+    </button>
+  </header>
+
+  <!-- ── Left panel ─────────────────────────────────────────────────────── -->
+  <aside id="panel">
+
+    <!-- Sidebar tabs -->
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" data-tab="data">Data</button>
+      <button class="sidebar-tab" data-tab="boundary">Boundary</button>
+      <button class="sidebar-tab" data-tab="grid">Grid</button>
+      <button class="sidebar-tab" data-tab="render">Render</button>
+    </div>
+
+    <div class="sidebar-body">
+
+      <!-- DATA TAB -->
+      <div class="tab-panel active" data-panel="data">
+        <!-- GitHub credentials -->
+        <div class="section">
+          <div class="section-title">GitHub Contributions</div>
+          <div class="row">
+            <label>Username</label>
+            <input type="text" id="inp-user" placeholder="octocat" value=""/>
+          </div>
+          <div class="row">
+            <label>Personal Access Token <span title="Needs read:user scope">ⓘ</span></label>
+            <input type="password" id="inp-token" placeholder="ghp_…"/>
+          </div>
+        </div>
+
+        <!-- Date Range -->
+        <div class="section">
+          <div class="section-title">Date Range</div>
+          <div class="days-mode-toggle">
+            <button class="days-mode-btn active" id="dm-last">Last N days</button>
+            <button class="days-mode-btn" id="dm-years">Year picker</button>
+            <button class="days-mode-btn" id="dm-range">Date range</button>
+          </div>
+
+          <!-- Last N days panel -->
+          <div id="dm-last-panel">
+            <div class="row">
+              <label>Days <span id="val-days">365</span></label>
+              <input type="range" id="inp-days" min="7" max="1825" value="365" step="1"/>
+            </div>
+            <div class="row">
+              <input type="number" id="inp-days-num" min="1" max="9999" value="365" placeholder="Type any number of days"/>
+            </div>
+          </div>
+
+          <!-- Year picker panel -->
+          <div id="dm-years-panel" style="display:none">
+            <div class="row">
+              <label>Select years (multi)</label>
+              <div class="year-chips" id="year-chips"></div>
+            </div>
+          </div>
+
+          <!-- Date range panel -->
+          <div id="dm-range-panel" style="display:none">
+            <div class="date-row">
+              <div class="row">
+                <label>Start</label>
+                <input type="date" id="range-start"/>
+              </div>
+              <div class="row">
+                <label>End</label>
+                <input type="date" id="range-end"/>
+              </div>
+            </div>
+          </div>
+
+          <button id="btn-fetch">Load Contributions</button>
+          <div id="status-line"></div>
+        </div>
+
+        <div class="section">
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Sync cell count to days</label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-sync-cells" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOUNDARY TAB -->
+      <div class="tab-panel" data-panel="boundary">
+        <div class="section">
+          <div class="section-title">Boundary Shape</div>
+          <div class="boundary-tabs">
+            <button class="boundary-tab active" data-tab="presets">Presets</button>
+            <button class="boundary-tab" data-tab="countries">Countries</button>
+            <button class="boundary-tab" data-tab="file">File</button>
+          </div>
+          <div id="panel-presets" class="boundary-panel active">
+            <div id="preset-grid">
+              <button class="preset-btn" data-preset="shield">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <path d="M14 2L26 7v8c0 7-5.5 11-12 13C7.5 26 2 22 2 15V7z" stroke="#39d353" stroke-width="1.5" fill="none"/>
+                </svg>
+                shield
+              </button>
+              <button class="preset-btn active" data-preset="circle">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <circle cx="14" cy="14" r="11" stroke="#39d353" stroke-width="1.5" fill="none"/>
+                </svg>
+                circle
+              </button>
+              <button class="preset-btn" data-preset="star">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <polygon points="14,2 17.5,10 26,11 20,17 22,25 14,21 6,25 8,17 2,11 10.5,10" stroke="#39d353" stroke-width="1.2" fill="none"/>
+                </svg>
+                star
+              </button>
+              <button class="preset-btn" data-preset="diamond">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <polygon points="14,2 26,14 14,26 2,14" stroke="#39d353" stroke-width="1.5" fill="none"/>
+                </svg>
+                diamond
+              </button>
+              <button class="preset-btn" data-preset="heart">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <path d="M14 24s-12-7-12-14a7 7 0 0 1 12-4.9A7 7 0 0 1 26 10c0 7-12 14-12 14z" stroke="#39d353" stroke-width="1.5" fill="none"/>
+                </svg>
+                heart
+              </button>
+              <button class="preset-btn" data-preset="rectangle">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <rect x="3" y="7" width="22" height="14" rx="2" stroke="#39d353" stroke-width="1.5" fill="none"/>
+                </svg>
+                rect
+              </button>
+              <button class="preset-btn" data-preset="hexagon">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <polygon points="14,2 25,7 25,21 14,26 3,21 3,7" stroke="#39d353" stroke-width="1.5" fill="none"/>
+                </svg>
+                hexagon
+              </button>
+              <button class="preset-btn" data-preset="arrow">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <polygon points="4,10 14,10 14,4 24,14 14,24 14,18 4,18" stroke="#39d353" stroke-width="1.5" fill="none"/>
+                </svg>
+                arrow
+              </button>
+              <button class="preset-btn" data-preset="cross">
+                <svg viewBox="0 0 28 28" fill="none">
+                  <polygon points="10,2 18,2 18,10 26,10 26,18 18,18 18,26 10,26 10,18 2,18 2,10 10,10" stroke="#39d353" stroke-width="1.5" fill="none"/>
+                </svg>
+                cross
+              </button>
+            </div>
+          </div>
+          <div id="panel-countries" class="boundary-panel">
+            <div id="country-search-container">
+              <input type="text" id="country-search" placeholder="Search countries..." autocomplete="off"/>
+              <div id="country-dropdown"></div>
+            </div>
+            <div id="country-grid"></div>
+            <div id="country-coord-system" style="margin-top:10px">
+              <label style="font-size:10px">Coordinate system</label>
+              <select id="inp-country-coord-system">
+                <option value="auto">Auto-detect</option>
+                <option value="planar">Planar (no projection)</option>
+                <option value="wgs84">WGS84 (cosine lat correction)</option>
+                <option value="mercator">Mercator</option>
+              </select>
+            </div>
+          </div>
+          <div id="panel-file" class="boundary-panel">
+            <div id="file-upload-area">
+              <div class="upload-icon">📁</div>
+              <p>Drop GeoJSON or SVG file here<br/>or click to browse</p>
+              <input type="file" id="file-input" accept=".geojson,.json,.svg,.shp"/>
+              <div id="file-name"></div>
+            </div>
+            <div id="file-coord-system" style="margin-top:10px">
+              <label style="font-size:10px">Coordinate system (for GeoJSON)</label>
+              <select id="inp-file-coord-system">
+                <option value="auto">Auto-detect</option>
+                <option value="planar">Planar (no projection)</option>
+                <option value="wgs84">WGS84 (cosine lat correction)</option>
+                <option value="mercator">Mercator</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-inline" style="margin-top:10px">
+            <label style="font-size:10px;color:var(--muted);flex:1">Show boundary outline</label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-boundary"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <!-- Axes options: only visible when geographic file is loaded -->
+          <div id="axes-options-section" style="display:none">
+            <div class="row-inline" style="margin-top:6px">
+              <label style="font-size:10px;color:var(--muted);flex:1">Show coordinate axes</label>
+              <label class="toggle">
+                <input type="checkbox" id="inp-coord-axes" checked/>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label style="font-size:10px">Axes label scale <span id="val-coord-axes-scale">1.0</span></label>
+              <input type="range" id="inp-coord-axes-scale" min="0.3" max="3" value="1.0" step="0.1"/>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label style="font-size:10px">Axes position</label>
+              <select id="inp-coord-axes-position">
+                <option value="outside">Outside</option>
+                <option value="inside">Inside</option>
+              </select>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label style="font-size:10px">Axes line color</label>
+              <input type="color" id="inp-coord-axes-line-color" value="#666666"/>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label style="font-size:10px">Axes label color</label>
+              <input type="color" id="inp-coord-axes-label-color" value="#888888"/>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label style="font-size:10px">X axis offset <span id="val-coord-axes-x-offset">0.04</span></label>
+              <input type="range" id="inp-coord-axes-x-offset" min="-0.5" max="0.5" value="0.04" step="0.01"/>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label style="font-size:10px">Y axis offset <span id="val-coord-axes-y-offset">0.04</span></label>
+              <input type="range" id="inp-coord-axes-y-offset" min="-0.5" max="0.5" value="0.04" step="0.01"/>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label style="font-size:10px">Tick length <span id="val-coord-axes-tick">0.015</span></label>
+              <input type="range" id="inp-coord-axes-tick" min="0.005" max="0.05" value="0.05" step="0.005"/>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label style="font-size:10px">Label offset <span id="val-coord-axes-label-off">0.03</span></label>
+              <input type="range" id="inp-coord-axes-label-off" min="0.01" max="0.1" value="0.05" step="0.01"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRID TAB -->
+      <div class="tab-panel" data-panel="grid">
+        <div class="section">
+          <div class="section-title">Grid Layout</div>
+          <div class="row">
+            <label>Cell type</label>
+            <select id="inp-grid-type">
+              <option value="hex">Hexagonal</option>
+              <option value="square">Square</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Cell count</label>
+            <input type="number" id="inp-count-num" min="1" max="9999" value="365" placeholder="Type any value up to 9999"/>
+          </div>
+          <div class="row">
+            <label>Cell gap <span id="val-gap">0.08</span></label>
+            <input type="range" id="inp-gap" min="0" max="0.4" value="0.08" step="0.01"/>
+          </div>
+          <div class="row">
+            <label>Coverage threshold <span id="val-coverage">0.30</span></label>
+            <input type="range" id="inp-coverage" min="0" max="1" value="0.3" step="0.05"/>
+          </div>
+        </div>
+
+        <!-- Camera -->
+        <div class="section">
+          <div class="section-title">Camera</div>
+          <div class="row">
+            <label>Yaw <span id="val-yaw">30°</span></label>
+            <input type="range" id="inp-yaw" min="-180" max="180" value="30"/>
+          </div>
+          <div class="row">
+            <label>Pitch <span id="val-pitch">45°</span></label>
+            <input type="range" id="inp-pitch" min="0" max="90" value="45"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- RENDER TAB -->
+      <div class="tab-panel" data-panel="render">
+        <div class="section">
+          <div class="section-title">Color Palette</div>
+          <div id="palette-list" class="palette-list"></div>
+          
+          <div class="section-title" style="margin-top:10px">Edit Palette</div>
+          <div id="palette-swatches" class="palette-swatches"></div>
+          <div class="color-picker-wrap">
+            <input type="color" id="swatch-color-picker" value="#39d353"/>
+            <input type="text" id="swatch-color-hex" value="#39d353" style="flex:1;font-family:var(--mono)"/>
+            <button class="btn-sm" id="btn-swatch-apply">Apply</button>
+          </div>
+          
+          <div class="row" style="margin-top:10px">
+            <label>New palette name</label>
+            <div style="display:flex;gap:6px">
+              <input type="text" id="new-palette-name" placeholder="My palette" style="flex:1"/>
+              <button class="btn-sm" id="btn-save-palette">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Visual Style</div>
+          <div class="row">
+            <label>Height scale <span id="val-height">1.0×</span></label>
+            <input type="range" id="inp-height" min="0" max="3" value="1" step="0.1"/>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Background</div>
+          <div class="row">
+            <label>Background color</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="color" id="inp-bg-color" value="#0d1117" style="width:40px;height:28px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer"/>
+              <input type="text" id="inp-bg-hex" value="#0d1117" style="flex:1;font-family:var(--mono)"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Export Settings</div>
+          <div class="row">
+            <label>Width (px)</label>
+            <input type="number" id="inp-export-w" value="1200" min="200" max="4096"/>
+          </div>
+          <div class="row">
+            <label>Height (px)</label>
+            <input type="number" id="inp-export-h" value="600" min="200" max="4096"/>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ── Canvas area ────────────────────────────────────────────────────── -->
+  <main id="canvas-wrap">
+    <canvas id="canvas-main"></canvas>
+
+    <div id="overlay">
+      <div class="spinner"></div>
+      <div id="overlay-text">Loading Three.js…</div>
+    </div>
+
+    <div id="legend">
+      <span>Less</span>
+      <div id="legend-swatches"></div>
+      <span>More</span>
+    </div>
+
+    <div id="stats-bar">
+      <div class="stat-item">
+        <span class="stat-value" id="stat-contrib">—</span>
+        <span>contributions</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-cells">—</span>
+        <span>cells</span>
+      </div>
+    </div>
+
+    <div id="tooltip"></div>
+    <div id="drag-hint">drag to rotate · scroll to zoom</div>
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer id="footer">
+    <span>shapegrid</span>
+    <span style="color:var(--border)">·</span>
+    <a href="https://github.com/YOUR_USERNAME/shapegrid" target="_blank">GitHub</a>
+    <span style="color:var(--border)">·</span>
+    <span>boundary-fit · WebGL · Three.js</span>
+    <span style="margin-left:auto" id="footer-gen"></span>
+  </footer>
+
+</div>
+
+<!-- Three.js - loaded via npm package -->
+
+<script type="module" src="app.ts"></script>
+</body>
+</html>
