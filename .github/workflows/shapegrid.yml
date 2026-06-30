@@ -16,6 +16,9 @@ on:
     paths:
       - 'shapegrid.config.yml'
       - '.github/workflows/shapegrid.yml'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
   workflow_dispatch:
     inputs:
       username:
