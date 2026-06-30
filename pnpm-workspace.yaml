@@ -1,5 +1,4 @@
 packages:
   - 'packages/core'
   - 'packages/core/cli'
-  - 'packages/core/renderer'
   - 'web'
