@@ -1,19 +1,15 @@
 # .github/workflows/shapegrid.yml
-#
-# Regenerates the activity grid on a daily schedule,
-# on push to main, or manually via workflow_dispatch.
+# Regenerates the activity grid on schedule or push.
 #
 # Prerequisites:
-#   1. Create a GitHub PAT with `read:user` scope
-#   2. Add it as a repository secret named SHAPEGRID_TOKEN
-#   3. Make sure GitHub Pages is enabled (Settings → Pages → Branch: master, Folder: /docs)
-#   4. Copy shapegrid.config.yml to your repo root and customise it
+#   1. Create a GitHub PAT with read:user scope
+#   2. Add it as repo secret SHAPEGRID_TOKEN
+#   3. Enable GitHub Pages (Settings > Pages > Branch: master, Folder: /docs)
 
-name: 🌿 shapegrid — Regenerate Activity Grid
+name: shapegrid - Regenerate Activity Grid
 
 on:
   schedule:
-    # Runs daily at 01:00 UTC
     - cron: '0 1 * * *'
   push:
     branches: [master]
@@ -75,7 +71,6 @@ jobs:
           mkdir -p docs
           cp web/index.html docs/index.html
           cp -r dist/ docs/assets/ 2>/dev/null || true
-          # Embed the generated data path into the viewer
           sed -i "s|__DATA_URL__|assets/shapegrid-data.json|g" docs/index.html
 
       - name: Commit generated assets
@@ -85,8 +80,7 @@ jobs:
           git add docs/ dist/
           git diff --staged --quiet || git commit -m "chore: update shapegrid activity grid [skip ci]
 
-          Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-          Runner: github-actions"
+          Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git push
 
       - name: Upload Pages artifact
