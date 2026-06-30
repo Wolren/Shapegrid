@@ -6,7 +6,7 @@
 # Prerequisites:
 #   1. Create a GitHub PAT with `read:user` scope
 #   2. Add it as a repository secret named SHAPEGRID_TOKEN
-#   3. Make sure GitHub Pages is enabled (Settings → Pages → Branch: main, Folder: /docs)
+#   3. Make sure GitHub Pages is enabled (Settings → Pages → Branch: master, Folder: /docs)
 #   4. Copy shapegrid.config.yml to your repo root and customise it
 
 name: 🌿 shapegrid — Regenerate Activity Grid
@@ -16,7 +16,7 @@ on:
     # Runs daily at 01:00 UTC
     - cron: '0 1 * * *'
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'shapegrid.config.yml'
       - '.github/workflows/shapegrid.yml'
@@ -46,11 +46,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
@@ -65,7 +65,7 @@ jobs:
           SHAPEGRID_TOKEN: ${{ secrets.SHAPEGRID_TOKEN }}
           GITHUB_USERNAME: ${{ github.event.inputs.username || github.repository_owner }}
         run: |
-          node packages/cli/dist/index.js generate \
+          node packages/core/cli/dist/index.js generate \
             --config shapegrid.config.yml \
             --user "$GITHUB_USERNAME" \
             --token SHAPEGRID_TOKEN
@@ -90,7 +90,7 @@ jobs:
           git push
 
       - name: Upload Pages artifact
-        if: ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ github.ref == 'refs/heads/master' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/
@@ -99,7 +99,7 @@ jobs:
     name: Deploy to GitHub Pages
     needs: generate
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/master' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

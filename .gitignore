@@ -9,3 +9,12 @@ yarn-error.log*
 .pnp.js
 
 .vscode/*
+
+# IntelliJ workspace (keep project config)
+.idea/workspace.xml
+
+# TypeScript build artifacts
+*.tsbuildinfo
+
+# npm lock artifacts (project uses pnpm)
+package-lock.json
