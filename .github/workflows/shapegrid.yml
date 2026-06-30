@@ -9,8 +9,6 @@
 name: shapegrid - Regenerate Activity Grid
 
 on:
-  schedule:
-    - cron: '0 1 * * *'
   push:
     branches: [master]
     paths:
