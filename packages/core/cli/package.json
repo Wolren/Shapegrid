@@ -14,7 +14,7 @@
   "dependencies": {
     "@shapegrid/core": "workspace:*",
     "chalk": "^5.3.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^5.2.2",
     "puppeteer-core": "^22.0.0",
     "three": "^0.183.2",
     "yargs": "^17.7.2"
