@@ -17,6 +17,8 @@ on:
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
       - 'package.json'
+      - 'packages/**'
+      - 'web/**'
   workflow_dispatch:
     inputs:
       username:
