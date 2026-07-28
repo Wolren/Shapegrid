@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import * as THREE from 'three';
-import type { Point2D, OverlayPos } from './src/types';
+import type { Point2D } from './src/types';
 import { state, updateState, setPreset } from './src/ui/state';
 import { norm, normWithCoordSystem, isLikelyLonLat } from './src/geometry/projection';
 import { parseGeoJsonFile, parseSvgFile } from './src/geometry/parsers';
@@ -366,25 +366,39 @@ canvas.addEventListener('mouseleave', () => tooltip.classList.remove('visible'))
 // Draggable overlays (legend, stats bar)
 // ══════════════════════════════════════════════════════════════════════════════
 
-let overlayDrag: { el: HTMLElement; key: string; lx: number; ly: number; startX: number; startY: number } | null = null;
+interface DragState {
+  el: HTMLElement;
+  key: 'legend' | 'stats';
+  lx: number;
+  ly: number;
+  startX: number;
+  startY: number;
+}
+
+let overlayDrag: DragState | null = null;
 
 function initOverlayDrag() {
-  document.querySelectorAll('[data-draggable]').forEach(el => {
-    const handle = el as HTMLElement;
-    handle.addEventListener('mousedown', e => {
+  // Make the whole legend/stats elements draggable
+  const legend = document.getElementById('legend');
+  const stats = document.getElementById('stats-bar');
+
+  [legend, stats].forEach(el => {
+    if (!el) return;
+    const key = el.id === 'legend' ? 'legend' : 'stats';
+    el.addEventListener('mousedown', e => {
+      // Don't drag when clicking toggle/link/etc (only on the element background)
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'A' || target.tagName === 'BUTTON' || target.tagName === 'INPUT') return;
       e.preventDefault();
-      e.stopPropagation();
-      const key = handle.dataset.draggable!; // 'legend' or 'stats'
-      const parent = handle.closest('[data-draggable-parent]') as HTMLElement || handle.parentElement!;
       overlayDrag = {
-        el: parent,
+        el,
         key,
         lx: e.clientX,
         ly: e.clientY,
-        startX: (state.overlay[`${key}Pos` as 'legendPos' | 'statsPos'] as OverlayPos).x,
-        startY: (state.overlay[`${key}Pos` as 'legendPos' | 'statsPos'] as OverlayPos).y,
+        startX: state.overlay[`${key}Pos`].x,
+        startY: state.overlay[`${key}Pos`].y,
       };
-      parent.style.cursor = 'grabbing';
+      el.classList.add('dragging');
     });
   });
 }
@@ -397,17 +411,17 @@ window.addEventListener('mousemove', e => {
   const dy = e.clientY - overlayDrag.ly;
   const pctX = (dx / rect.width) * 100;
   const pctY = (dy / rect.height) * 100;
-  const key = overlayDrag.key;
-  const posKey = `${key}Pos` as 'legendPos' | 'statsPos';
+  const posKey = `${overlayDrag.key}Pos` as 'legendPos' | 'statsPos';
   const newX = Math.max(0, Math.min(95, overlayDrag.startX + pctX));
   const newY = Math.max(0, Math.min(90, overlayDrag.startY + pctY));
   state.overlay[posKey] = { x: newX, y: newY };
-  applyOverlayPositions();
+  overlayDrag.el.style.left = newX + '%';
+  overlayDrag.el.style.top = newY + '%';
 });
 
 window.addEventListener('mouseup', () => {
   if (!overlayDrag) return;
-  overlayDrag.el.style.cursor = '';
+  overlayDrag.el.classList.remove('dragging');
   overlayDrag = null;
 });
 
