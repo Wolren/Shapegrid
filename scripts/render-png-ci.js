@@ -87,14 +87,16 @@ async function main() {
       '--disable-setuid-sandbox',
       '--use-gl=angle',
       '--use-angle=swiftshader',
-      '--disable-gpu-sandbox',
+      '--ignore-gpu-blocklist',
+      '--enable-webgl',
       '--deterministic-fetch',
     ],
   };
 
-  // Try known Chrome paths if using puppeteer-core
-  for (const p of chromePaths) {
-    if (p) {
+  // For puppeteer-core (no bundled browser), try to find system Chrome
+  if (!puppeteer.executablePath) {
+    for (const p of chromePaths) {
+      if (!p) continue;
       try {
         readFileSync(p);
         launchOpts.executablePath = p;
