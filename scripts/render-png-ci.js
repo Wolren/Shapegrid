@@ -21,8 +21,6 @@ async function main() {
 
   const W = parseInt(width);
   const H = parseInt(height);
-  const canvasW = W;
-  const canvasH = Math.round(H * 0.78); // canvas gets ~78% of height, ~624px at 800
 
   // 1. Start static HTTP server
   const server = createServer((req, res) => {
@@ -116,104 +114,12 @@ async function main() {
     // Extra settle time for Three.js
     await new Promise(r => setTimeout(r, 3000));
 
-    // Inject card layout CSS
+    // Inject card layout CSS — just hide chrome, let viewer layout handle the rest
     await page.addStyleTag({
       content: `
-        /* Hide sidebar, header, footer */
         #panel, #header, #footer { display: none !important; }
-
-        /* Body — flex column, centered */
-        body, #app {
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          justify-content: center !important;
-          background: #0d1117 !important;
-          width: ${W}px !important;
-          height: ${H}px !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          overflow: hidden !important;
-        }
-
-        /* Stats row — above canvas */
-        #stats-bar {
-          position: static !important;
-          display: flex !important;
-          justify-content: center !important;
-          align-items: center !important;
-          gap: 40px !important;
-          padding: 14px 0 8px 0 !important;
-          height: auto !important;
-          background: transparent !important;
-          border: none !important;
-          font-family: 'IBM Plex Sans', system-ui, sans-serif !important;
-          flex-shrink: 0 !important;
-        }
-        .stat-item {
-          display: flex !important;
-          align-items: baseline !important;
-          gap: 8px !important;
-        }
-        .stat-value {
-          font-size: 22px !important;
-          font-weight: 600 !important;
-          color: #e6edf3 !important;
-        }
-        .stat-item span:last-child {
-          font-size: 12px !important;
-          color: #8b949e !important;
-          text-transform: none !important;
-          letter-spacing: 0 !important;
-        }
-
-        /* Canvas — flex to fill remaining vertical space */
-        #canvas-wrap {
-          position: relative !important;
-          flex: 1 !important;
-          width: 100% !important;
-          min-height: 0 !important;
-          background: transparent !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-        }
-        #canvas-main {
-          width: 100% !important;
-          height: 100% !important;
-          display: block !important;
-        }
-
-        /* Overlay — hidden */
         #overlay { display: none !important; }
-
-        /* Legend — below canvas */
-        #legend {
-          position: static !important;
-          display: flex !important;
-          justify-content: center !important;
-          align-items: center !important;
-          gap: 12px !important;
-          padding: 10px 0 14px 0 !important;
-          height: auto !important;
-          background: transparent !important;
-          backdrop-filter: none !important;
-          flex-shrink: 0 !important;
-        }
-        .legend-label {
-          font-size: 11px !important;
-          color: #8b949e !important;
-          font-family: 'IBM Plex Mono', monospace !important;
-        }
-        #legend-bar {
-          width: 180px !important;
-          height: 14px !important;
-          border-radius: 4px !important;
-        }
-
-        /* Utility */
-        #drag-hint { display: none !important; }
-        #tooltip { display: none !important; }
+        body { overflow: hidden !important; margin: 0 !important; }
       `
     });
 
