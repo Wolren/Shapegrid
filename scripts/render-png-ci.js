@@ -128,17 +128,37 @@ async function main() {
     await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
 
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
-    await page.waitForSelector('#canvas-main', { timeout: 15000 });
+    console.log('Page loaded, title:', await page.title());
 
-    // Wait for data to load (stats bar populated)
-    await page.waitForFunction(
-      `const el = document.getElementById('stat-contrib');
-       return el && el.textContent && el.textContent !== '\u2014';`,
-      { timeout: 15000 }
-    );
+    await page.waitForSelector('#canvas-main', { timeout: 15000 });
+    console.log('Canvas found');
+
+    // Debug: check stats content
+    const statText = await page.evaluate(() => {
+      const el = document.getElementById('stat-contrib');
+      return el ? JSON.stringify(el.textContent) : 'null';
+    });
+    console.log('stat-contrib text:', statText);
+
+    const dataCheck = await page.evaluate(() => {
+      return typeof window.__shapegridLoaded !== 'undefined' ? 'loaded' : 'not set';
+    });
+    console.log('Data flag:', dataCheck);
+
+    // Wait for data to load (stats bar populated - not the default em dash)
+    try {
+      await page.waitForFunction(
+        `document.getElementById('stat-contrib') &&
+         document.getElementById('stat-contrib').textContent !== '\u2014'`,
+        { timeout: 20000 }
+      );
+      console.log('Data loaded');
+    } catch {
+      console.log('Timed out waiting for data, proceeding with current state');
+    }
 
     // Settle time for Three.js
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 3000));
 
     // Capture the canvas element
     const canvas = await page.$('#canvas-main');
