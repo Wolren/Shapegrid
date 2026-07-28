@@ -5,7 +5,6 @@
 import {
   PALETTES,
   activePaletteId,
-  intensityToColor,
   setActivePalette,
   updatePaletteColors,
   addPalette,
@@ -153,15 +152,11 @@ export function applyPaletteEdit() {
 }
 
 export function buildLegend() {
-  const cont = document.getElementById('legend-swatches');
+  const cont = document.getElementById('legend-bar');
   if (!cont) return;
-  cont.innerHTML = '';
-  [0, .25, .5, .75, 1].forEach(t => {
-    const d = document.createElement('div');
-    d.className = 'legend-cell';
-    d.style.background = intensityToColor(t, activePaletteId);
-    cont.appendChild(d);
-  });
+  const p = PALETTES[activePaletteId] || PALETTES.github;
+  const gradient = p.colors.join(', ');
+  cont.style.background = `linear-gradient(to right, ${gradient})`;
 }
 
 // Wire up palette event handlers (call once on init)

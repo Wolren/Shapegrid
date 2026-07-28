@@ -60,7 +60,7 @@ grid:
 
   # Exact number of cells to place. Must equal your date range in days
   # if you want one cell per day (e.g. 365 for one year).
-  count: 730
+  count: 1095
 
   # How much of a cell must be inside the boundary to be included (0–1).
   # Lower values allow more border cells; higher values are stricter.
@@ -74,15 +74,15 @@ camera:
   # Vertical tilt in degrees (5 to 89, 0 = top-down flat, 60 = steep isometric, 90 = side)
   pitch: 50
 
-  # Zoom level for SVG export (0.5 to 3.0, lower = more zoomed in)
-  # This controls how tightly the grid is framed in the output
-  zoom: 0.5
+  # Zoom level for SVG/PNG export (lower = more zoomed in)
+  # 0.3 = tight crop, 0.5 = moderate, 1.0 = full view
+  zoom: 0.3
 
 # ─── Visual style / Theme ─────────────────────────────────────────────────────
 theme:
   # Colour palette: github | warm | cool | mono | neon | forest | sunset | ocean | fire | pastel | arctic | gold
   # Or define custom palette with colors array (minimum 2 colors, will be interpolated)
-  palette: ocean
+  palette: pastel
   
   # Border color for empty days (no contributions). When set, empty days render
   # as border-only instead of filled. Useful on light backgrounds.
@@ -143,7 +143,7 @@ render:
 # ─── Date range ───────────────────────────────────────────────────────────────
 dateRange:
   # Last N days ending today (most common)
-  last: 730
+  last: 1095
 
   # Or specify explicit dates:
   # start: "2024-01-01"

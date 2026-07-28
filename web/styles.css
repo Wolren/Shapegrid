@@ -719,16 +719,6 @@
     }
 
     /* Camera drag hint */
-    #drag-hint {
-      position: absolute;
-      bottom: 12px;
-      right: 12px;
-      font-size: 9px;
-      color: var(--muted);
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
     /* Tooltip */
     #tooltip {
       position: absolute;
@@ -754,18 +744,24 @@
       left: 16px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 9px;
+      gap: 8px;
+      font-size: 10px;
       color: var(--muted);
+      background: rgba(13, 17, 23, 0.7);
+      padding: 6px 10px;
+      border-radius: 6px;
+      backdrop-filter: blur(4px);
     }
-    #legend-swatches {
-      display: flex;
-      gap: 2px;
+    .legend-label {
+      font-size: 9px;
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--text-secondary);
+      min-width: 20px;
     }
-    .legend-cell {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
+    #legend-bar {
+      width: 80px;
+      height: 10px;
+      border-radius: 3px;
     }
 
     /* ── Stats bar ───────────────────────────────────────────────────────────────── */
