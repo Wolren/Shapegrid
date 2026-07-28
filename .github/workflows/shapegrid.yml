@@ -67,9 +67,9 @@ jobs:
       - name: Stage for GitHub Pages
         run: |
           mkdir -p docs/assets
-          cp web/index.html docs/index.html
+          cp web/dist/index.html docs/index.html
+          cp -r web/dist/assets/* docs/assets/ 2>/dev/null || true
           cp dist/*.svg dist/*.json docs/assets/ 2>/dev/null || true
-          cp web/dist/assets/* docs/assets/ 2>/dev/null || true
 
       - name: Commit and push generated assets
         run: |

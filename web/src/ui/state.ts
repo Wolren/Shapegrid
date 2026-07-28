@@ -38,6 +38,7 @@ export const state: AppState = {
   pitch: 45,
   heightScale: 1.0,
   background: '#0d1117',
+  palette: 'ocean',
   daysMode: 'last',
   selectedYears: new Set([new Date().getFullYear()]),
   contributions: null,

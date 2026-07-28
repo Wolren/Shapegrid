@@ -1,11 +1,12 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Data loading and demo data generation
+// Data loading, demo data, and CI-generated JSON ingestion
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state, updateState } from './state';
 import { fetchContributions } from './github';
 import { generateGrid } from '../geometry/engine';
 import { scheduleRebuild } from './rebuild';
+import type { DataExport, GridResult, Cell, CellData } from '../types';
 
 export async function loadData(): Promise<void> {
   const user = (document.getElementById('inp-user') as HTMLInputElement).value.trim();
@@ -20,7 +21,7 @@ export async function loadData(): Promise<void> {
   const start = new Date();
   start.setDate(start.getDate() - days + 1);
 
-  setStatus('Fetching contributions…', '');
+  setStatus('Fetching contributions\u2026', '');
   (document.getElementById('btn-fetch') as HTMLButtonElement).disabled = true;
 
   try {
@@ -43,7 +44,7 @@ export async function loadData(): Promise<void> {
         : { date: '', count: 0, intensity: 0 };
     }));
 
-    setStatus(`✓ ${contrib.total} contributions · @${user}`, 'ok');
+    setStatus(`\u2713 ${contrib.total} contributions \u00b7 @${user}`, 'ok');
     scheduleRebuild();
     (document.getElementById('footer-gen') as HTMLElement).textContent = `generated ${new Date().toLocaleDateString()}`;
   } catch (e: any) {
@@ -74,6 +75,91 @@ export function loadDemo(): void {
   }));
   updateState('contributions', { username: 'demo', total: state.cellData.reduce((s, d) => s + d.count, 0), days: [] });
   (document.getElementById('stat-contrib') as HTMLElement).textContent = state.contributions!.total.toLocaleString();
+}
+
+/**
+ * Load grid data from a CI-generated DataExport JSON object.
+ * Sets boundary, grid, cell data, camera, and render settings.
+ */
+export function loadFromJson(data: DataExport): void {
+  // Boundary
+  updateState('poly', data.boundary);
+  updateState('boundaryType', 'file');
+  updateState('coordSystem', data.coordSystem ?? 'planar');
+  if (data.geoBounds) {
+    updateState('geoBounds', data.geoBounds);
+  }
+
+  // Grid
+  const cells: Cell[] = data.grid.cells.map(c => ({
+    cx: c.cx,
+    cy: c.cy,
+    col: 0,
+    row: 0,
+    coverage: 1,
+  }));
+  const gridResult: GridResult = {
+    cells,
+    cellSize: data.grid.cellSize,
+    gridType: data.grid.type,
+  };
+  updateState('grid', gridResult);
+
+  // Cell data (intensity colours)
+  const cellData: CellData[] = data.grid.cells.map(c => ({
+    date: c.date,
+    count: c.count,
+    intensity: c.intensity,
+  }));
+  updateState('cellData', cellData);
+
+  // Count
+  updateState('count', data.grid.count);
+
+  // Camera
+  if (data.config.camera) {
+    updateState('yaw', data.config.camera.yaw ?? 30);
+    updateState('pitch', data.config.camera.pitch ?? 45);
+  }
+
+  // Render settings
+  if (data.config.render) {
+    updateState('heightScale', data.config.render.heightScale ?? 1);
+    updateState('showBoundary', data.config.render.showBoundary ?? false);
+    updateState('background', data.config.render.background ?? '#0d1117');
+    updateState('gap', data.config.render.gap ?? 0.08);
+  }
+
+  // Theme
+  if (data.config.theme?.palette) {
+    updateState('palette', data.config.theme.palette);
+  }
+
+  // Stats
+  updateState('contributions', {
+    username: data.username,
+    total: data.totalContributions,
+    days: [],
+  });
+  (document.getElementById('stat-contrib') as HTMLElement).textContent = data.totalContributions.toLocaleString();
+  (document.getElementById('stat-cells') as HTMLElement).textContent = String(data.grid.cells.length);
+  (document.getElementById('footer-gen') as HTMLElement).textContent = `generated ${new Date(data.generated).toLocaleDateString()}`;
+}
+
+/**
+ * Try to load CI-generated data from a URL (e.g. assets/shapegrid-data.json).
+ * Returns true if loaded successfully, false if the file was not found.
+ */
+export async function loadFromUrl(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return false;
+    const data: DataExport = await res.json();
+    loadFromJson(data);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export { scheduleRebuild };

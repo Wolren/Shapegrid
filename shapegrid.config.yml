@@ -8,10 +8,8 @@ github:
   username: Wolren
 
   # Personal Access Token with `read:user` scope.
-  # Value can be:
-  #   - The name of an environment variable (e.g. "SHAPEGRID_TOKEN")  ← recommended
-  #   - A literal token string (not recommended — use secrets instead)
-  token: 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
+  # The value is the name of an environment variable (recommended) or a literal token.
+  token: SHAPEGRID_TOKEN
 
 # ─── Boundary shape ───────────────────────────────────────────────────────────
 boundary:

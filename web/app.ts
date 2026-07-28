@@ -8,12 +8,12 @@ import type { Point2D } from './src/types';
 import { state, updateState, setPreset } from './src/ui/state';
 import { norm, normWithCoordSystem, isLikelyLonLat } from './src/geometry/projection';
 import { parseGeoJsonFile, parseSvgFile } from './src/geometry/parsers';
-import { intensityToColor, colToHex, activePaletteId } from './src/rendering/colors';
-import { loadDemo, computeGrid, loadData, setStatus } from './src/ui/data';
-import { COUNTRIES, FEATURED_COUNTRIES, searchCountries } from './src/data/countries';
+import { intensityToColor, colToHex, activePaletteId, setActivePalette, buildLegend } from './src/rendering/colors';
+import { loadDemo, computeGrid, loadData, setStatus, loadFromUrl } from './src/ui/data';
 import { createPresets } from './src/data/presets';
 import { initPaletteUI } from './src/ui/palette-ui';
 import { scheduleRebuild, needsRebuild } from './src/ui/rebuild';
+import { COUNTRIES, FEATURED_COUNTRIES, searchCountries } from './src/data/countries';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Three.js Scene
@@ -851,9 +851,19 @@ async function bootstrap() {
     if (bgHex) bgHex.value = state.background;
     if (bgColor) bgColor.value = state.background;
 
-    // Initialize with default grid
-    computeGrid();
-    loadDemo();
+    // Initialize with CI-generated data or fall back to demo
+    const loaded = await loadFromUrl('./assets/shapegrid-data.json');
+    if (loaded) {
+      // Loaded from CI-generated data — update palette
+      if (state.palette) {
+        setActivePalette(state.palette);
+        buildLegend();
+      }
+    } else {
+      // Fall back to demo grid
+      computeGrid();
+      loadDemo();
+    }
     scheduleRebuild();
 
     posCamera();

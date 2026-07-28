@@ -1,0 +1,141 @@
+/**
+ * grid.ts
+ * Generates square or hexagonal grids inside a polygon boundary,
+ * fitting EXACTLY the requested number of cells via binary search.
+ */
+import { boundingBox, polygonArea, cellCoverage, } from './boundary.js';
+// ─── Candidate generation ────────────────────────────────────────────────────
+function generateSquareCandidates(poly, cellSize, coverageThreshold = 0.4) {
+    const { minX, minY, maxX, maxY } = boundingBox(poly);
+    const half = cellSize / 2;
+    const cells = [];
+    const cols = Math.ceil((maxX - minX) / cellSize) + 2;
+    const rows = Math.ceil((maxY - minY) / cellSize) + 2;
+    for (let col = -1; col < cols; col++) {
+        for (let row = -1; row < rows; row++) {
+            const cx = minX + (col + 0.5) * cellSize;
+            const cy = minY + (row + 0.5) * cellSize;
+            const cov = cellCoverage(cx, cy, half, half, poly);
+            if (cov >= coverageThreshold) {
+                cells.push({ cx, cy, col, row, coverage: cov });
+            }
+        }
+    }
+    return cells;
+}
+function generateHexCandidates(poly, cellSize, coverageThreshold = 0.4) {
+    const { minX, minY, maxX, maxY } = boundingBox(poly);
+    // Flat-top hex: width = cellSize, height = cellSize * sqrt(3)/2 * 2
+    const hexW = cellSize;
+    const hexH = cellSize * Math.sqrt(3);
+    const halfW = hexW / 2;
+    const halfH = hexH / 2;
+    const cells = [];
+    const cols = Math.ceil((maxX - minX) / (hexW * 0.75)) + 3;
+    const rows = Math.ceil((maxY - minY) / hexH) + 3;
+    for (let col = -1; col < cols; col++) {
+        for (let row = -1; row < rows; row++) {
+            const cx = minX + col * hexW * 0.75;
+            const cy = minY + (col % 2 === 0 ? row : row + 0.5) * hexH;
+            const cov = cellCoverage(cx, cy, halfW, halfH, poly);
+            if (cov >= coverageThreshold) {
+                cells.push({ cx, cy, col, row, coverage: cov });
+            }
+        }
+    }
+    return cells;
+}
+// ─── Count cells at a given size ─────────────────────────────────────────────
+function countCells(poly, cellSize, type) {
+    if (type === 'square')
+        return generateSquareCandidates(poly, cellSize).length;
+    return generateHexCandidates(poly, cellSize).length;
+}
+// ─── Binary search for cell size that yields >= N cells ──────────────────────
+function findCellSize(poly, targetN, type) {
+    const area = polygonArea(poly);
+    // Initial guess from area
+    const areaPerCell = area / targetN;
+    let lo = Math.sqrt(areaPerCell) * 0.1;
+    let hi = Math.sqrt(area) * 2;
+    // Ensure hi gives fewer than N cells
+    for (let i = 0; i < 20; i++) {
+        if (countCells(poly, hi, type) < targetN)
+            break;
+        hi *= 2;
+    }
+    // Binary search: find smallest cellSize where count < targetN
+    for (let i = 0; i < 50; i++) {
+        const mid = (lo + hi) / 2;
+        if (hi - lo < 1e-8)
+            break;
+        const n = countCells(poly, mid, type);
+        if (n >= targetN) {
+            lo = mid; // can still fit N, try larger cells
+        }
+        else {
+            hi = mid; // too few cells, shrink
+        }
+    }
+    // lo is the largest size where we get >= N cells
+    return lo;
+}
+// ─── Cell ranking & selection ─────────────────────────────────────────────────
+/**
+ * Pick exactly N cells from candidates.
+ * Priority: coverage desc, then distance from centroid asc.
+ */
+function selectN(cells, n, poly) {
+    if (cells.length <= n)
+        return cells;
+    // Compute centroid
+    const cx = cells.reduce((s, c) => s + c.cx, 0) / cells.length;
+    const cy = cells.reduce((s, c) => s + c.cy, 0) / cells.length;
+    // Sort: full coverage first, then closest to centroid
+    const ranked = cells.slice().sort((a, b) => {
+        if (b.coverage !== a.coverage)
+            return b.coverage - a.coverage;
+        const da = (a.cx - cx) ** 2 + (a.cy - cy) ** 2;
+        const db = (b.cx - cx) ** 2 + (b.cy - cy) ** 2;
+        return da - db;
+    });
+    return ranked.slice(0, n);
+}
+/**
+ * Generate a grid of exactly `count` cells inside `poly`.
+ */
+export function generateGrid(poly, opts) {
+    const { count, type, coverageThreshold = 0.4 } = opts;
+    const cellSize = findCellSize(poly, count, type);
+    const candidates = type === 'square'
+        ? generateSquareCandidates(poly, cellSize, coverageThreshold)
+        : generateHexCandidates(poly, cellSize, coverageThreshold);
+    const cells = selectN(candidates, count, poly);
+    // Sort cells in reading order (top-to-bottom, left-to-right) for
+    // deterministic day assignment
+    cells.sort((a, b) => {
+        const rowDiff = Math.round((a.cy - b.cy) / (cellSize * 0.5));
+        return rowDiff !== 0 ? rowDiff : a.cx - b.cx;
+    });
+    return { cells, cellSize, gridType: type };
+}
+/** Return an array of Date objects for each day in the range */
+export function daysInRange({ start, end }) {
+    const days = [];
+    const cur = new Date(start);
+    cur.setHours(0, 0, 0, 0);
+    const endMs = new Date(end).setHours(0, 0, 0, 0);
+    while (cur.getTime() <= endMs) {
+        days.push(new Date(cur));
+        cur.setDate(cur.getDate() + 1);
+    }
+    return days;
+}
+/** Last N days ending today */
+export function lastNDays(n) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - n + 1);
+    return { start, end };
+}
+//# sourceMappingURL=grid.js.map
