@@ -132,6 +132,7 @@ export interface AppState {
   coordAxesLabelColor: string;
   yaw: number;
   pitch: number;
+  zoom: number;
   heightScale: number;
   background: string;
   palette: string;

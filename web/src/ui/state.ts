@@ -36,6 +36,7 @@ export const state: AppState = {
   coordAxesLabelColor: '#888888',
   yaw: 30,
   pitch: 45,
+  zoom: 1.3,
   heightScale: 1.0,
   background: '#0d1117',
   palette: 'ocean',

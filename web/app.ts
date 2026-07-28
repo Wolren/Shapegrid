@@ -74,7 +74,7 @@ function posCamera() {
   camera.up.set(0, 1, 0);
 
   // Resize ortho cam to match canvas
-  const W = canvas.clientWidth, H = canvas.clientHeight, asp = W / H, fs = 1.3;
+  const W = canvas.clientWidth, H = canvas.clientHeight, asp = W / H, fs = state.zoom;
   camera.left = -fs * asp / 2; camera.right = fs * asp / 2;
   camera.top = fs / 2; camera.bottom = -fs / 2;
   camera.updateProjectionMatrix();
@@ -322,6 +322,7 @@ canvas.addEventListener('wheel', e => {
   const scale = camera.right - camera.left;
   const delta = e.deltaY > 0 ? 1.08 : 0.93;
   const newScale = Math.max(0.5, Math.min(4, scale * delta));
+  state.zoom = parseFloat((newScale / (canvas.clientWidth / canvas.clientHeight)).toFixed(4));
   const asp = canvas.clientWidth / canvas.clientHeight;
   camera.left = -newScale * asp / 2; camera.right = newScale * asp / 2;
   camera.top = newScale / 2; camera.bottom = -newScale / 2;
