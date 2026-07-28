@@ -4,18 +4,6 @@
 
 shapegrid takes your GitHub contribution data and maps it onto a grid that conforms to any polygon boundary: country outlines, SVG shapes, preset icons, or your own GeoJSON. Each cell is a 3D isometric column whose height and color reflect contribution intensity.
 
-```
-┌─────────────────────────────────────────────────────┐
-│  ██████████████████████████████████████████████████  │
-│  ██  ○ ○ ○ ● ● ○  ┌──────────────────┐  ○ ● ●  ██ │
-│  ██  ● ● ○ ● ● ●  │  GitHub Activity  │  ○ ○ ●  ██ │
-│  ██  ○ ● ● ● ○ ○  │    3D Grid Map    │  ● ● ○  ██ │
-│  ██  └──────────────────┘              ○ ○ ●  ██ │
-│  ██        Poland boundary, 730 cells              ██ │
-│  ██████████████████████████████████████████████████  │
-└─────────────────────────────────────────────────────┘
-```
-
 ---
 
 ## Features
