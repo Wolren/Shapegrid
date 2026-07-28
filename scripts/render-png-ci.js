@@ -4,21 +4,18 @@
  *
  * Usage: node scripts/render-png-ci.js <viewerDir> <outputPath> [width] [height]
  *
- * Requires: puppeteer-core (with CHROME_PATH env var) or puppeteer (bundled)
+ * Requires: puppeteer (bundled Chromium) or puppeteer-core (with CHROME_PATH)
+ *            Set NODE_PATH or install in the workspace.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { createServer } from 'node:http';
-import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const { readFileSync, writeFileSync } = require('fs');
+const { join } = require('path');
+const { createServer } = require('http');
 
 async function main() {
   const [, , viewerDir, outputPath, width = '1200', height = '630'] = process.argv;
   if (!viewerDir || !outputPath) {
-    console.error('Usage: node render-png-ci.js <viewerDir> <outputPath> [width] [height]');
+    console.error('Usage: node scripts/render-png-ci.js <viewerDir> <outputPath> [width] [height]');
     process.exit(1);
   }
 
@@ -58,28 +55,27 @@ async function main() {
 
   console.log(`Serving viewer at ${url}`);
 
-  // 2. Find browser executable path
-  const chromePaths = [
-    process.env.CHROME_PATH,
-    process.env.CHROMIUM_PATH,
-    '/usr/bin/google-chrome',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-  ].filter(Boolean);
-
-  // 3. Dynamically import puppeteer
+  // 2. Try to load puppeteer (bundled Chromium) or puppeteer-core
   let puppeteer;
+  let puppeteerErr;
+
   try {
-    puppeteer = await import('puppeteer');
+    puppeteer = require('puppeteer');
     console.log('Using puppeteer (bundled Chromium)');
-  } catch {
-    puppeteer = await import('puppeteer-core');
-    console.log('Using puppeteer-core (system Chromium)');
+  } catch (e) {
+    puppeteerErr = e;
+    try {
+      puppeteer = require('puppeteer-core');
+      console.log('Using puppeteer-core (system Chromium)');
+    } catch (e2) {
+      console.error('Could not load puppeteer or puppeteer-core');
+      console.error('puppeteer error:', puppeteerErr.message);
+      console.error('puppeteer-core error:', e2.message);
+      throw new Error('puppeteer not available - install it or set NODE_PATH');
+    }
   }
 
+  // 3. Find browser
   const launchOpts = {
     headless: true,
     args: [
@@ -95,6 +91,17 @@ async function main() {
 
   // For puppeteer-core (no bundled browser), try to find system Chrome
   if (!puppeteer.executablePath) {
+    const chromePaths = [
+      process.env.CHROME_PATH,
+      process.env.CHROMIUM_PATH,
+      '/usr/bin/google-chrome',
+      '/usr/bin/chromium',
+      '/usr/bin/chromium-browser',
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    ].filter(Boolean);
+
     for (const p of chromePaths) {
       if (!p) continue;
       try {
@@ -102,6 +109,13 @@ async function main() {
         launchOpts.executablePath = p;
         console.log(`Chrome found at: ${p}`);
         break;
+      } catch {}
+    }
+
+    if (!launchOpts.executablePath) {
+      // Try puppeteer's own discovery
+      try {
+        launchOpts.executablePath = puppeteer.executablePath();
       } catch {}
     }
   }
@@ -118,10 +132,8 @@ async function main() {
 
     // Wait for data to load (stats bar populated)
     await page.waitForFunction(
-      () => {
-        const el = document.getElementById('stat-contrib');
-        return el && el.textContent && el.textContent !== '\u2014';
-      },
+      `const el = document.getElementById('stat-contrib');
+       return el && el.textContent && el.textContent !== '\u2014';`,
       { timeout: 15000 }
     );
 
@@ -143,6 +155,5 @@ async function main() {
 
 main().catch(err => {
   console.error('PNG render failed:', err.message || err);
-  // Don't fail the CI build — the SVG fallback still works
   process.exit(1);
 });
