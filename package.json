@@ -25,5 +25,11 @@
     "js-yaml": "^4.1.1",
     "three": "^0.183.2",
     "yargs": "^18.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "gl"
+    ]
   }
 }

@@ -73,6 +73,13 @@ jobs:
           cp -r web/dist/assets/* docs/assets/ 2>/dev/null || true
           cp dist/*.svg dist/*.json docs/assets/ 2>/dev/null || true
 
+      - name: Render PNG (headless Three.js via Puppeteer)
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: |
+          pnpm add -g puppeteer --no-save 2>/dev/null || true
+          node scripts/render-png-ci.js docs docs/assets/shapegrid.png 1200 630
+
       - name: Commit and push generated assets
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
