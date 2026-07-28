@@ -788,7 +788,6 @@
       cursor: grab;
       user-select: none;
       z-index: 20;
-      touch-action: none;
     }
     .legend-label {
       font-size: 9px;
@@ -814,7 +813,6 @@
       cursor: grab;
       user-select: none;
       z-index: 20;
-      touch-action: none;
     }
     .stat-item { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
     .stat-value { font-size: 15px; color: var(--text); font-weight: 500; }

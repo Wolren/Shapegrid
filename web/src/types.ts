@@ -99,6 +99,9 @@ export interface OverlayState {
   statsPos: OverlayPos;
   showLegend: boolean;
   showStats: boolean;
+  legendFontSize: number;
+  legendBarWidth: number;
+  statsFontSize: number;
 }
 
 export interface AppState {

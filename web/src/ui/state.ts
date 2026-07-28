@@ -49,6 +49,9 @@ export const state: AppState = {
     statsPos: { x: 82, y: 1 },
     showLegend: true,
     showStats: true,
+    legendFontSize: 10,
+    legendBarWidth: 80,
+    statsFontSize: 10,
   },
 };
 

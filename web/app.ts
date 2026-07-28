@@ -442,6 +442,18 @@ function applyOverlayPositions() {
   }
 }
 
+function applyOverlayStyles() {
+  const legend = document.getElementById('legend');
+  const statsBar = document.getElementById('stats-bar');
+  const legendBar = document.getElementById('legend-bar');
+  const legendLabels = legend?.querySelectorAll('.legend-label');
+
+  if (legend) legend.style.fontSize = state.overlay.legendFontSize + 'px';
+  if (legendLabels) legendLabels.forEach(l => (l as HTMLElement).style.fontSize = state.overlay.legendFontSize + 'px');
+  if (legendBar) legendBar.style.width = state.overlay.legendBarWidth + 'px';
+  if (statsBar) statsBar.style.fontSize = state.overlay.statsFontSize + 'px';
+}
+
 function initOverlayVisibility() {
   const showLegend = document.getElementById('inp-show-legend') as HTMLInputElement;
   const showStats = document.getElementById('inp-show-stats') as HTMLInputElement;
@@ -466,9 +478,13 @@ function initOverlayVisibility() {
 function resetLayout() {
   state.overlay.legendPos = { x: 2, y: 86 };
   state.overlay.statsPos = { x: 82, y: 1 };
+  state.overlay.legendFontSize = 10;
+  state.overlay.legendBarWidth = 80;
+  state.overlay.statsFontSize = 10;
   state.overlay.showLegend = true;
   state.overlay.showStats = true;
   applyOverlayPositions();
+  applyOverlayStyles();
   const legend = document.getElementById('legend');
   const stats = document.getElementById('stats-bar');
   if (legend) legend.style.display = '';
@@ -477,6 +493,15 @@ function resetLayout() {
   const cbStats = document.getElementById('inp-show-stats') as HTMLInputElement;
   if (cbLegend) cbLegend.checked = true;
   if (cbStats) cbStats.checked = true;
+  // Reset slider values too
+  const setVal = (id: string, val: number) => {
+    const el = document.getElementById(id) as HTMLInputElement;
+    if (el) el.value = String(val);
+  };
+  setVal('inp-legend-font-size', 10);
+  setVal('inp-legend-bar-width', 80);
+  setVal('inp-stats-font-size', 10);
+  updateLabels();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -517,6 +542,9 @@ function exportConfig() {
         statsPos: state.overlay.statsPos,
         showLegend: state.overlay.showLegend,
         showStats: state.overlay.showStats,
+        legendFontSize: state.overlay.legendFontSize,
+        legendBarWidth: state.overlay.legendBarWidth,
+        statsFontSize: state.overlay.statsFontSize,
       },
     },
   };
@@ -605,6 +633,9 @@ function updateLabels() {
   el('val-coord-axes-y-offset')!.textContent = state.coordAxesYOffset.toFixed(2);
   el('val-coord-axes-tick')!.textContent = state.coordAxesTickLength.toFixed(3);
   el('val-coord-axes-label-off')!.textContent = state.coordAxesLabelOffset.toFixed(2);
+  el('val-legend-font')!.textContent = String(state.overlay.legendFontSize);
+  el('val-legend-bar-w')!.textContent = state.overlay.legendBarWidth + 'px';
+  el('val-stats-font')!.textContent = String(state.overlay.statsFontSize);
 }
 
 // Sliders
@@ -1063,7 +1094,25 @@ async function bootstrap() {
     // Init overlay drag and visibility
     initOverlayDrag();
     initOverlayVisibility();
+
+    // Legend size sliders
+    ['legend-font-size', 'legend-bar-width', 'stats-font-size'].forEach(key => {
+      const el = document.getElementById(`inp-${key}`) as HTMLInputElement;
+      if (el) {
+        el.addEventListener('input', () => {
+          const stateKey = key.replace(/-([a-z])/g, (_, c) => c.toUpperCase()) as 'legendFontSize' | 'legendBarWidth' | 'statsFontSize';
+          state.overlay[stateKey] = parseFloat(el.value) as any;
+          applyOverlayStyles();
+          updateLabels();
+        });
+      }
+    });
     applyOverlayPositions();
+    applyOverlayStyles();
+    // Set overlay slider values
+    setSliderValue('inp-legend-font-size', state.overlay.legendFontSize);
+    setSliderValue('inp-legend-bar-width', state.overlay.legendBarWidth);
+    setSliderValue('inp-stats-font-size', state.overlay.statsFontSize);
 
     // Hide overlay
     setTimeout(() => { overlay.classList.add('hidden'); }, 400);
