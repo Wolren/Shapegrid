@@ -66,6 +66,14 @@ export function setStatus(msg: string, cls: string): void {
 }
 
 export function loadDemo(): void {
+  // Preserve real contributions when they exist — don't overwrite with noise
+  if (state.contributions && state.contributions.username !== 'demo' && state.contributions.days.length > 0) {
+    return;
+  }
+  // If data was loaded from CI JSON (no per-day data), preserve cell data
+  if (state.contributions && state.contributions.username !== 'demo' && state.cellData.length > 0) {
+    return;
+  }
   const N = state.count;
   const max = 15;
   updateState('cellData', Array.from({ length: N }, (_, i) => {
