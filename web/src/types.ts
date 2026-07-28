@@ -89,6 +89,18 @@ export interface BoundingBox {
   maxY: number;
 }
 
+export interface OverlayPos {
+  x: number;  // % from left
+  y: number;  // % from top
+}
+
+export interface OverlayState {
+  legendPos: OverlayPos;
+  statsPos: OverlayPos;
+  showLegend: boolean;
+  showStats: boolean;
+}
+
 export interface AppState {
   poly: Point2D[];
   preset: string;
@@ -124,6 +136,7 @@ export interface AppState {
   contributions: GitHubContributions | null;
   grid: GridResult | null;
   cellData: CellData[];
+  overlay: OverlayState;
 }
 
 /**

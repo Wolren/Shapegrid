@@ -44,6 +44,12 @@ export const state: AppState = {
   contributions: null,
   grid: null,
   cellData: [],
+  overlay: {
+    legendPos: { x: 2, y: 86 },
+    statsPos: { x: 82, y: 1 },
+    showLegend: true,
+    showStats: true,
+  },
 };
 
 export function updateState<K extends keyof AppState>(key: K, value: AppState[K]) {

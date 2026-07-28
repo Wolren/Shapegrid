@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import * as THREE from 'three';
-import type { Point2D } from './src/types';
+import type { Point2D, OverlayPos } from './src/types';
 import { state, updateState, setPreset } from './src/ui/state';
 import { norm, normWithCoordSystem, isLikelyLonLat } from './src/geometry/projection';
 import { parseGeoJsonFile, parseSvgFile } from './src/geometry/parsers';
@@ -363,6 +363,160 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Draggable overlays (legend, stats bar)
+// ══════════════════════════════════════════════════════════════════════════════
+
+let overlayDrag: { el: HTMLElement; key: string; lx: number; ly: number; startX: number; startY: number } | null = null;
+
+function initOverlayDrag() {
+  document.querySelectorAll('[data-draggable]').forEach(el => {
+    const handle = el as HTMLElement;
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = handle.dataset.draggable!; // 'legend' or 'stats'
+      const parent = handle.closest('[data-draggable-parent]') as HTMLElement || handle.parentElement!;
+      overlayDrag = {
+        el: parent,
+        key,
+        lx: e.clientX,
+        ly: e.clientY,
+        startX: (state.overlay[`${key}Pos` as 'legendPos' | 'statsPos'] as OverlayPos).x,
+        startY: (state.overlay[`${key}Pos` as 'legendPos' | 'statsPos'] as OverlayPos).y,
+      };
+      parent.style.cursor = 'grabbing';
+    });
+  });
+}
+
+window.addEventListener('mousemove', e => {
+  if (!overlayDrag) return;
+  const wrap = document.getElementById('canvas-wrap')!;
+  const rect = wrap.getBoundingClientRect();
+  const dx = e.clientX - overlayDrag.lx;
+  const dy = e.clientY - overlayDrag.ly;
+  const pctX = (dx / rect.width) * 100;
+  const pctY = (dy / rect.height) * 100;
+  const key = overlayDrag.key;
+  const posKey = `${key}Pos` as 'legendPos' | 'statsPos';
+  const newX = Math.max(0, Math.min(95, overlayDrag.startX + pctX));
+  const newY = Math.max(0, Math.min(90, overlayDrag.startY + pctY));
+  state.overlay[posKey] = { x: newX, y: newY };
+  applyOverlayPositions();
+});
+
+window.addEventListener('mouseup', () => {
+  if (!overlayDrag) return;
+  overlayDrag.el.style.cursor = '';
+  overlayDrag = null;
+});
+
+function applyOverlayPositions() {
+  const legend = document.getElementById('legend');
+  const stats = document.getElementById('stats-bar');
+  if (legend) {
+    legend.style.left = state.overlay.legendPos.x + '%';
+    legend.style.top = state.overlay.legendPos.y + '%';
+    legend.style.bottom = 'auto';
+    legend.style.right = 'auto';
+  }
+  if (stats) {
+    stats.style.left = state.overlay.statsPos.x + '%';
+    stats.style.top = state.overlay.statsPos.y + '%';
+    stats.style.right = 'auto';
+    stats.style.bottom = 'auto';
+  }
+}
+
+function initOverlayVisibility() {
+  const showLegend = document.getElementById('inp-show-legend') as HTMLInputElement;
+  const showStats = document.getElementById('inp-show-stats') as HTMLInputElement;
+  if (showLegend) {
+    showLegend.checked = state.overlay.showLegend;
+    showLegend.addEventListener('change', () => {
+      state.overlay.showLegend = showLegend.checked;
+      const legend = document.getElementById('legend');
+      if (legend) legend.style.display = state.overlay.showLegend ? '' : 'none';
+    });
+  }
+  if (showStats) {
+    showStats.checked = state.overlay.showStats;
+    showStats.addEventListener('change', () => {
+      state.overlay.showStats = showStats.checked;
+      const stats = document.getElementById('stats-bar');
+      if (stats) stats.style.display = state.overlay.showStats ? '' : 'none';
+    });
+  }
+}
+
+function resetLayout() {
+  state.overlay.legendPos = { x: 2, y: 86 };
+  state.overlay.statsPos = { x: 82, y: 1 };
+  state.overlay.showLegend = true;
+  state.overlay.showStats = true;
+  applyOverlayPositions();
+  const legend = document.getElementById('legend');
+  const stats = document.getElementById('stats-bar');
+  if (legend) legend.style.display = '';
+  if (stats) stats.style.display = '';
+  const cbLegend = document.getElementById('inp-show-legend') as HTMLInputElement;
+  const cbStats = document.getElementById('inp-show-stats') as HTMLInputElement;
+  if (cbLegend) cbLegend.checked = true;
+  if (cbStats) cbStats.checked = true;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Export Config JSON
+// ══════════════════════════════════════════════════════════════════════════════
+
+function exportConfig() {
+  const config = {
+    version: 2,
+    generated: new Date().toISOString(),
+    username: state.contributions?.username || '',
+    totalContributions: state.contributions?.total || 0,
+    boundary: state.poly,
+    geoBounds: state.geoBounds || undefined,
+    coordSystem: state.coordSystem || undefined,
+    grid: state.grid ? {
+      type: state.grid.gridType,
+      count: state.count,
+      cellSize: state.grid.cellSize,
+      cells: state.grid.cells.map((c, i) => ({
+        cx: c.cx, cy: c.cy,
+        date: state.cellData[i]?.date || '',
+        count: state.cellData[i]?.count || 0,
+        intensity: state.cellData[i]?.intensity || 0,
+      })),
+    } : null,
+    config: {
+      camera: { yaw: state.yaw, pitch: state.pitch },
+      render: {
+        heightScale: state.heightScale,
+        showBoundary: state.showBoundary,
+        background: state.background,
+        gap: state.gap,
+      },
+      theme: { palette: state.palette },
+      overlay: {
+        legendPos: state.overlay.legendPos,
+        statsPos: state.overlay.statsPos,
+        showLegend: state.overlay.showLegend,
+        showStats: state.overlay.showStats,
+      },
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = `shapegrid-config-${Date.now()}.json`;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // UI Wiring
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -627,7 +781,13 @@ if (daysNumInput) {
   posCamera();
 });
 
-// Preset buttons
+// Export Config button
+(document.getElementById('btn-export-config') as HTMLButtonElement).addEventListener('click', exportConfig);
+
+// Reset layout button
+(document.getElementById('btn-reset-layout') as HTMLButtonElement).addEventListener('click', resetLayout);
+
+// Overlay drag init
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -885,6 +1045,11 @@ async function bootstrap() {
 
     // Set initial axes options visibility (hidden by default for presets/countries)
     updateAxesOptionsVisibility();
+
+    // Init overlay drag and visibility
+    initOverlayDrag();
+    initOverlayVisibility();
+    applyOverlayPositions();
 
     // Hide overlay
     setTimeout(() => { overlay.classList.add('hidden'); }, 400);

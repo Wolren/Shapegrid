@@ -36,6 +36,13 @@
       </svg>
       Export PNG
     </button>
+    <button id="btn-export-config">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 1.5a.75.75 0 0 1 .75.75V4.5h2.25a.75.75 0 0 1 0 1.5h-2.25v2.25a.75.75 0 0 1-1.5 0V6H4.75a.75.75 0 0 1 0-1.5H7V2.25A.75.75 0 0 1 7.75 1.5z"/>
+        <path d="M2.75 10a.75.75 0 0 1 .75.75v2.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-2.5a.75.75 0 0 1 .75-.75z"/>
+      </svg>
+      Export Config
+    </button>
   </header>
 
   <!-- ── Left panel ─────────────────────────────────────────────────────── -->
@@ -360,6 +367,27 @@
         </div>
 
         <div class="section">
+          <div class="section-title">Layout</div>
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Show color legend</label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-show-legend" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Show stats bar</label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-show-stats" checked/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn-sm" id="btn-reset-layout" style="width:100%;margin-top:4px">Reset Layout</button>
+          </div>
+        </div>
+
+        <div class="section">
           <div class="section-title">Export Settings</div>
           <div class="row">
             <label>Width (px)</label>
@@ -385,12 +413,15 @@
     </div>
 
     <div id="legend">
+      <span class="drag-handle" data-draggable="legend" title="Drag to reposition">⠿</span>
       <span class="legend-label">0</span>
       <div id="legend-bar"></div>
       <span class="legend-label">Max</span>
     </div>
 
     <div id="stats-bar">
+      <span class="drag-handle" data-draggable="stats" title="Drag to reposition">⠿</span>
+      <div class="stat-item">
       <div class="stat-item">
         <span class="stat-value" id="stat-contrib">—</span>
         <span>contributions</span>
