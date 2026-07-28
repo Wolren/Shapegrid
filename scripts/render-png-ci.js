@@ -120,6 +120,8 @@ async function main() {
         #panel, #header, #footer { display: none !important; }
         #overlay { display: none !important; }
         body { overflow: hidden !important; margin: 0 !important; }
+        #app { display: flex !important; justify-content: center !important; }
+        #canvas-wrap { position: relative !important; margin: 0 auto !important; }
       `
     });
 
