@@ -82,7 +82,7 @@ jobs:
           npm init -y 2>&1 | tail -1
           npm install puppeteer 2>&1 | tail -5
           cd /home/runner/work/Shapegrid/Shapegrid
-          NODE_PATH=/tmp/puppeteer-install/node_modules node scripts/render-png-ci.js docs docs/assets/shapegrid.png 1200 630
+          NODE_PATH=/tmp/puppeteer-install/node_modules node scripts/render-png-ci.js docs docs/assets/shapegrid.png 1200 800
 
       - name: Commit and push generated assets
         run: |

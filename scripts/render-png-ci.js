@@ -1,11 +1,11 @@
 /**
  * render-png-ci.js
- * CI script: serves the built viewer and captures the Three.js canvas as PNG.
+ * CI script: serves the built viewer and captures a card-layout PNG.
  *
  * Usage: node scripts/render-png-ci.js <viewerDir> <outputPath> [width] [height]
  *
+ * Layout: centered grid canvas with title/stat above and legend bar below.
  * Requires: puppeteer (bundled Chromium) or puppeteer-core (with CHROME_PATH)
- *            Set NODE_PATH or install in the workspace.
  */
 
 const { readFileSync, writeFileSync } = require('fs');
@@ -13,26 +13,22 @@ const { join } = require('path');
 const { createServer } = require('http');
 
 async function main() {
-  const [, , viewerDir, outputPath, width = '1200', height = '630'] = process.argv;
+  const [, , viewerDir, outputPath, width = '1200', height = '800'] = process.argv;
   if (!viewerDir || !outputPath) {
     console.error('Usage: node scripts/render-png-ci.js <viewerDir> <outputPath> [width] [height]');
     process.exit(1);
   }
 
-  const w = parseInt(width);
-  const h = parseInt(height);
+  const W = parseInt(width);
+  const H = parseInt(height);
+  const canvasW = W;
+  const canvasH = Math.round(H * 0.78); // canvas gets ~78% of height, ~624px at 800
 
   // 1. Start static HTTP server
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
     let filePath = join(viewerDir, url.pathname === '/' ? 'index.html' : url.pathname);
-
-    if (!filePath.startsWith(viewerDir)) {
-      res.writeHead(403);
-      res.end();
-      return;
-    }
-
+    if (!filePath.startsWith(viewerDir)) { res.writeHead(403); res.end(); return; }
     try {
       const content = readFileSync(filePath);
       const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
@@ -43,22 +39,16 @@ async function main() {
       };
       res.writeHead(200, { 'Content-Type': mimes[ext] ?? 'application/octet-stream' });
       res.end(content);
-    } catch {
-      res.writeHead(404);
-      res.end('Not found');
-    }
+    } catch { res.writeHead(404); res.end('Not found'); }
   });
 
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const port = server.address().port;
   const url = `http://localhost:${port}/`;
-
   console.log(`Serving viewer at ${url}`);
 
-  // 2. Try to load puppeteer (bundled Chromium) or puppeteer-core
-  let puppeteer;
-  let puppeteerErr;
-
+  // 2. Load puppeteer
+  let puppeteer, puppeteerErr;
   try {
     puppeteer = require('puppeteer');
     console.log('Using puppeteer (bundled Chromium)');
@@ -68,55 +58,36 @@ async function main() {
       puppeteer = require('puppeteer-core');
       console.log('Using puppeteer-core (system Chromium)');
     } catch (e2) {
-      console.error('Could not load puppeteer or puppeteer-core');
-      console.error('puppeteer error:', puppeteerErr.message);
-      console.error('puppeteer-core error:', e2.message);
-      throw new Error('puppeteer not available - install it or set NODE_PATH');
+      console.error('Could not load puppeteer:', puppeteerErr.message);
+      console.error('puppeteer-core:', e2.message);
+      throw new Error('puppeteer not available');
     }
   }
 
-  // 3. Find browser
   const launchOpts = {
     headless: true,
     args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--use-gl=angle',
-      '--use-angle=swiftshader',
-      '--ignore-gpu-blocklist',
-      '--enable-webgl',
+      '--no-sandbox', '--disable-setuid-sandbox',
+      '--use-gl=angle', '--use-angle=swiftshader',
+      '--ignore-gpu-blocklist', '--enable-webgl',
       '--deterministic-fetch',
     ],
   };
 
-  // For puppeteer-core (no bundled browser), try to find system Chrome
   if (!puppeteer.executablePath) {
     const chromePaths = [
-      process.env.CHROME_PATH,
-      process.env.CHROMIUM_PATH,
-      '/usr/bin/google-chrome',
-      '/usr/bin/chromium',
-      '/usr/bin/chromium-browser',
+      process.env.CHROME_PATH, process.env.CHROMIUM_PATH,
+      '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     ].filter(Boolean);
-
     for (const p of chromePaths) {
       if (!p) continue;
-      try {
-        readFileSync(p);
-        launchOpts.executablePath = p;
-        console.log(`Chrome found at: ${p}`);
-        break;
-      } catch {}
+      try { readFileSync(p); launchOpts.executablePath = p; console.log(`Chrome: ${p}`); break; } catch {}
     }
-
     if (!launchOpts.executablePath) {
-      // Try puppeteer's own discovery
-      try {
-        launchOpts.executablePath = puppeteer.executablePath();
-      } catch {}
+      try { launchOpts.executablePath = puppeteer.executablePath(); } catch {}
     }
   }
 
@@ -125,27 +96,12 @@ async function main() {
 
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
+    await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
 
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
-    console.log('Page loaded, title:', await page.title());
-
     await page.waitForSelector('#canvas-main', { timeout: 15000 });
-    console.log('Canvas found');
 
-    // Debug: check stats content
-    const statText = await page.evaluate(() => {
-      const el = document.getElementById('stat-contrib');
-      return el ? JSON.stringify(el.textContent) : 'null';
-    });
-    console.log('stat-contrib text:', statText);
-
-    const dataCheck = await page.evaluate(() => {
-      return typeof window.__shapegridLoaded !== 'undefined' ? 'loaded' : 'not set';
-    });
-    console.log('Data flag:', dataCheck);
-
-    // Wait for data to load (stats bar populated - not the default em dash)
+    // Wait for data to load
     try {
       await page.waitForFunction(
         `document.getElementById('stat-contrib') &&
@@ -154,17 +110,120 @@ async function main() {
       );
       console.log('Data loaded');
     } catch {
-      console.log('Timed out waiting for data, proceeding with current state');
+      console.log('Data load timeout, proceeding');
     }
 
-    // Settle time for Three.js
+    // Extra settle time for Three.js
     await new Promise(r => setTimeout(r, 3000));
 
-    // Capture the canvas element
-    const canvas = await page.$('#canvas-main');
-    if (!canvas) throw new Error('Canvas #canvas-main not found');
+    // Inject card layout CSS
+    await page.addStyleTag({
+      content: `
+        /* Hide sidebar, header, footer */
+        #panel, #header, #footer { display: none !important; }
 
-    const buffer = await canvas.screenshot({ type: 'png', omitBackground: false });
+        /* Reset main area to full-width card */
+        #canvas-wrap {
+          position: relative !important;
+          margin: 0 auto !important;
+          width: 100% !important;
+          height: ${canvasH}px !important;
+          top: 0 !important;
+          left: 0 !important;
+          background: var(--bg, #0d1117) !important;
+        }
+        #canvas-main { width: 100% !important; height: 100% !important; }
+
+        /* Remove overlay */
+        #overlay { display: none !important; }
+
+        /* Stats row — centered above canvas, laid out horizontally */
+        #stats-bar {
+          position: relative !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          gap: 32px !important;
+          padding: 10px 0 6px 0 !important;
+          top: auto !important;
+          left: auto !important;
+          background: transparent !important;
+          border: none !important;
+          font-family: 'IBM Plex Sans', system-ui, sans-serif !important;
+        }
+        .stat-item {
+          display: flex !important;
+          align-items: baseline !important;
+          gap: 6px !important;
+        }
+        .stat-value {
+          font-size: 20px !important;
+          font-weight: 600 !important;
+          color: #e6edf3 !important;
+        }
+        .stat-item span:last-child {
+          font-size: 11px !important;
+          color: #8b949e !important;
+          text-transform: none !important;
+          letter-spacing: 0 !important;
+        }
+
+        /* Legend — centered below canvas */
+        #legend {
+          position: relative !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          gap: 10px !important;
+          padding: 8px 0 4px 0 !important;
+          bottom: auto !important;
+          left: auto !important;
+          background: transparent !important;
+          backdrop-filter: none !important;
+        }
+        .legend-label {
+          font-size: 10px !important;
+          color: #8b949e !important;
+          font-family: 'IBM Plex Mono', monospace !important;
+        }
+        #legend-bar {
+          width: 160px !important;
+          height: 12px !important;
+          border-radius: 4px !important;
+        }
+
+        /* Drag hint — hidden */
+        #drag-hint { display: none !important; }
+        #tooltip { display: none !important; }
+
+        /* Body — centered column */
+        body, #app {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          background: var(--bg, #0d1117) !important;
+          min-height: 100vh !important;
+          overflow: hidden !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+      `
+    });
+
+    // Also set background from state
+    await page.evaluate(() => {
+      const bg = document.body.style.backgroundColor;
+      document.documentElement.style.setProperty('--bg', bg || '#0d1117');
+    });
+
+    // Settle after CSS injection
+    await new Promise(r => setTimeout(r, 500));
+
+    // Capture the full app container
+    const app = await page.$('#app');
+    if (!app) throw new Error('#app not found');
+
+    const buffer = await app.screenshot({ type: 'png', omitBackground: false });
     writeFileSync(outputPath, buffer);
     console.log(`PNG saved to ${outputPath} (${(buffer.length / 1024).toFixed(0)} KB)`);
   } finally {
