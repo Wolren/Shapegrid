@@ -76,8 +76,12 @@ jobs:
       - name: Render PNG (headless Three.js via Puppeteer)
         continue-on-error: true
         run: |
-          npm install puppeteer --no-save 2>&1
-          node scripts/render-png-ci.js docs docs/assets/shapegrid.png 1200 630
+          mkdir -p /tmp/puppeteer-install
+          cd /tmp/puppeteer-install
+          npm init -y 2>&1 | tail -1
+          npm install puppeteer 2>&1 | tail -5
+          cd /home/runner/work/Shapegrid/Shapegrid
+          NODE_PATH=/tmp/puppeteer-install/node_modules node scripts/render-png-ci.js docs docs/assets/shapegrid.png 1200 630
 
       - name: Commit and push generated assets
         run: |
