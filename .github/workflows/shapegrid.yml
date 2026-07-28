@@ -19,6 +19,7 @@ on:
       - 'package.json'
       - 'packages/**'
       - 'web/**'
+      - 'scripts/**'
   workflow_dispatch:
     inputs:
       username:
