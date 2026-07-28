@@ -852,8 +852,10 @@ async function bootstrap() {
     if (bgColor) bgColor.value = state.background;
 
     // Initialize with CI-generated data or fall back to demo
+    let dataLoaded = false;
     const loaded = await loadFromUrl('./assets/shapegrid-data.json');
     if (loaded) {
+      dataLoaded = true;
       // Loaded from CI-generated data — update palette
       if (state.palette) {
         setActivePalette(state.palette);
@@ -876,8 +878,10 @@ async function bootstrap() {
     setDaysMode(state.daysMode);
     buildYearChips();
 
-    // Initial sync days to count
-    syncDaysToCount();
+    // Initial sync days to count (skip when CI data loaded — would overwrite the grid)
+    if (!dataLoaded) {
+      syncDaysToCount();
+    }
 
     // Set initial axes options visibility (hidden by default for presets/countries)
     updateAxesOptionsVisibility();

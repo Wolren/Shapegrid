@@ -104,8 +104,9 @@ export function loadFromJson(data: DataExport): void {
     gridType: data.grid.type,
   };
   updateState('grid', gridResult);
+  updateState('gridType', data.grid.type);
 
-  // Cell data (intensity colours)
+  // Cell data
   const cellData: CellData[] = data.grid.cells.map(c => ({
     date: c.date,
     count: c.count,
@@ -113,13 +114,28 @@ export function loadFromJson(data: DataExport): void {
   }));
   updateState('cellData', cellData);
 
-  // Count
+  // Count — sync both state and UI inputs
   updateState('count', data.grid.count);
+  const daysSlider = document.getElementById('inp-days') as HTMLInputElement;
+  const daysNum = document.getElementById('inp-days-num') as HTMLInputElement;
+  const countNum = document.getElementById('inp-count-num') as HTMLInputElement;
+  if (daysSlider) daysSlider.value = String(data.grid.count);
+  if (daysNum) daysNum.value = String(data.grid.count);
+  if (countNum) countNum.value = String(data.grid.count);
+  document.getElementById('val-days')!.textContent = String(data.grid.count);
+
+  // Grid type dropdown
+  const gridTypeSelect = document.getElementById('inp-grid-type') as HTMLSelectElement;
+  if (gridTypeSelect) gridTypeSelect.value = data.grid.type;
 
   // Camera
   if (data.config.camera) {
     updateState('yaw', data.config.camera.yaw ?? 30);
     updateState('pitch', data.config.camera.pitch ?? 45);
+    const yawSlider = document.getElementById('inp-yaw') as HTMLInputElement;
+    const pitchSlider = document.getElementById('inp-pitch') as HTMLInputElement;
+    if (yawSlider) yawSlider.value = String(data.config.camera.yaw ?? 30);
+    if (pitchSlider) pitchSlider.value = String(data.config.camera.pitch ?? 45);
   }
 
   // Render settings
