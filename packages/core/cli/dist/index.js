@@ -104,6 +104,7 @@ async function runGenerate(cfg, configDir) {
         config: {
             camera: cfg.camera,
             render: cfg.render,
+            theme: cfg.theme,
         },
     };
     // 8. Write outputs
@@ -119,7 +120,7 @@ async function runGenerate(cfg, configDir) {
         writeFileSync(svgFile, svg);
         ok(`Wrote ${svgFile}`);
     }
-    log(chalk.bold.green('\nDone! 🎉'));
+    log(chalk.bold.green('\nDone!'));
     log(`To embed in your README:\n  ![Activity Grid](${cfg.output.svgFilename ?? 'shapegrid-data.json'})`);
 }
 function generateSvg(data, cfg) {

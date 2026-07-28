@@ -237,7 +237,7 @@ async function runGenerate(cfg: ShapegridConfig, configDir: string) {
     ok(`Wrote ${svgFile}`);
   }
 
-  log(chalk.bold.green('\nDone! 🎉'));
+  log(chalk.bold.green('\nDone!'));
   log(`To embed in your README:\n  ![Activity Grid](${cfg.output.svgFilename ?? 'shapegrid-data.json'})`);
 }
 
