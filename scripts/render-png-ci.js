@@ -122,91 +122,98 @@ async function main() {
         /* Hide sidebar, header, footer */
         #panel, #header, #footer { display: none !important; }
 
-        /* Reset main area to full-width card */
-        #canvas-wrap {
-          position: relative !important;
-          margin: 0 auto !important;
-          width: 100% !important;
-          height: ${canvasH}px !important;
-          top: 0 !important;
-          left: 0 !important;
-          background: var(--bg, #0d1117) !important;
+        /* Body — flex column, centered */
+        body, #app {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
+          background: #0d1117 !important;
+          width: ${W}px !important;
+          height: ${H}px !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
         }
-        #canvas-main { width: 100% !important; height: 100% !important; }
 
-        /* Remove overlay */
-        #overlay { display: none !important; }
-
-        /* Stats row — centered above canvas, laid out horizontally */
+        /* Stats row — above canvas */
         #stats-bar {
-          position: relative !important;
+          position: static !important;
           display: flex !important;
           justify-content: center !important;
           align-items: center !important;
-          gap: 32px !important;
-          padding: 10px 0 6px 0 !important;
-          top: auto !important;
-          left: auto !important;
+          gap: 40px !important;
+          padding: 14px 0 8px 0 !important;
+          height: auto !important;
           background: transparent !important;
           border: none !important;
           font-family: 'IBM Plex Sans', system-ui, sans-serif !important;
+          flex-shrink: 0 !important;
         }
         .stat-item {
           display: flex !important;
           align-items: baseline !important;
-          gap: 6px !important;
+          gap: 8px !important;
         }
         .stat-value {
-          font-size: 20px !important;
+          font-size: 22px !important;
           font-weight: 600 !important;
           color: #e6edf3 !important;
         }
         .stat-item span:last-child {
-          font-size: 11px !important;
+          font-size: 12px !important;
           color: #8b949e !important;
           text-transform: none !important;
           letter-spacing: 0 !important;
         }
 
-        /* Legend — centered below canvas */
-        #legend {
+        /* Canvas — flex to fill remaining vertical space */
+        #canvas-wrap {
           position: relative !important;
+          flex: 1 !important;
+          width: 100% !important;
+          min-height: 0 !important;
+          background: transparent !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        }
+        #canvas-main {
+          width: 100% !important;
+          height: 100% !important;
+          display: block !important;
+        }
+
+        /* Overlay — hidden */
+        #overlay { display: none !important; }
+
+        /* Legend — below canvas */
+        #legend {
+          position: static !important;
           display: flex !important;
           justify-content: center !important;
           align-items: center !important;
-          gap: 10px !important;
-          padding: 8px 0 4px 0 !important;
-          bottom: auto !important;
-          left: auto !important;
+          gap: 12px !important;
+          padding: 10px 0 14px 0 !important;
+          height: auto !important;
           background: transparent !important;
           backdrop-filter: none !important;
+          flex-shrink: 0 !important;
         }
         .legend-label {
-          font-size: 10px !important;
+          font-size: 11px !important;
           color: #8b949e !important;
           font-family: 'IBM Plex Mono', monospace !important;
         }
         #legend-bar {
-          width: 160px !important;
-          height: 12px !important;
+          width: 180px !important;
+          height: 14px !important;
           border-radius: 4px !important;
         }
 
-        /* Drag hint — hidden */
+        /* Utility */
         #drag-hint { display: none !important; }
         #tooltip { display: none !important; }
-
-        /* Body — centered column */
-        body, #app {
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          background: var(--bg, #0d1117) !important;
-          min-height: 100vh !important;
-          overflow: hidden !important;
-          margin: 0 !important;
-          padding: 0 !important;
-        }
       `
     });
 
