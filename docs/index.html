@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"/>
 
-  <script type="module" crossorigin src="./assets/main-Bw7x6jC_.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/main-C_WprMZ2.css">
+  <script type="module" crossorigin src="./assets/main-CSG2rEuh.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/main-DVnqehpa.css">
 </head>
 
 <body>
@@ -376,12 +376,24 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
+          <div class="row">
+            <label>Legend font size <span id="val-legend-font">10</span></label>
+            <input type="range" id="inp-legend-font-size" min="6" max="20" value="10" step="1"/>
+          </div>
+          <div class="row">
+            <label>Legend bar width <span id="val-legend-bar-w">80px</span></label>
+            <input type="range" id="inp-legend-bar-width" min="40" max="200" value="80" step="5"/>
+          </div>
           <div class="row-inline">
             <label style="font-size:10px;color:var(--muted);flex:1">Show stats bar</label>
             <label class="toggle">
               <input type="checkbox" id="inp-show-stats" checked/>
               <span class="toggle-slider"></span>
             </label>
+          </div>
+          <div class="row">
+            <label>Stats font size <span id="val-stats-font">10</span></label>
+            <input type="range" id="inp-stats-font-size" min="6" max="20" value="10" step="1"/>
           </div>
           <div class="row">
             <button class="btn-sm" id="btn-reset-layout" style="width:100%;margin-top:4px">Reset Layout</button>
