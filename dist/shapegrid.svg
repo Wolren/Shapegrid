@@ -27,7 +27,7 @@
     </text>
   </g>
   <text x="600" y="52" text-anchor="middle" fill="#8b949e" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="300" letter-spacing="0.3">
-    2643 contributions · 730 days · Jul 2024 - Jul 2026
+    2664 contributions · 730 days · Jul 2024 - Jul 2026
   </text>
 
   <!-- Grid Cells -->
@@ -13108,36 +13108,36 @@
   />
 </g>
     <g>
-  <title>2026-05-16: 16 contributions</title>
+  <title>2026-05-16: 21 contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
   <polygon
     points="578.4,485.3,585.3,493.4,578.4,501.6,571.6,493.4"
-    fill="#000b17"
-    stroke="#000b17"
+    fill="#000d1a"
+    stroke="#000d1a"
     stroke-width="0.5"
     stroke-linejoin="round"
   />
   <!-- Left face -->
   <polygon
-    points="571.6,489.7 571.6,493.4 578.4,485.3 578.4,481.6"
-    fill="#000f1f"
-    stroke="#000f1f"
+    points="571.6,488.6 571.6,493.4 578.4,485.3 578.4,480.4"
+    fill="#001224"
+    stroke="#001224"
     stroke-width="0.5"
     stroke-linejoin="round"
   />
   <!-- Right face -->
   <polygon
-    points="578.4,481.6 578.4,485.3 585.3,493.4 585.3,489.7"
-    fill="#001326"
-    stroke="#001326"
+    points="578.4,480.4 578.4,485.3 585.3,493.4 585.3,488.6"
+    fill="#00152b"
+    stroke="#00152b"
     stroke-width="0.5"
     stroke-linejoin="round"
   />
   <!-- Top face -->
   <polygon
-    points="578.4,481.6,585.3,489.7,578.4,497.9,571.6,489.7"
-    fill="#00162d"
-    stroke="#001934"
+    points="578.4,480.4,585.3,488.6,578.4,496.7,571.6,488.6"
+    fill="#001933"
+    stroke="#001d3b"
     stroke-width="0.8"
     stroke-linejoin="round"
   />
@@ -15798,36 +15798,36 @@
   />
 </g>
     <g>
-  <title>2026-07-28: 52 contributions</title>
+  <title>2026-07-28: 68 contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
   <polygon
     points="578.4,588.1,585.3,596.2,578.4,604.3,571.6,596.2"
-    fill="#00162c"
-    stroke="#00162c"
+    fill="#001d36"
+    stroke="#001d36"
     stroke-width="0.5"
     stroke-linejoin="round"
   />
   <!-- Left face -->
   <polygon
-    points="571.6,584.2 571.6,596.2 578.4,588.1 578.4,576.0"
-    fill="#001e3d"
-    stroke="#001e3d"
+    points="571.6,580.5 571.6,596.2 578.4,588.1 578.4,572.3"
+    fill="#00284b"
+    stroke="#00284b"
     stroke-width="0.5"
     stroke-linejoin="round"
   />
   <!-- Right face -->
   <polygon
-    points="578.4,576.0 578.4,588.1 585.3,596.2 585.3,584.2"
-    fill="#00254a"
-    stroke="#00254a"
+    points="578.4,572.3 578.4,588.1 585.3,596.2 585.3,580.5"
+    fill="#00305b"
+    stroke="#00305b"
     stroke-width="0.5"
     stroke-linejoin="round"
   />
   <!-- Top face -->
   <polygon
-    points="578.4,576.0,585.3,584.2,578.4,592.3,571.6,584.2"
-    fill="#002b57"
-    stroke="#003164"
+    points="578.4,572.3,585.3,580.5,578.4,588.6,571.6,580.5"
+    fill="#00396b"
+    stroke="#00427b"
     stroke-width="0.8"
     stroke-linejoin="round"
   />
