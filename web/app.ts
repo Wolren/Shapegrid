@@ -452,11 +452,19 @@ function applyOverlayStyles() {
   if (legendLabels) legendLabels.forEach(l => (l as HTMLElement).style.fontSize = state.overlay.legendFontSize + 'px');
   if (legendBar) legendBar.style.width = state.overlay.legendBarWidth + 'px';
   if (statsBar) statsBar.style.fontSize = state.overlay.statsFontSize + 'px';
+  if (statsBar) statsBar.classList.toggle('inline', state.overlay.statsInline);
 }
 
 function initOverlayVisibility() {
   const showLegend = document.getElementById('inp-show-legend') as HTMLInputElement;
   const showStats = document.getElementById('inp-show-stats') as HTMLInputElement;
+  const statsInline = document.getElementById('inp-stats-inline') as HTMLInputElement;
+
+  const applyStatsInline = () => {
+    const stats = document.getElementById('stats-bar');
+    if (stats) stats.classList.toggle('inline', state.overlay.statsInline);
+  };
+
   if (showLegend) {
     showLegend.checked = state.overlay.showLegend;
     showLegend.addEventListener('change', () => {
@@ -473,6 +481,15 @@ function initOverlayVisibility() {
       if (stats) stats.style.display = state.overlay.showStats ? '' : 'none';
     });
   }
+  if (statsInline) {
+    statsInline.checked = state.overlay.statsInline;
+    statsInline.addEventListener('change', () => {
+      state.overlay.statsInline = statsInline.checked;
+      applyStatsInline();
+    });
+  }
+  // Apply inline state on init
+  applyStatsInline();
 }
 
 function resetLayout() {
@@ -483,6 +500,7 @@ function resetLayout() {
   state.overlay.statsFontSize = 10;
   state.overlay.showLegend = true;
   state.overlay.showStats = true;
+  state.overlay.statsInline = false;
   applyOverlayPositions();
   applyOverlayStyles();
   const legend = document.getElementById('legend');
@@ -491,8 +509,10 @@ function resetLayout() {
   if (stats) stats.style.display = '';
   const cbLegend = document.getElementById('inp-show-legend') as HTMLInputElement;
   const cbStats = document.getElementById('inp-show-stats') as HTMLInputElement;
+  const cbInline = document.getElementById('inp-stats-inline') as HTMLInputElement;
   if (cbLegend) cbLegend.checked = true;
   if (cbStats) cbStats.checked = true;
+  if (cbInline) cbInline.checked = false;
   // Reset slider values too
   const setVal = (id: string, val: number) => {
     const el = document.getElementById(id) as HTMLInputElement;
@@ -545,6 +565,7 @@ function exportConfig() {
         legendFontSize: state.overlay.legendFontSize,
         legendBarWidth: state.overlay.legendBarWidth,
         statsFontSize: state.overlay.statsFontSize,
+        statsInline: state.overlay.statsInline,
       },
     },
   };

@@ -394,6 +394,13 @@
             <label>Stats font size <span id="val-stats-font">10</span></label>
             <input type="range" id="inp-stats-font-size" min="6" max="20" value="10" step="1"/>
           </div>
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Inline stats (one line)</label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-stats-inline"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
           <div class="row">
             <button class="btn-sm" id="btn-reset-layout" style="width:100%;margin-top:4px">Reset Layout</button>
           </div>
@@ -433,7 +440,6 @@
 
     <div id="stats-bar">
       <span class="drag-handle">⠿</span>
-      <div class="stat-item">
       <div class="stat-item">
         <span class="stat-value" id="stat-contrib">—</span>
         <span>contributions</span>

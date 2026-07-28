@@ -102,6 +102,7 @@ export interface OverlayState {
   legendFontSize: number;
   legendBarWidth: number;
   statsFontSize: number;
+  statsInline: boolean;
 }
 
 export interface AppState {

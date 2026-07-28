@@ -52,6 +52,7 @@ export const state: AppState = {
     legendFontSize: 10,
     legendBarWidth: 80,
     statsFontSize: 10,
+    statsInline: false,
   },
 };
 
