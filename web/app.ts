@@ -319,13 +319,11 @@ window.addEventListener('mousemove', e => {
 
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  const scale = camera.right - camera.left;
   const delta = e.deltaY > 0 ? 1.08 : 0.93;
-  const newScale = Math.max(0.5, Math.min(4, scale * delta));
-  state.zoom = parseFloat((newScale / (canvas.clientWidth / canvas.clientHeight)).toFixed(4));
+  state.zoom = Math.max(0.5, Math.min(4, state.zoom * delta));
   const asp = canvas.clientWidth / canvas.clientHeight;
-  camera.left = -newScale * asp / 2; camera.right = newScale * asp / 2;
-  camera.top = newScale / 2; camera.bottom = -newScale / 2;
+  camera.left = -state.zoom * asp / 2; camera.right = state.zoom * asp / 2;
+  camera.top = state.zoom / 2; camera.bottom = -state.zoom / 2;
   camera.updateProjectionMatrix();
 }, { passive: false });
 
