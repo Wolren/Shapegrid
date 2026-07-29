@@ -105,6 +105,72 @@ export interface OverlayState {
   statsInline: boolean;
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// Dashboard widget system — GIS display widgets
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type WidgetId = 'legend' | 'stats' | 'languages' | 'cellInfo' | 'scaleBar' | 'coordinates' | 'distribution' | 'timeline' | 'activity' | 'overview';
+
+export interface WidgetConfig {
+  id: WidgetId;
+  title: string;
+  visible: boolean;
+  position: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'left' | 'right';
+  order: number;
+  settings: Record<string, any>;
+  customPos: { x: number; y: number } | null;
+}
+
+export interface DashboardState {
+  widgets: WidgetConfig[];
+  collapsed: boolean;
+  managerOpen: boolean;
+  layout: 'floating' | 'grid';
+}
+
+export interface GitHubLanguage {
+  name: string;
+  color: string;
+  size: number;
+  percentage: number;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Editor / GIS tool types
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type ToolType = 'select' | 'pan' | 'measureDistance' | 'measureArea';
+
+export interface Measurement {
+  id: string;
+  type: 'distance' | 'area';
+  points: Point2D[];
+  distance?: number;
+  area?: number;
+  label: string;
+}
+
+export interface LayerVisibility {
+  boundary: boolean;
+  grid: boolean;
+  axes: boolean;
+  overheadLabels: boolean;
+}
+
+export interface EditorState {
+  activeTool: ToolType;
+  selectedCellIndices: number[];
+  measurements: Measurement[];
+  activeMeasurement: Measurement | null;
+  showInfoPanel: boolean;
+  showDataTable: boolean;
+  showLayerPanel: boolean;
+  dataTableSort: { key: string; asc: boolean } | null;
+  layerVisibility: LayerVisibility;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+
 export interface AppState {
   poly: Point2D[];
   preset: string;
@@ -142,6 +208,9 @@ export interface AppState {
   grid: GridResult | null;
   cellData: CellData[];
   overlay: OverlayState;
+  dashboard: DashboardState;
+  languages: GitHubLanguage[];
+  editor: EditorState;
 }
 
 /**
