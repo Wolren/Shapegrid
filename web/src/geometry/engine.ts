@@ -67,7 +67,7 @@ export function findSize(poly: Point2D[], N: number, type: GridType): number {
   const area = polyArea(poly);
   let lo = Math.sqrt(area / N) * .05, hi = Math.sqrt(area) * 3;
   for (let i = 0; i < 20; i++) { if (countCells(poly, hi, type) < N) break; hi *= 2; }
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 40; i++) {
     const mid = (lo + hi) / 2;
     if (hi - lo < 1e-9) break;
     countCells(poly, mid, type) >= N ? lo = mid : hi = mid;
