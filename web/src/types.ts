@@ -200,6 +200,14 @@ export interface AppState {
   pitch: number;
   zoom: number;
   heightScale: number;
+  bloomStrength: number;
+  bloomRadius: number;
+  bloomThreshold: number;
+  bloomEnabled: boolean;
+  fogEnabled: boolean;
+  fogDensity: number;
+  toneMapping: number;
+  envMapEnabled: boolean;
   background: string;
   palette: string;
   daysMode: DaysMode;

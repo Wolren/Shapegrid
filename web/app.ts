@@ -13,6 +13,7 @@ import { loadDemo, computeGrid, loadData, setStatus, loadFromUrl } from './src/u
 import { createPresets } from './src/data/presets';
 import { initPaletteUI } from './src/ui/palette-ui';
 import { scheduleRebuild, needsRebuild } from './src/ui/rebuild';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { COUNTRIES, searchCountries, getCountryList, initCountries } from './src/data/countries';
 import { initToolbar, syncToolbarState } from './src/ui/toolbar';
 import { initMeasureOverlay, updateMeasureOverlay, handleMeasureClick, clearMeasureOverlay, isMeasuring } from './src/ui/measure';
@@ -302,6 +303,41 @@ function buildCoordAxes() {
   scene.add(coordAxesGroup);
 }
 
+// ── Post-processing state ────────────────────────────────────────────────
+let bloomNode: any = null;
+
+function applyPostProcessing() {
+  if (!renderer || !scene) return;
+  // Bloom
+  if (bloomNode) {
+    bloomNode.strength.value = state.bloomEnabled ? state.bloomStrength : 0;
+    bloomNode.radius.value = state.bloomRadius;
+    bloomNode.threshold.value = state.bloomThreshold;
+  }
+  // Fog
+  if (state.fogEnabled && !scene.fog) {
+    scene.fog = new THREE.FogExp2(state.background, state.fogDensity);
+  } else if (state.fogEnabled && scene.fog) {
+    (scene.fog as THREE.FogExp2).density = state.fogDensity;
+  } else if (!state.fogEnabled) {
+    scene.fog = null;
+  }
+  // Tone mapping
+  renderer.toneMapping = state.toneMapping as THREE.ToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  // Environment map - toggle visibility
+  if (state.envMapEnabled && !scene.environment) {
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileCubemapShader();
+    // Use a simple neutral env map
+    const envTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envTexture.texture;
+    pmremGenerator.dispose();
+  } else if (!state.envMapEnabled) {
+    scene.environment = null;
+  }
+}
+
 function loop() {
   requestAnimationFrame(loop);
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -312,6 +348,7 @@ function loop() {
   if (needsRebuild()) {
     buildMesh();
   }
+  applyPostProcessing();
   // Update measurement overlay when measuring
   const editor = getEditor();
   if (editor.activeMeasurement || editor.measurements.length > 0) {
@@ -737,8 +774,62 @@ if (daysNumInput) {
 });
 
 (document.getElementById('inp-bg-hex') as HTMLInputElement).addEventListener('change', e => {
-  updateState('background', (e.target as HTMLInputElement).value);
-});
+    state.background = (e.target as HTMLInputElement).value;
+  });
+
+  // ── Post-processing event handlers ──────────────────────────────────
+  const syncPP = () => {
+    if (bloomNode) {
+      bloomNode.strength.value = state.bloomEnabled ? state.bloomStrength : 0;
+      bloomNode.radius.value = state.bloomRadius;
+      bloomNode.threshold.value = state.bloomThreshold;
+    }
+    if (state.fogEnabled && !scene.fog) {
+      scene.fog = new THREE.FogExp2(state.background, state.fogDensity);
+    } else if (state.fogEnabled && scene.fog) {
+      (scene.fog as THREE.FogExp2).density = state.fogDensity;
+    } else {
+      scene.fog = null;
+    }
+    renderer.toneMapping = state.toneMapping as THREE.ToneMapping;
+    renderer.toneMappingExposure = 1.0;
+  };
+
+  // Bloom toggle
+  (document.getElementById('inp-bloom') as HTMLInputElement).addEventListener('change', e => {
+    state.bloomEnabled = (e.target as HTMLInputElement).checked;
+    syncPP();
+  });
+  // Bloom sliders
+  ['bloom-strength', 'bloom-radius', 'bloom-threshold'].forEach(id => {
+    const el = document.getElementById(`inp-${id}`) as HTMLInputElement;
+    if (!el) return;
+    const key = id.replace(/-([a-z])/g, (_, c) => c.toUpperCase()) as 'bloomStrength' | 'bloomRadius' | 'bloomThreshold';
+    el.addEventListener('input', () => {
+      state[key] = parseFloat(el.value);
+      syncPP();
+    });
+  });
+  // Fog toggle
+  (document.getElementById('inp-fog') as HTMLInputElement).addEventListener('change', e => {
+    state.fogEnabled = (e.target as HTMLInputElement).checked;
+    syncPP();
+  });
+  // Fog density
+  (document.getElementById('inp-fog-density') as HTMLInputElement).addEventListener('input', e => {
+    state.fogDensity = parseFloat((e.target as HTMLInputElement).value);
+    syncPP();
+  });
+  // Env map toggle
+  (document.getElementById('inp-env-map') as HTMLInputElement).addEventListener('change', e => {
+    state.envMapEnabled = (e.target as HTMLInputElement).checked;
+    syncPP();
+  });
+  // Tone mapping
+  (document.getElementById('inp-tone-mapping') as HTMLSelectElement).addEventListener('change', e => {
+    state.toneMapping = parseInt((e.target as HTMLSelectElement).value);
+    syncPP();
+  });
 
 // Grid type
 (document.getElementById('inp-grid-type') as HTMLSelectElement).addEventListener('change', e => {
@@ -1126,6 +1217,24 @@ async function bootstrap() {
     const bgColor = document.getElementById('inp-bg-color') as HTMLInputElement;
     if (bgHex) bgHex.value = state.background;
     if (bgColor) bgColor.value = state.background;
+
+    // Set default post-processing values
+    setCheckboxValue('inp-bloom', state.bloomEnabled);
+    setCheckboxValue('inp-fog', state.fogEnabled);
+    setCheckboxValue('inp-env-map', state.envMapEnabled);
+    setSliderValue('inp-bloom-strength', state.bloomStrength);
+    setSliderValue('inp-bloom-radius', state.bloomRadius);
+    setSliderValue('inp-bloom-threshold', state.bloomThreshold);
+    setSliderValue('inp-fog-density', state.fogDensity);
+    setSelectValue('inp-tone-mapping', String(state.toneMapping));
+
+    // Initialize post-processing on first frame
+    setTimeout(() => {
+      if (bloomNode) {
+        bloomNode.strength.value = state.bloomEnabled ? state.bloomStrength : 0;
+      }
+      applyPostProcessing();
+    }, 100);
 
     // Initialize with CI-generated data or fall back to demo
     let dataLoaded = false;
