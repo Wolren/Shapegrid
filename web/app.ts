@@ -387,15 +387,14 @@ function loop() {
     buildMesh();
   }
   applyPostProcessing();
-
-  // Set scene background color for the composer to use
-  scene.background = new THREE.Color(state.background);
+  // Clear to background — use renderer.clearColor (matches original pre-composer path)
+  // Don't set scene.background (it goes through color space conversion differently)
   renderer.setClearColor(state.background, 1);
 
   // Skip composer when all effects are off — matches original direct render path
-  const effectsActive = state.bloomEnabled || state.toneMapping !== 0 || state.fogEnabled || state.envMapEnabled;
-  if (composer && effectsActive) {
-    composer.render();
+  const effectsActive = (composer !== null) && (state.bloomEnabled || state.toneMapping !== 0 || state.fogEnabled || state.envMapEnabled);
+  if (effectsActive) {
+    composer!.render();
   } else {
     renderer.render(scene, camera);
   }
@@ -725,8 +724,8 @@ function updateLabels() {
   el('val-coord-axes-label-off')!.textContent = state.coordAxesLabelOffset.toFixed(2);
 }
 
-// Sliders
-['yaw', 'pitch', 'gap', 'height', 'coverage'].forEach(key => {
+// Sliders — map input IDs to state keys where they differ
+['yaw', 'pitch', 'gap', 'coverage'].forEach(key => {
   const el = document.getElementById(`inp-${key}`) as HTMLInputElement;
   if (el) {
     el.addEventListener('input', () => {
@@ -740,6 +739,15 @@ function updateLabels() {
     });
   }
 });
+// Height scale factor slider — state key differs from input ID
+const heightEl = document.getElementById('inp-height') as HTMLInputElement;
+if (heightEl) {
+  heightEl.addEventListener('input', () => {
+    state.heightScale = parseFloat(heightEl.value);
+    updateLabels();
+    scheduleRebuild();
+  });
+}
 
 // Cell count number input
 const countNum = document.getElementById('inp-count-num') as HTMLInputElement;
