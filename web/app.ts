@@ -387,17 +387,23 @@ function loop() {
     buildMesh();
   }
   applyPostProcessing();
+
+  // Set scene background color for the composer to use
+  scene.background = new THREE.Color(state.background);
+  renderer.setClearColor(state.background, 1);
+
+  // Skip composer when all effects are off — matches original direct render path
+  const effectsActive = state.bloomEnabled || state.toneMapping !== 0 || state.fogEnabled || state.envMapEnabled;
+  if (composer && effectsActive) {
+    composer.render();
+  } else {
+    renderer.render(scene, camera);
+  }
   // Update measurement overlay when measuring
   const editor = getEditor();
   if (editor.activeMeasurement || editor.measurements.length > 0) {
     const rect = canvas.getBoundingClientRect();
     updateMeasureOverlay(camera, rect);
-  }
-  renderer.setClearColor(state.background, 1);
-  if (composer) {
-    composer.render();
-  } else {
-    renderer.render(scene, camera);
   }
 }
 
