@@ -375,6 +375,9 @@ function loop() {
   const targetW = Math.floor(W * pr), targetH = Math.floor(H * pr);
   if (renderer.domElement.width !== targetW || renderer.domElement.height !== targetH) {
     renderer.setSize(W, H, false);
+    if (composer) {
+      composer.setSize(W * pr, H * pr);
+    }
     posCamera();
   }
   if (needsRebuild()) {
