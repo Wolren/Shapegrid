@@ -133,7 +133,10 @@ function buildMesh() {
     const clamped = Math.max(0, Math.min(1, raw));
     switch (state.scaleMode) {
       case 'sqrt': return Math.sqrt(clamped);
+      case 'cbrt': return Math.cbrt(clamped);
       case 'log': return clamped <= 0 ? 0 : Math.log(1 + clamped * 9) / Math.log(10);
+      case 'quad': return clamped * clamped;
+      case 'inverse': return 1 - clamped;
       default: return clamped;
     }
   };
@@ -872,7 +875,7 @@ if (daysNumInput) {
 
   // Intensity scale mode
   (document.getElementById('inp-scale-mode') as HTMLSelectElement).addEventListener('change', e => {
-    state.scaleMode = (e.target as HTMLSelectElement).value as 'linear' | 'sqrt' | 'log';
+    state.scaleMode = (e.target as HTMLSelectElement).value as 'linear' | 'sqrt' | 'cbrt' | 'log' | 'quad' | 'inverse';
     scheduleRebuild();
   });
 

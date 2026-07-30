@@ -208,7 +208,7 @@ export interface AppState {
   fogDensity: number;
   toneMapping: number;
   envMapEnabled: boolean;
-  scaleMode: 'linear' | 'sqrt' | 'log';
+  scaleMode: 'linear' | 'sqrt' | 'cbrt' | 'log' | 'quad' | 'inverse';
   orgName: string;
   includeOrgRepos: boolean;
   background: string;
