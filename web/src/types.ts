@@ -208,6 +208,7 @@ export interface AppState {
   fogDensity: number;
   toneMapping: number;
   envMapEnabled: boolean;
+  scaleMode: 'linear' | 'sqrt' | 'log';
   background: string;
   palette: string;
   daysMode: DaysMode;

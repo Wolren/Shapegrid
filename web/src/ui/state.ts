@@ -48,6 +48,7 @@ export const state: AppState = {
   fogDensity: 0.12,
   toneMapping: 0,
   envMapEnabled: true,
+  scaleMode: 'linear',
   background: '#0d1117',
   palette: 'ocean',
   daysMode: 'last',

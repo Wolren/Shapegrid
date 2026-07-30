@@ -14,6 +14,10 @@ import { createPresets } from './src/data/presets';
 import { initPaletteUI } from './src/ui/palette-ui';
 import { scheduleRebuild, needsRebuild } from './src/ui/rebuild';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { COUNTRIES, searchCountries, getCountryList, initCountries } from './src/data/countries';
 import { initToolbar, syncToolbarState } from './src/ui/toolbar';
 import { initMeasureOverlay, updateMeasureOverlay, handleMeasureClick, clearMeasureOverlay, isMeasuring } from './src/ui/measure';
@@ -42,6 +46,7 @@ let renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Orthographi
 let dirLight: THREE.DirectionalLight, mesh: THREE.InstancedMesh | null, boundaryLine: THREE.LineLoop | null;
 let groundMesh: THREE.Mesh;
 let coordAxesGroup: THREE.Group | null;
+let composer: EffectComposer | null = null;
 // Initialize presets after norm is available
 createPresets(norm);
 
@@ -76,6 +81,20 @@ function initThree() {
   groundMesh.receiveShadow = true;
   scene.add(groundMesh);
 
+  // Post-processing pipeline
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(canvas.clientWidth, canvas.clientHeight),
+    state.bloomStrength,
+    state.bloomRadius,
+    state.bloomThreshold
+  );
+  bloomPass.strength = state.bloomEnabled ? state.bloomStrength : 0;
+  bloomNode = bloomPass;
+  composer.addPass(bloomPass);
+  composer.addPass(new OutputPass());
+
   loop();
 }
 
@@ -109,6 +128,16 @@ function buildMesh() {
   const hs = state.heightScale;
   const gap = state.gap;
 
+  // Apply intensity scaling
+  const scaleIntensity = (raw: number): number => {
+    const clamped = Math.max(0, Math.min(1, raw));
+    switch (state.scaleMode) {
+      case 'sqrt': return Math.sqrt(clamped);
+      case 'log': return clamped <= 0 ? 0 : Math.log(1 + clamped * 9) / Math.log(10);
+      default: return clamped;
+    }
+  };
+
   // Geometry
   let geo: THREE.BufferGeometry;
   if (gridType === 'square') {
@@ -128,13 +157,14 @@ function buildMesh() {
 
   cells.forEach((cell, i) => {
     const d = state.cellData[i] || { intensity: 0, count: 0 };
-    const h = Math.max(0.008, d.intensity * hs * 0.12 + 0.008);
+    const scaled = scaleIntensity(d.intensity);
+    const h = Math.max(0.008, scaled * hs * 0.12 + 0.008);
     dummy.position.set(cell.cx - .5, h / 2, cell.cy - .5);
     dummy.scale.set(1, h, 1);
     dummy.updateMatrix();
     mesh!.setMatrixAt(i, dummy.matrix);
 
-    const css = intensityToColor(d.intensity, activePaletteId);
+    const css = intensityToColor(scaled, activePaletteId);
     const [r, g, b] = colToHex(css);
     col.setRGB(r, g, b);
     mesh!.setColorAt(i, col);
@@ -310,9 +340,9 @@ function applyPostProcessing() {
   if (!renderer || !scene) return;
   // Bloom
   if (bloomNode) {
-    bloomNode.strength.value = state.bloomEnabled ? state.bloomStrength : 0;
-    bloomNode.radius.value = state.bloomRadius;
-    bloomNode.threshold.value = state.bloomThreshold;
+    bloomNode.strength = state.bloomEnabled ? state.bloomStrength : 0;
+    bloomNode.radius = state.bloomRadius;
+    bloomNode.threshold = state.bloomThreshold;
   }
   // Fog
   if (state.fogEnabled && !scene.fog) {
@@ -356,7 +386,11 @@ function loop() {
     updateMeasureOverlay(camera, rect);
   }
   renderer.setClearColor(state.background, 1);
-  renderer.render(scene, camera);
+  if (composer) {
+    composer.render();
+  } else {
+    renderer.render(scene, camera);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -780,9 +814,9 @@ if (daysNumInput) {
   // ── Post-processing event handlers ──────────────────────────────────
   const syncPP = () => {
     if (bloomNode) {
-      bloomNode.strength.value = state.bloomEnabled ? state.bloomStrength : 0;
-      bloomNode.radius.value = state.bloomRadius;
-      bloomNode.threshold.value = state.bloomThreshold;
+      bloomNode.strength = state.bloomEnabled ? state.bloomStrength : 0;
+      bloomNode.radius = state.bloomRadius;
+      bloomNode.threshold = state.bloomThreshold;
     }
     if (state.fogEnabled && !scene.fog) {
       scene.fog = new THREE.FogExp2(state.background, state.fogDensity);
@@ -829,6 +863,12 @@ if (daysNumInput) {
   (document.getElementById('inp-tone-mapping') as HTMLSelectElement).addEventListener('change', e => {
     state.toneMapping = parseInt((e.target as HTMLSelectElement).value);
     syncPP();
+  });
+
+  // Intensity scale mode
+  (document.getElementById('inp-scale-mode') as HTMLSelectElement).addEventListener('change', e => {
+    state.scaleMode = (e.target as HTMLSelectElement).value as 'linear' | 'sqrt' | 'log';
+    scheduleRebuild();
   });
 
 // Grid type
@@ -1227,11 +1267,12 @@ async function bootstrap() {
     setSliderValue('inp-bloom-threshold', state.bloomThreshold);
     setSliderValue('inp-fog-density', state.fogDensity);
     setSelectValue('inp-tone-mapping', String(state.toneMapping));
+    setSelectValue('inp-scale-mode', state.scaleMode);
 
     // Initialize post-processing on first frame
     setTimeout(() => {
       if (bloomNode) {
-        bloomNode.strength.value = state.bloomEnabled ? state.bloomStrength : 0;
+        bloomNode.strength = state.bloomEnabled ? state.bloomStrength : 0;
       }
       applyPostProcessing();
     }, 100);
