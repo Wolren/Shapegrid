@@ -17,7 +17,7 @@
     "js-yaml": "^5.2.2",
     "puppeteer-core": "^22.0.0",
     "three": "^0.183.2",
-    "yargs": "^17.7.2"
+    "yargs": "^18.1.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
