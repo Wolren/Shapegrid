@@ -49,6 +49,8 @@ export const state: AppState = {
   toneMapping: 0,
   envMapEnabled: true,
   scaleMode: 'linear',
+  orgName: '',
+  includeOrgRepos: false,
   background: '#0d1117',
   palette: 'ocean',
   daysMode: 'last',

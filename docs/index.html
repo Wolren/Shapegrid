@@ -6,8 +6,8 @@
   <title>shapegrid — Activity Grid Viewer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"/>
-
-  <script type="module" crossorigin src="./assets/main-BeVaJjmQ.js"></script>
+
+  <script type="module" crossorigin src="./assets/main-DZ0thBuf.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/main-A_qetb1g.css">
 </head>
 
@@ -118,6 +118,21 @@
 
           <button id="btn-fetch">Load Contributions</button>
           <div id="status-line"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Language Stats</div>
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Include org repos</label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-include-org"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="row">
+            <label>Organization name</label>
+            <input type="text" id="inp-org-name" placeholder="org-name"/>
+          </div>
         </div>
 
         <div class="section">
@@ -490,6 +505,6 @@
 </div>
 
 <!-- Three.js - loaded via npm package -->
-
+
 </body>
 </html>

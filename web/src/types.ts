@@ -209,6 +209,8 @@ export interface AppState {
   toneMapping: number;
   envMapEnabled: boolean;
   scaleMode: 'linear' | 'sqrt' | 'log';
+  orgName: string;
+  includeOrgRepos: boolean;
   background: string;
   palette: string;
   daysMode: DaysMode;

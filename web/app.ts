@@ -370,8 +370,10 @@ function applyPostProcessing() {
 
 function loop() {
   requestAnimationFrame(loop);
+  const pr = renderer.getPixelRatio();
   const W = canvas.clientWidth, H = canvas.clientHeight;
-  if (renderer.domElement.width !== W || renderer.domElement.height !== H) {
+  const targetW = Math.floor(W * pr), targetH = Math.floor(H * pr);
+  if (renderer.domElement.width !== targetW || renderer.domElement.height !== targetH) {
     renderer.setSize(W, H, false);
     posCamera();
   }
@@ -871,6 +873,14 @@ if (daysNumInput) {
     scheduleRebuild();
   });
 
+  // ── Language org controls ──────────────────────────────────────────────
+  (document.getElementById('inp-include-org') as HTMLInputElement).addEventListener('change', e => {
+    state.includeOrgRepos = (e.target as HTMLInputElement).checked;
+  });
+  (document.getElementById('inp-org-name') as HTMLInputElement).addEventListener('change', e => {
+    state.orgName = (e.target as HTMLInputElement).value.trim();
+  });
+
 // Grid type
 (document.getElementById('inp-grid-type') as HTMLSelectElement).addEventListener('change', e => {
   const target = e.target as HTMLSelectElement;
@@ -1268,6 +1278,9 @@ async function bootstrap() {
     setSliderValue('inp-fog-density', state.fogDensity);
     setSelectValue('inp-tone-mapping', String(state.toneMapping));
     setSelectValue('inp-scale-mode', state.scaleMode);
+    setCheckboxValue('inp-include-org', state.includeOrgRepos);
+    const orgInput = document.getElementById('inp-org-name') as HTMLInputElement;
+    if (orgInput) orgInput.value = state.orgName;
 
     // Initialize post-processing on first frame
     setTimeout(() => {

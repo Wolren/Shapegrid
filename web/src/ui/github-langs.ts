@@ -3,15 +3,36 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { GitHubLanguage } from '../types';
-import { updateState } from './state';
+import { updateState, state } from './state';
 import { renderAllWidgets } from './dashboard';
 
-// ── GraphQL query ────────────────────────────────────────────────────────────
+// ── GraphQL queries ──────────────────────────────────────────────────────────
 
-const LANGUAGES_QUERY = `
+const USER_LANGUAGES_QUERY = `
 query($login:String!) {
   user(login:$login) {
-    repositories(first:50, ownerAffiliations:[OWNER], isFork:false) {
+    repositories(first:100, ownerAffiliations:[OWNER], isFork:false) {
+      nodes {
+        name
+        languages(first:10) {
+          edges {
+            size
+            node {
+              name
+              color
+            }
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+const ORG_LANGUAGES_QUERY = `
+query($login:String!) {
+  organization(login:$login) {
+    repositories(first:100, isFork:false) {
       nodes {
         name
         languages(first:10) {
@@ -39,85 +60,103 @@ query($login:String!) {
  */
 export async function fetchLanguages(
   username: string,
-  token: string
+  token: string,
+  orgName?: string
 ): Promise<GitHubLanguage[]> {
-  try {
-    const response = await fetch('https://api.github.com/graphql', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: LANGUAGES_QUERY,
-        variables: { login: username },
-      }),
-    });
-
-    if (!response.ok) {
-      console.warn(`GitHub API returned ${response.status} for language fetch`);
-      return [];
-    }
-
-    const json = await response.json();
-
-    if (json.errors?.length) {
-      console.warn('GitHub GraphQL errors (languages):', json.errors[0].message);
-      return [];
-    }
-
-    const repos = json.data?.user?.repositories?.nodes;
-    if (!repos || repos.length === 0) {
-      return [];
-    }
-
-    // ── Aggregate language bytes ──────────────────────────────────────────
+  const aggregate = async (query: string, login: string): Promise<Map<string, { name: string; color: string; size: number }>> => {
     const langMap = new Map<string, { name: string; color: string; size: number }>();
+    try {
+      const response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          variables: { login },
+        }),
+      });
 
-    for (const repo of repos) {
-      const edges = repo?.languages?.edges;
-      if (!edges) continue;
+      if (!response.ok) {
+        console.warn(`GitHub API returned ${response.status} for language fetch (${login})`);
+        return langMap;
+      }
 
-      for (const edge of edges) {
-        if (!edge?.node?.name) continue;
+      const json = await response.json();
 
-        const name = edge.node.name;
-        const color = edge.node.color || '#8b949e';
-        const size = edge.size || 0;
+      if (json.errors?.length) {
+        console.warn('GitHub GraphQL errors (languages):', json.errors[0].message);
+        return langMap;
+      }
 
-        const existing = langMap.get(name);
-        if (existing) {
-          existing.size += size;
-          // Use the first color seen (or update if current is placeholder)
-          if (existing.color === '#8b949e' && color !== '#8b949e') {
-            existing.color = color;
+      const container = json.data?.user || json.data?.organization;
+      const repos = container?.repositories?.nodes;
+      if (!repos || repos.length === 0) return langMap;
+
+      for (const repo of repos) {
+        const edges = repo?.languages?.edges;
+        if (!edges) continue;
+        for (const edge of edges) {
+          if (!edge?.node?.name) continue;
+          const name = edge.node.name;
+          const color = edge.node.color || '#8b949e';
+          const size = edge.size || 0;
+          const existing = langMap.get(name);
+          if (existing) {
+            existing.size += size;
+            if (existing.color === '#8b949e' && color !== '#8b949e') {
+              existing.color = color;
+            }
+          } else {
+            langMap.set(name, { name, color, size });
           }
-        } else {
-          langMap.set(name, { name, color, size });
         }
       }
+    } catch (err: any) {
+      console.warn(`Failed to fetch languages for ${login}:`, err.message);
     }
+    return langMap;
+  };
 
-    if (langMap.size === 0) return [];
+  // Fetch user repos
+  const userMap = await aggregate(USER_LANGUAGES_QUERY, username);
 
-    // ── Compute percentages ───────────────────────────────────────────────
-    const totalBytes = Array.from(langMap.values()).reduce((sum, l) => sum + l.size, 0);
-    if (totalBytes === 0) return [];
-
-    const languages: GitHubLanguage[] = Array.from(langMap.values())
-      .map(l => ({
-        name: l.name,
-        color: l.color,
-        size: l.size,
-        percentage: Math.round((l.size / totalBytes) * 10000) / 100, // 2 decimal places
-      }))
-      .sort((a, b) => b.percentage - a.percentage);
-
-    return languages;
-  } catch (err: any) {
-    console.warn('Failed to fetch GitHub languages:', err.message);
-    return [];
+  // Fetch org repos if requested
+  let orgMap = new Map<string, { name: string; color: string; size: number }>();
+  if (orgName && orgName.trim()) {
+    orgMap = await aggregate(ORG_LANGUAGES_QUERY, orgName.trim());
   }
+
+  // Merge org into user map
+  for (const [name, data] of orgMap) {
+    const existing = userMap.get(name);
+    if (existing) {
+      existing.size += data.size;
+      if (existing.color === '#8b949e' && data.color !== '#8b949e') {
+        existing.color = data.color;
+      }
+    } else {
+      userMap.set(name, { ...data });
+    }
+  }
+
+  if (userMap.size === 0) return [];
+
+  // Compute percentages
+  const totalBytes = Array.from(userMap.values()).reduce((sum, l) => sum + l.size, 0);
+  if (totalBytes === 0) return [];
+
+  const languages: GitHubLanguage[] = Array.from(userMap.values())
+    .map(l => ({
+      name: l.name,
+      color: l.color,
+      size: l.size,
+      percentage: Math.round((l.size / totalBytes) * 10000) / 100,
+    }))
+    .sort((a, b) => b.percentage - a.percentage);
+
+  return languages;
 }
 
 /**
@@ -135,7 +174,8 @@ export async function fetchAndUpdateLanguages(): Promise<void> {
     return;
   }
 
-  const languages = await fetchLanguages(user, token);
+  const orgName = state.includeOrgRepos ? state.orgName : undefined;
+  const languages = await fetchLanguages(user, token, orgName);
   updateState('languages', languages);
   renderAllWidgets();
 }
