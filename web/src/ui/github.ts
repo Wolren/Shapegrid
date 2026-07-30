@@ -13,7 +13,7 @@ async function fetchContributionsSingle(
   const q = `query($login:String!,$from:DateTime!,$to:DateTime!){user(login:$login){contributionsCollection(from:$from,to:$to){contributionCalendar{totalContributions weeks{contributionDays{date contributionCount color weekday}}}}}}`;
   const r = await fetch('https://api.github.com/graphql', {
     method: 'POST',
-    headers: { Authorization: `bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: q, variables: { login: username, from: from.toISOString(), to: to.toISOString() } }),
   });
   if (!r.ok) throw new Error(`GitHub API ${r.status}`);

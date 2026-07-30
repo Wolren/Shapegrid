@@ -1,20 +1,34 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Country boundary data
+// Country boundary data — loaded from Natural Earth via world-atlas
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { CountryData } from '../types';
+import { loadCountries, getLoadedCountries } from './country-loader';
 
-export const COUNTRIES: Record<string, CountryData> = {
-  US: { name: 'United States', coords: [[0.17,0.52],[0.19,0.48],[0.17,0.43],[0.14,0.42],[0.11,0.43],[0.08,0.41],[0.06,0.43],[0.04,0.47],[0.03,0.52],[0.04,0.57],[0.07,0.60],[0.05,0.64],[0.06,0.68],[0.08,0.71],[0.12,0.72],[0.15,0.70],[0.19,0.71],[0.23,0.69],[0.27,0.71],[0.31,0.70],[0.35,0.72],[0.39,0.71],[0.43,0.73],[0.47,0.72],[0.50,0.74],[0.54,0.73],[0.57,0.75],[0.61,0.73],[0.65,0.74],[0.69,0.72],[0.72,0.73],[0.76,0.71],[0.79,0.72],[0.82,0.70],[0.85,0.71],[0.88,0.69],[0.91,0.70],[0.94,0.68],[0.96,0.64],[0.97,0.59],[0.96,0.54],[0.94,0.50],[0.91,0.47],[0.87,0.45],[0.83,0.44],[0.79,0.46],[0.75,0.45],[0.71,0.47],[0.67,0.46],[0.63,0.48],[0.59,0.47],[0.55,0.49],[0.51,0.48],[0.47,0.50],[0.43,0.49],[0.39,0.51],[0.35,0.50],[0.31,0.52],[0.27,0.51],[0.23,0.53],[0.20,0.52]] },
-  CA: { name: 'Canada', coords: [[0.12,0.85],[0.08,0.82],[0.05,0.78],[0.03,0.73],[0.02,0.68],[0.04,0.63],[0.03,0.58],[0.05,0.53],[0.08,0.49],[0.12,0.46],[0.17,0.44],[0.22,0.43],[0.27,0.45],[0.32,0.44],[0.37,0.46],[0.42,0.45],[0.47,0.47],[0.52,0.46],[0.57,0.48],[0.62,0.47],[0.67,0.49],[0.72,0.48],[0.77,0.50],[0.82,0.49],[0.87,0.51],[0.91,0.54],[0.94,0.58],[0.96,0.63],[0.97,0.68],[0.95,0.73],[0.92,0.77],[0.88,0.80],[0.83,0.82],[0.78,0.83],[0.73,0.81],[0.68,0.83],[0.63,0.82],[0.58,0.84],[0.53,0.83],[0.48,0.85],[0.43,0.84],[0.38,0.86],[0.33,0.85],[0.28,0.87],[0.23,0.86],[0.18,0.87]] },
-  // ... (remaining countries - I'll use a placeholder since the full data is very large)
-};
+export const FEATURED_COUNTRIES = [
+  'US','CA','GB','FR','DE','IT','ES','JP','CN','KR','IN','AU','BR','MX','NL','SE','PL','NO','CH','AR',
+];
 
-export const FEATURED_COUNTRIES = ['US','CA','GB','FR','DE','IT','ES','JP','CN','KR','IN','AU','BR','MX','NL','SE'];
+let initPromise: Promise<void> | null = null;
+
+/** Call once at startup to preload country boundaries */
+export function initCountries(): Promise<void> {
+  if (!initPromise) {
+    initPromise = loadCountries().then(() => {});
+  }
+  return initPromise;
+}
+
+/** Get the countries map (may be empty before load completes) */
+export function getCountries(): Record<string, CountryData> {
+  return getLoadedCountries() || {};
+}
 
 export function getCountryList(): Array<{ code: string; name: string }> {
-  return Object.entries(COUNTRIES)
-    .map(([code, data]) => ({ code, name: data.name }))
+  const data = getLoadedCountries();
+  if (!data) return FEATURED_COUNTRIES.map(c => ({ code: c, name: c }));
+  return Object.entries(data)
+    .map(([code, d]) => ({ code, name: d.name }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -24,3 +38,16 @@ export function searchCountries(query: string): Array<{ code: string; name: stri
     c.name.toLowerCase().includes(lq) || c.code.toLowerCase().includes(lq)
   );
 }
+
+/** Legacy constant for backward compat — prefer getCountries() */
+export const COUNTRIES: Record<string, CountryData> = new Proxy({} as Record<string, CountryData>, {
+  get(_target, prop: string) {
+    return getLoadedCountries()?.[prop] ?? null;
+  },
+  has(_target, prop: string) {
+    return getLoadedCountries()?.[prop] !== undefined;
+  },
+  ownKeys() {
+    return Object.keys(getLoadedCountries() || {});
+  },
+});

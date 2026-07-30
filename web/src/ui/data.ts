@@ -8,6 +8,12 @@ import { generateGrid } from '../geometry/engine';
 import { scheduleRebuild } from './rebuild';
 import type { DataExport, GridResult, Cell, CellData } from '../types';
 
+// Safe textContent setter — guard against removed DOM elements
+function setText(id: string, text: string): void {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
 export async function loadData(): Promise<void> {
   const user = (document.getElementById('inp-user') as HTMLInputElement).value.trim();
   const token = (document.getElementById('inp-token') as HTMLInputElement).value.trim();
@@ -27,7 +33,7 @@ export async function loadData(): Promise<void> {
   try {
     const contrib = await fetchContributions(user, start, end, token);
     updateState('contributions', contrib);
-    (document.getElementById('stat-contrib') as HTMLElement).textContent = contrib.total.toLocaleString();
+    setText('stat-contrib', contrib.total.toLocaleString());
 
     const startStr = start.toISOString().slice(0, 10);
     const endStr = end.toISOString().slice(0, 10);
@@ -46,7 +52,7 @@ export async function loadData(): Promise<void> {
 
     setStatus(`\u2713 ${contrib.total} contributions \u00b7 @${user}`, 'ok');
     scheduleRebuild();
-    (document.getElementById('footer-gen') as HTMLElement).textContent = `generated ${new Date().toLocaleDateString()}`;
+    setText('footer-gen', `generated ${new Date().toLocaleDateString()}`);
   } catch (e: any) {
     setStatus(e.message, 'error');
   } finally {
@@ -56,11 +62,12 @@ export async function loadData(): Promise<void> {
 
 export function computeGrid(): void {
   updateState('grid', generateGrid(state.poly, { count: state.count, type: state.gridType, thr: state.coverage }));
-  (document.getElementById('stat-cells') as HTMLElement).textContent = String(state.grid!.cells.length);
+  setText('stat-cells', String(state.grid!.cells.length));
 }
 
 export function setStatus(msg: string, cls: string): void {
-  const el = document.getElementById('status-line')!;
+  const el = document.getElementById('status-line');
+  if (!el) return;
   el.textContent = msg;
   el.className = cls || '';
 }
@@ -82,7 +89,7 @@ export function loadDemo(): void {
     return { date: '', count, intensity: count / max };
   }));
   updateState('contributions', { username: 'demo', total: state.cellData.reduce((s, d) => s + d.count, 0), days: [] });
-  (document.getElementById('stat-contrib') as HTMLElement).textContent = state.contributions!.total.toLocaleString();
+  setText('stat-contrib', state.contributions!.total.toLocaleString());
 }
 
 /**
@@ -130,7 +137,7 @@ export function loadFromJson(data: DataExport): void {
   if (daysSlider) daysSlider.value = String(data.grid.count);
   if (daysNum) daysNum.value = String(data.grid.count);
   if (countNum) countNum.value = String(data.grid.count);
-  document.getElementById('val-days')!.textContent = String(data.grid.count);
+  setText('val-days', String(data.grid.count));
 
   // Grid type dropdown
   const gridTypeSelect = document.getElementById('inp-grid-type') as HTMLSelectElement;
@@ -165,9 +172,9 @@ export function loadFromJson(data: DataExport): void {
     total: data.totalContributions,
     days: [],
   });
-  (document.getElementById('stat-contrib') as HTMLElement).textContent = data.totalContributions.toLocaleString();
-  (document.getElementById('stat-cells') as HTMLElement).textContent = String(data.grid.cells.length);
-  (document.getElementById('footer-gen') as HTMLElement).textContent = `generated ${new Date(data.generated).toLocaleDateString()}`;
+  setText('stat-contrib', data.totalContributions.toLocaleString());
+  setText('stat-cells', String(data.grid.cells.length));
+  setText('footer-gen', `generated ${new Date(data.generated).toLocaleDateString()}`);
 }
 
 /**

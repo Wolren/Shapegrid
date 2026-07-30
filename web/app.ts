@@ -13,7 +13,24 @@ import { loadDemo, computeGrid, loadData, setStatus, loadFromUrl } from './src/u
 import { createPresets } from './src/data/presets';
 import { initPaletteUI } from './src/ui/palette-ui';
 import { scheduleRebuild, needsRebuild } from './src/ui/rebuild';
-import { COUNTRIES, FEATURED_COUNTRIES, searchCountries } from './src/data/countries';
+import { COUNTRIES, searchCountries, getCountryList, initCountries } from './src/data/countries';
+import { initToolbar, syncToolbarState } from './src/ui/toolbar';
+import { initMeasureOverlay, updateMeasureOverlay, handleMeasureClick, clearMeasureOverlay, isMeasuring } from './src/ui/measure';
+import { getEditor, setSelectedCells, cancelMeasurement } from './src/ui/editor-state';
+import { updateCellInfoWidget } from './src/ui/widget-cell-info';
+import { initWidgetManager } from './src/ui/widget-manager';
+import { fetchAndUpdateLanguages } from './src/ui/github-langs';
+import { renderAllWidgets } from './src/ui/dashboard';
+import './src/ui/widget-legend';
+import './src/ui/widget-stats';
+import './src/ui/widget-languages';
+import './src/ui/widget-cell-info';
+import './src/ui/widget-scale';
+import './src/ui/widget-coords';
+import './src/ui/widget-distribution';
+import './src/ui/widget-timeline';
+import './src/ui/widget-activity';
+import './src/ui/widget-overview';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Three.js Scene
@@ -126,7 +143,7 @@ function buildMesh() {
   scene.add(mesh);
 
   // Boundary outline
-  if (state.showBoundary) {
+  if (state.showBoundary && getEditor().layerVisibility.boundary) {
     const pts = state.poly.map(([x, y]) => new THREE.Vector3(x - .5, 0.02, y - .5));
     const bGeo = new THREE.BufferGeometry().setFromPoints(pts);
     const bMat = new THREE.LineBasicMaterial({ color: 0x666666 });
@@ -183,7 +200,7 @@ function buildCoordAxes() {
 
   const isGeo = state.coordSystem === 'wgs84' || state.coordSystem === 'mercator';
   const isFileLoaded = state.fileType !== null;
-  if (!isGeo || !state.geoBounds || !state.showCoordAxes || !isFileLoaded) return;
+  if (!isGeo || !state.geoBounds || !state.showCoordAxes || !isFileLoaded || !getEditor().layerVisibility.axes) return;
 
   coordAxesGroup = new THREE.Group();
   const { minLon, maxLon, minLat, maxLat } = state.geoBounds!;
@@ -295,6 +312,12 @@ function loop() {
   if (needsRebuild()) {
     buildMesh();
   }
+  // Update measurement overlay when measuring
+  const editor = getEditor();
+  if (editor.activeMeasurement || editor.measurements.length > 0) {
+    const rect = canvas.getBoundingClientRect();
+    updateMeasureOverlay(camera, rect);
+  }
   renderer.setClearColor(state.background, 1);
   renderer.render(scene, camera);
 }
@@ -353,6 +376,10 @@ canvas.addEventListener('mousemove', e => {
         tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
         tooltip.style.top = (e.clientY - rect.top - 28) + 'px';
         tooltip.classList.add('visible');
+        if (getEditor().activeTool === 'select') {
+          setSelectedCells([idx]);
+          updateCellInfoWidget();
+        }
         return;
       }
     }
@@ -360,6 +387,63 @@ canvas.addEventListener('mousemove', e => {
   tooltip.classList.remove('visible');
 });
 canvas.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Measurement tool — click handling on canvas
+// ══════════════════════════════════════════════════════════════════════════════
+
+let measureDragActive = false;
+
+canvas.addEventListener('mousedown', () => {
+  // Track whether this turns into a drag
+  measureDragActive = false;
+});
+
+canvas.addEventListener('mousemove', e => {
+  // If mouse moves too far during a measure click, cancel it
+  if (getEditor().activeTool === 'measureDistance' || getEditor().activeTool === 'measureArea') {
+    if (e.buttons > 0) measureDragActive = true;
+  }
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (measureDragActive) return; // Was a camera drag, not a click
+  const tool = getEditor().activeTool;
+  if (tool === 'measureDistance' || tool === 'measureArea') {
+    const rect = canvas.getBoundingClientRect();
+    const handled = handleMeasureClick(e.clientX, e.clientY, rect, camera);
+    if (handled) {
+      updateMeasureOverlay(camera, rect);
+    }
+  } else if (tool === 'select' && mesh) {
+    // Select cell under cursor
+    const rect = canvas.getBoundingClientRect();
+    const mx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const my = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(new THREE.Vector2(mx, my), camera);
+    const hits = raycaster.intersectObject(mesh);
+    if (hits.length > 0) {
+      const idx = hits[0].instanceId;
+      if (idx !== undefined) {
+        setSelectedCells([idx]);
+        updateCellInfoWidget();
+      }
+    } else {
+      setSelectedCells([]);
+      updateCellInfoWidget();
+    }
+  }
+});
+
+// Keyboard: Escape cancels measurement
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (isMeasuring()) {
+      cancelMeasurement();
+      clearMeasureOverlay();
+    }
+  }
+});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Draggable overlays (legend, stats bar)
@@ -423,105 +507,6 @@ window.addEventListener('mouseup', () => {
   overlayDrag.el.classList.remove('dragging');
   overlayDrag = null;
 });
-
-function applyOverlayPositions() {
-  const legend = document.getElementById('legend');
-  const stats = document.getElementById('stats-bar');
-  if (legend) {
-    legend.style.left = state.overlay.legendPos.x + '%';
-    legend.style.top = state.overlay.legendPos.y + '%';
-    legend.style.bottom = 'auto';
-    legend.style.right = 'auto';
-  }
-  if (stats) {
-    stats.style.left = state.overlay.statsPos.x + '%';
-    stats.style.top = state.overlay.statsPos.y + '%';
-    stats.style.right = 'auto';
-    stats.style.bottom = 'auto';
-  }
-}
-
-function applyOverlayStyles() {
-  const legend = document.getElementById('legend');
-  const statsBar = document.getElementById('stats-bar');
-  const legendBar = document.getElementById('legend-bar');
-  const legendLabels = legend?.querySelectorAll('.legend-label');
-
-  if (legend) legend.style.fontSize = state.overlay.legendFontSize + 'px';
-  if (legendLabels) legendLabels.forEach(l => (l as HTMLElement).style.fontSize = state.overlay.legendFontSize + 'px');
-  if (legendBar) legendBar.style.width = state.overlay.legendBarWidth + 'px';
-  if (statsBar) statsBar.style.fontSize = state.overlay.statsFontSize + 'px';
-  if (statsBar) statsBar.classList.toggle('inline', state.overlay.statsInline);
-}
-
-function initOverlayVisibility() {
-  const showLegend = document.getElementById('inp-show-legend') as HTMLInputElement;
-  const showStats = document.getElementById('inp-show-stats') as HTMLInputElement;
-  const statsInline = document.getElementById('inp-stats-inline') as HTMLInputElement;
-
-  const applyStatsInline = () => {
-    const stats = document.getElementById('stats-bar');
-    if (stats) stats.classList.toggle('inline', state.overlay.statsInline);
-  };
-
-  if (showLegend) {
-    showLegend.checked = state.overlay.showLegend;
-    showLegend.addEventListener('change', () => {
-      state.overlay.showLegend = showLegend.checked;
-      const legend = document.getElementById('legend');
-      if (legend) legend.style.display = state.overlay.showLegend ? '' : 'none';
-    });
-  }
-  if (showStats) {
-    showStats.checked = state.overlay.showStats;
-    showStats.addEventListener('change', () => {
-      state.overlay.showStats = showStats.checked;
-      const stats = document.getElementById('stats-bar');
-      if (stats) stats.style.display = state.overlay.showStats ? '' : 'none';
-    });
-  }
-  if (statsInline) {
-    statsInline.checked = state.overlay.statsInline;
-    statsInline.addEventListener('change', () => {
-      state.overlay.statsInline = statsInline.checked;
-      applyStatsInline();
-    });
-  }
-  // Apply inline state on init
-  applyStatsInline();
-}
-
-function resetLayout() {
-  state.overlay.legendPos = { x: 2, y: 86 };
-  state.overlay.statsPos = { x: 82, y: 1 };
-  state.overlay.legendFontSize = 10;
-  state.overlay.legendBarWidth = 80;
-  state.overlay.statsFontSize = 10;
-  state.overlay.showLegend = true;
-  state.overlay.showStats = true;
-  state.overlay.statsInline = false;
-  applyOverlayPositions();
-  applyOverlayStyles();
-  const legend = document.getElementById('legend');
-  const stats = document.getElementById('stats-bar');
-  if (legend) legend.style.display = '';
-  if (stats) stats.style.display = '';
-  const cbLegend = document.getElementById('inp-show-legend') as HTMLInputElement;
-  const cbStats = document.getElementById('inp-show-stats') as HTMLInputElement;
-  const cbInline = document.getElementById('inp-stats-inline') as HTMLInputElement;
-  if (cbLegend) cbLegend.checked = true;
-  if (cbStats) cbStats.checked = true;
-  if (cbInline) cbInline.checked = false;
-  // Reset slider values too
-  const setVal = (id: string, val: number) => {
-    const el = document.getElementById(id) as HTMLInputElement;
-    if (el) el.value = String(val);
-  };
-  setVal('inp-legend-font-size', 10);
-  setVal('inp-legend-bar-width', 80);
-  setVal('inp-stats-font-size', 10);
-  updateLabels();
-}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Export Config JSON
@@ -653,9 +638,6 @@ function updateLabels() {
   el('val-coord-axes-y-offset')!.textContent = state.coordAxesYOffset.toFixed(2);
   el('val-coord-axes-tick')!.textContent = state.coordAxesTickLength.toFixed(3);
   el('val-coord-axes-label-off')!.textContent = state.coordAxesLabelOffset.toFixed(2);
-  el('val-legend-font')!.textContent = String(state.overlay.legendFontSize);
-  el('val-legend-bar-w')!.textContent = state.overlay.legendBarWidth + 'px';
-  el('val-stats-font')!.textContent = String(state.overlay.statsFontSize);
 }
 
 // Sliders
@@ -813,27 +795,77 @@ if (daysNumInput) {
 });
 
 // Fetch button
-(document.getElementById('btn-fetch') as HTMLButtonElement).addEventListener('click', loadData);
+(document.getElementById('btn-fetch') as HTMLButtonElement).addEventListener('click', async () => {
+  await loadData();
+  await fetchAndUpdateLanguages();
+});
 
 // Export PNG
 (document.getElementById('btn-export') as HTMLButtonElement).addEventListener('click', () => {
-  const w = +(document.getElementById('inp-export-w') as HTMLInputElement).value;
-  const h = +(document.getElementById('inp-export-h') as HTMLInputElement).value;
+  let w = +(document.getElementById('inp-export-w') as HTMLInputElement).value;
+  let h = +(document.getElementById('inp-export-h') as HTMLInputElement).value;
+  const autocrop = (document.getElementById('inp-export-autocrop') as HTMLInputElement).checked;
+  const vertical = (document.getElementById('inp-export-vertical') as HTMLInputElement).checked;
+  const padding = +(document.getElementById('inp-export-pad') as HTMLInputElement).value || 40;
+
+  // Swap for vertical/portrait
+  if (vertical) { const t = w; w = h; h = t; }
 
   const offscreen = document.createElement('canvas');
   offscreen.width = w; offscreen.height = h;
   const ctx = offscreen.getContext('2d')!;
 
-  // Render at export size
   const origW = renderer.domElement.width, origH = renderer.domElement.height;
-  renderer.setSize(w, h, false);
-  posCamera();
+  const origLeft = camera.left, origRight = camera.right;
+  const origTop = camera.top, origBottom = camera.bottom;
+
+  if (autocrop && state.grid && state.grid.cells.length > 0) {
+    // Compute bounding box of grid cells in world coords
+    const xs = state.grid.cells.map(c => c.cx);
+    const ys = state.grid.cells.map(c => c.cy);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const spanX = maxX - minX || 1;
+    const spanY = maxY - minY || 1;
+    const asp = w / h;
+
+    // Add padding proportionally
+    const padWorldX = (padding / w) * spanX;
+    const padWorldY = (padding / h) * spanY;
+
+    // Center the grid in the view
+    const centerX = (minX + maxX) / 2 - 0.5;
+    const centerY = (minY + maxY) / 2 - 0.5;
+
+    // Fit with aspect ratio
+    let viewW = (spanX + padWorldX * 2) / 2;
+    let viewH = (spanY + padWorldY * 2) / 2;
+    if (viewW / viewH > asp) viewH = viewW / asp;
+    else viewW = viewH * asp;
+
+    camera.left = -viewW;
+    camera.right = viewW;
+    camera.top = viewH;
+    camera.bottom = -viewH;
+
+    // Shift camera to center the grid
+    camera.position.x = centerX;
+    camera.position.y = 0.5;
+    camera.position.z = centerY;
+    camera.lookAt(centerX, 0, centerY);
+
+    camera.updateProjectionMatrix();
+  } else {
+    renderer.setSize(w, h, false);
+    posCamera();
+  }
+
   renderer.render(scene, camera);
 
   // Copy to offscreen canvas
   ctx.fillStyle = state.background;
   ctx.fillRect(0, 0, w, h);
-  ctx.drawImage(canvas, 0, 0, w, h);
+  ctx.drawImage(renderer.domElement, 0, 0, w, h);
 
   // Download
   const link = document.createElement('a');
@@ -841,18 +873,18 @@ if (daysNumInput) {
   link.href = offscreen.toDataURL('image/png');
   link.click();
 
-  // Restore original size
+  // Restore
   renderer.setSize(origW, origH, false);
+  camera.left = origLeft; camera.right = origRight;
+  camera.top = origTop; camera.bottom = origBottom;
+  camera.position.x = 0; camera.position.y = 0; camera.position.z = 0;
+  camera.updateProjectionMatrix();
   posCamera();
 });
 
 // Export Config button
 (document.getElementById('btn-export-config') as HTMLButtonElement).addEventListener('click', exportConfig);
-
-// Reset layout button
-(document.getElementById('btn-reset-layout') as HTMLButtonElement).addEventListener('click', resetLayout);
-
-// Overlay drag init
+// Create Export Config
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -892,17 +924,25 @@ const countrySearch = document.getElementById('country-search') as HTMLInputElem
 const countryDropdown = document.getElementById('country-dropdown')!;
 const countryGrid = document.getElementById('country-grid')!;
 
-function renderFeaturedCountries() {
+function renderCountryList() {
   countryGrid.innerHTML = '';
-  FEATURED_COUNTRIES.forEach(code => {
-    const country = COUNTRIES[code];
-    if (!country) return;
+  const entries = getCountryList();
+  if (entries.length === 0) {
+    countryGrid.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted);font-size:10px">Loading countries...</div>';
+    return;
+  }
+  for (const { code, name } of entries) {
     const btn = document.createElement('button');
     btn.className = 'country-grid-item';
-    btn.innerHTML = `<span>${country.name}</span>`;
+    btn.innerHTML = `<span class="country-name">${name}</span><span class="country-code">${code}</span>`;
     btn.addEventListener('click', () => selectCountry(code));
     countryGrid.appendChild(btn);
-  });
+  }
+}
+
+// Replace the FEATURED_COUNTRIES call with the full list
+function renderFeaturedCountries() {
+  renderCountryList();
 }
 
 function selectCountry(code: string) {
@@ -925,22 +965,33 @@ countrySearch.addEventListener('input', () => {
   const q = countrySearch.value.trim();
   if (!q) {
     countryDropdown.innerHTML = '';
-    renderFeaturedCountries();
+    countryDropdown.classList.remove('visible');
+    countryGrid.style.display = '';
+    renderCountryList();
     return;
   }
   const results = searchCountries(q);
   countryDropdown.innerHTML = '';
-  results.slice(0, 10).forEach(c => {
+  countryGrid.style.display = 'none';
+  if (results.length === 0) {
+    countryDropdown.innerHTML = '<div class="country-option" style="color:var(--muted);font-style:italic">No matches</div>';
+    countryDropdown.classList.add('visible');
+    return;
+  }
+  results.slice(0, 15).forEach(c => {
     const item = document.createElement('div');
-    item.className = 'country-dropdown-item';
-    item.innerHTML = `<span>${c.name} (${c.code})</span>`;
+    item.className = 'country-option';
+    item.innerHTML = `<span>${c.name}</span><span class="country-code">${c.code}</span>`;
     item.addEventListener('click', () => {
       countrySearch.value = c.name;
       countryDropdown.innerHTML = '';
+      countryDropdown.classList.remove('visible');
+      countryGrid.style.display = '';
       selectCountry(c.code);
     });
     countryDropdown.appendChild(item);
   });
+  countryDropdown.classList.add('visible');
 });
 
 renderFeaturedCountries();
@@ -1113,26 +1164,71 @@ async function bootstrap() {
 
     // Init overlay drag and visibility
     initOverlayDrag();
-    initOverlayVisibility();
 
-    // Legend size sliders
-    ['legend-font-size', 'legend-bar-width', 'stats-font-size'].forEach(key => {
-      const el = document.getElementById(`inp-${key}`) as HTMLInputElement;
-      if (el) {
-        el.addEventListener('input', () => {
-          const stateKey = key.replace(/-([a-z])/g, (_, c) => c.toUpperCase()) as 'legendFontSize' | 'legendBarWidth' | 'statsFontSize';
-          state.overlay[stateKey] = parseFloat(el.value) as any;
-          applyOverlayStyles();
-          updateLabels();
-        });
-      }
+    // Preload country boundaries
+    initCountries().then(() => {
+      renderFeaturedCountries();
     });
-    applyOverlayPositions();
-    applyOverlayStyles();
-    // Set overlay slider values
-    setSliderValue('inp-legend-font-size', state.overlay.legendFontSize);
-    setSliderValue('inp-legend-bar-width', state.overlay.legendBarWidth);
-    setSliderValue('inp-stats-font-size', state.overlay.statsFontSize);
+
+    // Render dashboard widgets
+    renderAllWidgets();
+
+    // ── Editor panel initialisation ────────────────────────────────────────
+
+    // Toolbar — with action callbacks
+    initToolbar({
+      zoomToFit: () => {
+        if (!state.grid || state.grid.cells.length === 0) return;
+        const xs = state.grid.cells.map(c => c.cx);
+        const ys = state.grid.cells.map(c => c.cy);
+        const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) || 1;
+        state.zoom = Math.max(0.3, Math.min(2.5, span * 0.8));
+        const asp = canvas.clientWidth / canvas.clientHeight;
+        camera.left = -state.zoom * asp / 2; camera.right = state.zoom * asp / 2;
+        camera.top = state.zoom / 2; camera.bottom = -state.zoom / 2;
+        camera.updateProjectionMatrix();
+      },
+      resetCamera: () => {
+        state.yaw = 30; state.pitch = 45; state.zoom = 1.3;
+        syncToDom('yaw'); syncToDom('pitch');
+        posCamera();
+        scheduleRebuild();
+      },
+      topDownView: () => {
+        state.yaw = 0; state.pitch = 89; state.zoom = 1.3;
+        syncToDom('yaw'); syncToDom('pitch');
+        posCamera();
+        scheduleRebuild();
+      },
+      screenshot: () => {
+        // Reuse export PNG logic
+        const w = +(document.getElementById('inp-export-w') as HTMLInputElement).value;
+        const h = +(document.getElementById('inp-export-h') as HTMLInputElement).value;
+        const offscreen = document.createElement('canvas');
+        offscreen.width = w; offscreen.height = h;
+        const ctx = offscreen.getContext('2d')!;
+        const origW = renderer.domElement.width, origH = renderer.domElement.height;
+        renderer.setSize(w, h, false);
+        posCamera();
+        renderer.render(scene, camera);
+        ctx.fillStyle = state.background;
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(canvas, 0, 0, w, h);
+        const link = document.createElement('a');
+        link.download = `shapegrid-${Date.now()}.png`;
+        link.href = offscreen.toDataURL('image/png');
+        link.click();
+        renderer.setSize(origW, origH, false);
+        posCamera();
+      },
+    });
+    syncToolbarState();
+
+    // Measurement overlay
+    initMeasureOverlay();
+
+    // Dashboard widget manager
+    initWidgetManager();
 
     // Hide overlay
     setTimeout(() => { overlay.classList.add('hidden'); }, 400);

@@ -5,6 +5,8 @@
 import type { AppState } from '../types';
 import { createPresets } from '../data/presets';
 import { norm } from '../geometry/projection';
+import { defaultEditorState } from './editor-state';
+import { getDefaultDashboard } from './dashboard';
 
 // Initialize presets after norm is available
 const PRESETS = createPresets(norm);
@@ -55,6 +57,9 @@ export const state: AppState = {
     statsFontSize: 10,
     statsInline: false,
   },
+  dashboard: getDefaultDashboard(),
+  languages: [],
+  editor: { ...defaultEditorState },
 };
 
 export function updateState<K extends keyof AppState>(key: K, value: AppState[K]) {
