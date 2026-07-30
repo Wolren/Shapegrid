@@ -23,7 +23,7 @@ export const state: AppState = {
   coordSystem: null,
   gridType: 'hex',
   count: 365,
-  gap: 0.08,
+  gap: 0,
   coverage: 0.3,
   showBoundary: false,
   showCoordAxes: true,
