@@ -147,10 +147,9 @@ function buildMesh() {
     const s = cellSize * (1 - gap);
     geo = new THREE.BoxGeometry(s, 1, s);
   } else {
-    // Hex grid from genHex spaces cells cs*0.75 apart horizontally.
-    // CylinderGeometry hexagon's flat-to-flat width = r * sqrt(3).
-    // For touching: r * sqrt(3) = cs * 0.75  →  r = cs * 0.75 / sqrt(3)
-    const r = cellSize * (0.75 / Math.sqrt(3)) * (1 - gap);
+    // Hex grid from genHex has center-to-center distance = cs.
+    // For touching: r * sqrt(3) = cs  →  r = cs / sqrt(3)
+    const r = cellSize / Math.sqrt(3) * (1 - gap);
     geo = new THREE.CylinderGeometry(r, r, 1, 6);
   }
 

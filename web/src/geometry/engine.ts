@@ -49,10 +49,13 @@ export function genSquare(poly: Point2D[], cs: number, thr = 0.3): Cell[] {
 export function genHex(poly: Point2D[], cs: number, thr = 0.3): Cell[] {
   const { minX, minY, maxX, maxY } = bbox(poly);
   const hw = cs / 2, hh = cs * Math.sqrt(3) / 2, cells: Cell[] = [];
-  const cols = Math.ceil((maxX - minX) / (cs * .75)) + 3, rows = Math.ceil((maxY - minY) / (hh * 2)) + 3;
+  // Proper pointy-topped hex grid with center-to-center distance = cs
+  const xStep = cs * Math.sqrt(3) / 2;
+  const zStep = cs * 1.5;
+  const cols = Math.ceil((maxX - minX) / xStep) + 3, rows = Math.ceil((maxY - minY) / zStep) + 3;
   for (let col = -1; col < cols; col++)
     for (let row = -1; row < rows; row++) {
-      const cx = minX + col * cs * .75, cy = minY + (col % 2 === 0 ? row : row + .5) * hh * 2;
+      const cx = minX + col * xStep, cy = minY + (col % 2 === 0 ? row : row + 0.5) * zStep;
       const cov = cellCov(cx, cy, hw, hh, poly);
       if (cov >= thr) cells.push({ cx, cy, col, row, coverage: cov });
     }
@@ -85,6 +88,6 @@ export function generateGrid(poly: Point2D[], opts: GridOptions): GridResult {
     if (b.coverage !== a.coverage) return b.coverage - a.coverage;
     return ((a.cx - cx0) ** 2 + (a.cy - cy0) ** 2) - ((b.cx - cx0) ** 2 + (b.cy - cy0) ** 2);
   }).slice(0, count);
-  ranked.sort((a, b) => { const d = Math.round((a.cy - b.cy) / (cs * .5)); return d || a.cx - b.cx; });
+  ranked.sort((a, b) => { const d = Math.round((a.cy - b.cy) / (cs * 0.75)); return d || a.cx - b.cx; });
   return { cells: ranked, cellSize: cs, gridType: type };
 }
