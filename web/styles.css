@@ -66,17 +66,61 @@
       padding: 2px 4px;
     }
 
-    /* Theme presets */
+    /* Theme presets — editor theme cards */
     .theme-presets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .theme-card {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 7px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .theme-card:hover {
+      border-color: var(--text);
+      background: var(--surface3);
+    }
+    .theme-card.active {
+      border-color: var(--accent);
+      background: var(--surface3);
+    }
+    .theme-card-name {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.03em;
+    }
+    .theme-card.active .theme-card-name {
+      color: var(--accent);
+    }
+    .theme-card-strip {
+      display: flex;
+      gap: 2px;
+    }
+    .theme-card-chip {
+      flex: 1;
+      height: 8px;
+      border-radius: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* Widget theme selector bar */
+    .widget-theme-bar {
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
-      margin-top: 8px;
+      margin-bottom: 8px;
     }
-    .theme-preset-btn {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+    .widget-theme-btn {
       font-size: 9px;
       font-family: var(--mono);
       color: var(--muted);
@@ -87,17 +131,14 @@
       cursor: pointer;
       transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
-    .theme-preset-btn:hover {
+    .widget-theme-btn:hover {
       color: var(--text);
       border-color: var(--text);
       background: var(--surface3);
     }
-    .theme-preset-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 3px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      flex-shrink: 0;
+    .widget-theme-btn.active {
+      color: var(--accent);
+      border-color: var(--accent);
     }
 
     /* Color picker: swatch + popover */

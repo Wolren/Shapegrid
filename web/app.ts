@@ -1545,7 +1545,9 @@ const DEFAULT_THEME: ThemeColors = {
   muted: '#8b949e',
 };
 
-// One-click theme presets for the Theme Colors section.
+// One-click theme presets for the Editor Colors section. Every theme defines
+// the full 9-color set: accent, accent2, background, surface, surface2,
+// surface3, border, text, muted.
 const THEME_PRESETS: { name: string; theme: ThemeColors }[] = [
   { name: 'GitHub', theme: DEFAULT_THEME },
   {
@@ -1580,15 +1582,140 @@ const THEME_PRESETS: { name: string; theme: ThemeColors }[] = [
       border: '#333333', text: '#f0f0f0', muted: '#9a9a9a',
     },
   },
+  {
+    name: 'Midnight',
+    theme: {
+      accent: '#a78bfa', accent2: '#818cf8',
+      background: '#07070f', surface: '#0d0d1a', surface2: '#151528', surface3: '#1f1f38',
+      border: '#2e2e4d', text: '#e5e7ff', muted: '#8d8db3',
+    },
+  },
+  {
+    name: 'Aurora',
+    theme: {
+      accent: '#2dd4bf', accent2: '#34d399',
+      background: '#04100d', surface: '#071713', surface2: '#0d241e', surface3: '#17352c',
+      border: '#23503f', text: '#dcfce7', muted: '#7fb8a5',
+    },
+  },
+  {
+    name: 'Cherry',
+    theme: {
+      accent: '#f87171', accent2: '#fb7185',
+      background: '#120606', surface: '#1c0a0a', surface2: '#2b1111', surface3: '#3f1a1a',
+      border: '#5c2626', text: '#ffe4e4', muted: '#c98f8f',
+    },
+  },
+  {
+    name: 'Amber',
+    theme: {
+      accent: '#fbbf24', accent2: '#f59e0b',
+      background: '#120b02', surface: '#1a1206', surface2: '#271b0a', surface3: '#392813',
+      border: '#53391a', text: '#fef3c7', muted: '#c9a76b',
+    },
+  },
+  {
+    name: 'Cyber',
+    theme: {
+      accent: '#22d3ee', accent2: '#e879f9',
+      background: '#04040d', surface: '#0a0a18', surface2: '#111129', surface3: '#1c1c3d',
+      border: '#2c2c55', text: '#d9f4ff', muted: '#8fa3c9',
+    },
+  },
+  {
+    name: 'Slate',
+    theme: {
+      accent: '#60a5fa', accent2: '#94a3b8',
+      background: '#0a0e14', surface: '#0f141c', surface2: '#161d28', surface3: '#202936',
+      border: '#2d3947', text: '#e2e8f0', muted: '#7c8aa0',
+    },
+  },
+  {
+    name: 'Ember',
+    theme: {
+      accent: '#ff6b35', accent2: '#ffb703',
+      background: '#150a04', surface: '#1f0f06', surface2: '#2e1608', surface3: '#42200b',
+      border: '#5c2e10', text: '#ffe8d6', muted: '#c9a184',
+    },
+  },
+];
+
+// Widget accent palettes: one coherent accent per widget, applied across the
+// whole Widget Colors section. 'Follow editor' clears all widget accents so
+// every widget uses the editor accent.
+const WIDGET_THEMES: { name: string; accents: Record<string, string> }[] = [
+  { name: 'Follow editor', accents: {} },
+  {
+    name: 'Neon',
+    accents: {
+      legend: '#39d353', stats: '#58a6ff', languages: '#d29922', cellInfo: '#f778ba',
+      scaleBar: '#39d353', coordinates: '#7d8590', distribution: '#f78166', timeline: '#58a6ff',
+      activity: '#a371f7', topCells: '#f778ba', weekday: '#39d353', streak: '#f78166',
+      monthly: '#58a6ff', geo: '#a371f7', minimap: '#39d353',
+    },
+  },
+  {
+    name: 'Cool',
+    accents: {
+      legend: '#2dd4bf', stats: '#38bdf8', languages: '#34d399', cellInfo: '#60a5fa',
+      scaleBar: '#2dd4bf', coordinates: '#7d8590', distribution: '#22d3ee', timeline: '#38bdf8',
+      activity: '#6366f1', topCells: '#60a5fa', weekday: '#34d399', streak: '#2dd4bf',
+      monthly: '#38bdf8', geo: '#6366f1', minimap: '#2dd4bf',
+    },
+  },
+  {
+    name: 'Warm',
+    accents: {
+      legend: '#fbbf24', stats: '#fb923c', languages: '#f59e0b', cellInfo: '#f472b6',
+      scaleBar: '#fbbf24', coordinates: '#7d8590', distribution: '#f87171', timeline: '#fb923c',
+      activity: '#f59e0b', topCells: '#f472b6', weekday: '#fbbf24', streak: '#f87171',
+      monthly: '#fb923c', geo: '#f59e0b', minimap: '#fbbf24',
+    },
+  },
+  {
+    name: 'Pastel',
+    accents: {
+      legend: '#86efac', stats: '#93c5fd', languages: '#fcd34d', cellInfo: '#f9a8d4',
+      scaleBar: '#86efac', coordinates: '#9ca3af', distribution: '#fdba74', timeline: '#93c5fd',
+      activity: '#c4b5fd', topCells: '#f9a8d4', weekday: '#86efac', streak: '#fdba74',
+      monthly: '#93c5fd', geo: '#c4b5fd', minimap: '#86efac',
+    },
+  },
 ];
 
 /**
- * Widget Colors section (Theme tab): one accent picker per widget, logically
- * separate from the editor theme. Widgets fall back to the editor accent.
+ * Widget Colors section (Theme tab): widget theme bar + one accent picker per
+ * widget, logically separate from the editor theme. Widgets fall back to the
+ * editor accent when left on 'theme'.
  */
+const widgetColorPickers: Record<string, ColorPicker> = {};
+
 function initThemeWidgetColors(): void {
   const host = document.getElementById('theme-widget-colors');
   if (!host) return;
+
+  // Widget theme selector bar
+  const bar = document.createElement('div');
+  bar.className = 'widget-theme-bar';
+  for (const wt of WIDGET_THEMES) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'widget-theme-btn';
+    btn.textContent = wt.name;
+    btn.title = `Apply the ${wt.name} widget palette`;
+    btn.addEventListener('click', () => {
+      for (const { id } of listWidgetMeta()) {
+        const hex = wt.accents[id] || '';
+        setWidgetSetting(id, 'accent', hex);
+        widgetColorPickers[id]?.setValue(hex || state.theme.accent);
+      }
+      renderAllWidgets();
+    });
+    bar.appendChild(btn);
+  }
+  host.appendChild(bar);
+
+  // Per-widget accent rows
   for (const { id, title } of listWidgetMeta()) {
     const row = document.createElement('div');
     row.className = 'theme-row';
@@ -1617,8 +1744,17 @@ function initThemeWidgetColors(): void {
         renderAllWidgets();
       },
     }, row);
+    widgetColorPickers[id] = picker;
 
     host.appendChild(row);
+  }
+}
+
+const themeCards: Record<string, HTMLElement> = {};
+
+function setActiveThemeCard(name: string): void {
+  for (const [n, el] of Object.entries(themeCards)) {
+    el.classList.toggle('active', n === name);
   }
 }
 
@@ -1626,25 +1762,41 @@ function initThemePresets(): void {
   const host = document.getElementById('theme-presets');
   if (!host) return;
   for (const preset of THEME_PRESETS) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'theme-preset-btn';
-    btn.title = `Apply the ${preset.name} theme`;
-    const dot = document.createElement('span');
-    dot.className = 'theme-preset-dot';
-    dot.style.background = preset.theme.accent;
-    const label = document.createElement('span');
-    label.textContent = preset.name;
-    btn.appendChild(dot);
-    btn.appendChild(label);
-    btn.addEventListener('click', () => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'theme-card';
+    card.title = `Apply the ${preset.name} theme`;
+
+    const name = document.createElement('div');
+    name.className = 'theme-card-name';
+    name.textContent = preset.name;
+
+    const strip = document.createElement('div');
+    strip.className = 'theme-card-strip';
+    const preview = [
+      preset.theme.accent, preset.theme.accent2, preset.theme.background,
+      preset.theme.surface2, preset.theme.surface3, preset.theme.border, preset.theme.text,
+    ];
+    for (const color of preview) {
+      const chip = document.createElement('span');
+      chip.className = 'theme-card-chip';
+      chip.style.background = color;
+      strip.appendChild(chip);
+    }
+
+    card.appendChild(name);
+    card.appendChild(strip);
+    card.addEventListener('click', () => {
       updateState('theme', { ...preset.theme });
       applyTheme();
       syncThemeInputs();
       renderAllWidgets();
+      setActiveThemeCard(preset.name);
     });
-    host.appendChild(btn);
+    host.appendChild(card);
+    themeCards[preset.name] = card;
   }
+  setActiveThemeCard('GitHub');
 }
 
 const themePickers: Partial<Record<keyof ThemeColors, ColorPicker>> = {};
@@ -1699,6 +1851,7 @@ function initThemeControls(): void {
     applyTheme();
     syncThemeInputs();
     renderAllWidgets();
+    setActiveThemeCard('GitHub');
   });
 }
 
