@@ -30,6 +30,7 @@ import { updateCellInfoWidget } from './src/ui/widget-cell-info';
 import { initWidgetManager } from './src/ui/widget-manager';
 import { fetchAndUpdateLanguages } from './src/ui/github-langs';
 import { renderAllWidgets } from './src/ui/dashboard';
+import { createColorPicker, type ColorPicker } from './src/ui/color-picker';
 import './src/ui/widget-legend';
 import './src/ui/widget-stats';
 import './src/ui/widget-languages';
@@ -1544,6 +1545,70 @@ const DEFAULT_THEME: ThemeColors = {
   muted: '#8b949e',
 };
 
+// One-click theme presets for the Theme Colors section.
+const THEME_PRESETS: { name: string; theme: ThemeColors }[] = [
+  { name: 'GitHub', theme: DEFAULT_THEME },
+  {
+    name: 'Forest',
+    theme: {
+      accent: '#58d68d', accent2: '#2e86c1',
+      background: '#0a0f0d', surface: '#0f1613', surface2: '#182420', surface3: '#24362e',
+      border: '#2f4a3e', text: '#e8f5e9', muted: '#8fae9e',
+    },
+  },
+  {
+    name: 'Ocean',
+    theme: {
+      accent: '#38bdf8', accent2: '#6366f1',
+      background: '#060b13', surface: '#0b1220', surface2: '#131c2e', surface3: '#1e2a40',
+      border: '#2b3a56', text: '#e2e8f0', muted: '#7f8ea3',
+    },
+  },
+  {
+    name: 'Sunset',
+    theme: {
+      accent: '#fb923c', accent2: '#e879f9',
+      background: '#120a08', surface: '#1a0f0b', surface2: '#2a1710', surface3: '#3d2318',
+      border: '#52301f', text: '#fdeee3', muted: '#c2a394',
+    },
+  },
+  {
+    name: 'Mono',
+    theme: {
+      accent: '#c9d1d9', accent2: '#8b949e',
+      background: '#0a0a0a', surface: '#101010', surface2: '#181818', surface3: '#242424',
+      border: '#333333', text: '#f0f0f0', muted: '#9a9a9a',
+    },
+  },
+];
+
+function initThemePresets(): void {
+  const host = document.getElementById('theme-presets');
+  if (!host) return;
+  for (const preset of THEME_PRESETS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'theme-preset-btn';
+    btn.title = `Apply the ${preset.name} theme`;
+    const dot = document.createElement('span');
+    dot.className = 'theme-preset-dot';
+    dot.style.background = preset.theme.accent;
+    const label = document.createElement('span');
+    label.textContent = preset.name;
+    btn.appendChild(dot);
+    btn.appendChild(label);
+    btn.addEventListener('click', () => {
+      updateState('theme', { ...preset.theme });
+      applyTheme();
+      syncThemeInputs();
+      renderAllWidgets();
+    });
+    host.appendChild(btn);
+  }
+}
+
+const themePickers: Partial<Record<keyof ThemeColors, ColorPicker>> = {};
+
 /** Apply the current theme to the CSS custom properties (live site-wide). */
 function applyTheme(): void {
   const root = document.documentElement;
@@ -1554,31 +1619,38 @@ function applyTheme(): void {
 
 function syncThemeInputs(): void {
   for (const { key, id } of THEME_KEYS) {
-    const picker = document.getElementById(id) as HTMLInputElement | null;
+    const picker = themePickers[key];
+    if (picker) picker.setValue(state.theme[key]);
     const hex = document.getElementById(`${id}-hex`) as HTMLInputElement | null;
-    if (picker) picker.value = state.theme[key];
     if (hex) hex.value = state.theme[key];
   }
 }
 
 function initThemeControls(): void {
   for (const { key, id } of THEME_KEYS) {
-    const picker = document.getElementById(id) as HTMLInputElement | null;
+    const host = document.getElementById(id) as HTMLInputElement | null;
     const hex = document.getElementById(`${id}-hex`) as HTMLInputElement | null;
-    if (!picker) continue;
+    if (!host) continue;
     const apply = (v: string): void => {
       if (!/^#([0-9a-f]{6})$/i.test(v)) return;
       updateState('theme', { ...state.theme, [key]: v.toLowerCase() });
       applyTheme();
       renderAllWidgets(); // widgets fall back to the theme accent
     };
-    picker.addEventListener('input', () => {
-      if (hex) hex.value = picker.value;
-      apply(picker.value);
+    // Replace the native color input with the swatch + popover picker
+    const picker = createColorPicker({
+      value: state.theme[key],
+      onChange: (v) => {
+        if (hex) hex.value = v;
+        apply(v);
+      },
+      onCommit: apply,
     });
+    themePickers[key] = picker;
+    host.replaceWith(picker.el);
     hex?.addEventListener('change', () => {
       const v = hex.value.trim();
-      if (/^#([0-9a-f]{6})$/i.test(v)) picker.value = v.toLowerCase();
+      if (/^#([0-9a-f]{6})$/i.test(v)) picker.setValue(v.toLowerCase());
       apply(v);
     });
   }
@@ -2029,6 +2101,7 @@ async function bootstrap() {
 
     // Theme colors (applies defaults, wires the pickers)
     initThemeControls();
+    initThemePresets();
     applyTheme();
     syncThemeInputs();
 

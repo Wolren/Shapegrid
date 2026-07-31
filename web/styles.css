@@ -66,6 +66,111 @@
       padding: 2px 4px;
     }
 
+    /* Theme presets */
+    .theme-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .theme-preset-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3px 7px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .theme-preset-btn:hover {
+      color: var(--text);
+      border-color: var(--text);
+      background: var(--surface3);
+    }
+    .theme-preset-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      flex-shrink: 0;
+    }
+
+    /* Color picker: swatch + popover */
+    .cp-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .cp-swatch {
+      width: 34px;
+      height: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      padding: 0;
+      transition: border-color 0.15s;
+      background-size: 100% 100%;
+    }
+    .cp-swatch:hover {
+      border-color: var(--text);
+    }
+    .cp-popover {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 60;
+      width: 190px;
+      padding: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+    .cp-popover hex-color-picker {
+      display: block;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .cp-popover hex-input {
+      display: block;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+    }
+    .cp-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      gap: 6px;
+    }
+    .cp-reset,
+    .cp-close {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--muted);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .cp-reset:hover {
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+    .cp-close:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+
     /* ── Layout ────────────────────────────────────────────────────────────────── */
     #app {
       display: grid;

@@ -6,6 +6,7 @@ import type { WidgetId, WidgetConfig } from '../types';
 import { state } from './state';
 import { toggleWidget, setWidgetPosition, setWidgetSetting, toggleManager, resetDashboard } from './dashboard';
 import { renderAllWidgets, saveCurrentLayoutAs, loadDashboardLayout, deleteDashboardLayout, listDashboardLayouts } from './dashboard';
+import { createColorPicker } from './color-picker';
 
 // ── Widget metadata (title + settings UI) ────────────────────────────────────
 
@@ -630,18 +631,6 @@ function buildSettingsRow(def: WidgetSettingDef, widgetId: WidgetId): HTMLElemen
     const cfg = state.dashboard.widgets.find(w => w.id === widgetId);
     const current = (cfg?.settings?.[def.key] as string) || '';
 
-    const picker = document.createElement('input');
-    picker.type = 'color';
-    picker.value = /^#([0-9a-f]{6})$/i.test(current) ? current : '#39d353';
-    picker.style.cssText = 'width:36px;height:24px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;cursor:pointer;padding:0';
-    picker.title = 'Accent color (empty = site theme accent)';
-
-    const hexInput = document.createElement('input');
-    hexInput.type = 'text';
-    hexInput.value = current;
-    hexInput.placeholder = 'theme';
-    hexInput.style.cssText = 'flex:1;min-width:0;font-family:var(--mono);font-size:10px';
-
     const apply = (value: string) => {
       const clean = value.trim();
       if (clean === '') {
@@ -654,30 +643,20 @@ function buildSettingsRow(def: WidgetSettingDef, widgetId: WidgetId): HTMLElemen
       renderAllWidgets();
     };
 
-    picker.addEventListener('input', () => {
-      hexInput.value = picker.value;
-      apply(picker.value);
-    });
-    hexInput.addEventListener('change', () => {
-      const v = hexInput.value.trim();
-      if (/^#([0-9a-f]{6})$/i.test(v)) picker.value = v.toLowerCase();
-      apply(v);
-    });
-
-    const clearBtn = document.createElement('button');
-    clearBtn.type = 'button';
-    clearBtn.textContent = 'reset';
-    clearBtn.style.cssText = 'font-size:9px;color:var(--muted);background:none;border:none;cursor:pointer;padding:2px 4px';
-    clearBtn.title = 'Use the site theme accent';
-    clearBtn.addEventListener('click', () => {
-      picker.value = '#39d353';
-      hexInput.value = '';
-      apply('');
+    const picker = createColorPicker({
+      // Show the effective color: the widget's accent, or the theme fallback
+      value: current || state.theme.accent,
+      onChange: apply,
+      onCommit: apply,
+      resetLabel: 'theme',
+      onReset: () => {
+        setWidgetSetting(widgetId, def.key, '');
+        picker.setValue(state.theme.accent);
+        renderAllWidgets();
+      },
     });
 
-    row.appendChild(picker);
-    row.appendChild(hexInput);
-    row.appendChild(clearBtn);
+    row.appendChild(picker.el);
   }
 
   return row;
