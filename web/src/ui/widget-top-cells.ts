@@ -3,11 +3,12 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent, widgetSecondary } from './dashboard';
 import type { WidgetId } from '../types';
 
 function renderTopCells(container: HTMLElement, id: string): void {
   const accent = widgetAccent(id as WidgetId);
+  const secondary = widgetSecondary(id as WidgetId);
   const maxItems = getWidgetSetting('topCells', 'maxItems', 5) as number;
   const cellData = state.cellData;
   const f = widgetFontScale('topCells');
@@ -59,6 +60,7 @@ function renderTopCells(container: HTMLElement, id: string): void {
     date.style.color = 'rgba(255,255,255,0.45)';
     date.style.fontSize = (9 * f) + 'px';
     date.style.fontFamily = 'var(--mono)';
+    date.style.color = secondary;
     date.textContent = shortDate(item.date);
     row.appendChild(date);
 

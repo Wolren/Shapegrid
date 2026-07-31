@@ -3,13 +3,14 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent, widgetSecondary } from './dashboard';
 import type { WidgetId } from '../types';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function renderWeekday(container: HTMLElement, id: string): void {
   const accent = widgetAccent(id as WidgetId);
+  const secondary = widgetSecondary(id as WidgetId);
   const heightSetting = getWidgetSetting('weekday', 'height', 130) as number;
   const cellData = state.cellData;
   const f = widgetFontScale('weekday');
@@ -106,7 +107,7 @@ function renderWeekday(container: HTMLElement, id: string): void {
     label.setAttribute('x', cx.toFixed(1));
     label.setAttribute('y', String(baseline + 10));
     label.setAttribute('text-anchor', 'middle');
-    label.setAttribute('fill', 'rgba(255,255,255,0.45)');
+    label.setAttribute('fill', `${secondary}73`);
     label.setAttribute('font-size', (7 * f).toFixed(1));
     label.textContent = DAY_LABELS[i];
     svg.appendChild(label);

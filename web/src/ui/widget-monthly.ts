@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent, widgetSecondary } from './dashboard';
 import type { WidgetId } from '../types';
 
 const WIDGET_ID: WidgetId = 'monthly';
@@ -20,6 +20,7 @@ interface MonthTotal {
 
 function renderMonthly(container: HTMLElement, _id: string): void {
   const accent = widgetAccent(WIDGET_ID);
+  const secondary = widgetSecondary(WIDGET_ID);
   const heightSetting = getWidgetSetting(WIDGET_ID, 'height', 130) as number;
   const days = state.contributions?.days ?? [];
   const f = widgetFontScale(WIDGET_ID);
@@ -121,7 +122,7 @@ function renderMonthly(container: HTMLElement, _id: string): void {
       val.setAttribute('x', cx.toFixed(1));
       val.setAttribute('y', (y - 3).toFixed(1));
       val.setAttribute('text-anchor', 'middle');
-      val.setAttribute('fill', 'rgba(255,255,255,0.6)');
+      val.setAttribute('fill', `${secondary}b3`);
       val.setAttribute('font-size', (7 * f).toFixed(1));
       val.textContent = m.total.toLocaleString();
       svg.appendChild(val);
@@ -132,7 +133,7 @@ function renderMonthly(container: HTMLElement, _id: string): void {
     label.setAttribute('x', cx.toFixed(1));
     label.setAttribute('y', String(baseline + 10));
     label.setAttribute('text-anchor', 'middle');
-    label.setAttribute('fill', 'rgba(255,255,255,0.45)');
+    label.setAttribute('fill', `${secondary}73`);
     label.setAttribute('font-size', (7 * f).toFixed(1));
     label.textContent = narrow ? MONTH_NAMES[m.month][0] : MONTH_NAMES[m.month];
     svg.appendChild(label);

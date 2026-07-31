@@ -29,7 +29,7 @@ import { getEditor, setSelectedCells, cancelMeasurement } from './src/ui/editor-
 import { updateCellInfoWidget } from './src/ui/widget-cell-info';
 import { initWidgetManager, listWidgetMeta } from './src/ui/widget-manager';
 import { fetchAndUpdateLanguages } from './src/ui/github-langs';
-import { renderAllWidgets, getWidgetSetting, setWidgetSetting } from './src/ui/dashboard';
+import { renderAllWidgets, getWidgetSetting, setWidgetSetting, DEFAULT_WIDGET_PALETTES, type WidgetPalette } from './src/ui/dashboard';
 import { createColorPicker, type ColorPicker } from './src/ui/color-picker';
 import './src/ui/widget-legend';
 import './src/ui/widget-stats';
@@ -1640,55 +1640,103 @@ const THEME_PRESETS: { name: string; theme: ThemeColors }[] = [
   },
 ];
 
-// Widget accent palettes: one coherent accent per widget, applied across the
-// whole Widget Colors section. 'Follow editor' clears all widget accents so
-// every widget uses the editor accent.
-const WIDGET_THEMES: { name: string; accents: Record<string, string> }[] = [
-  { name: 'Follow editor', accents: {} },
+// Widget themes: one coherent palette (accent + secondary) per widget,
+// applied across the whole Widget Colors section. 'Default' clears all
+// widget overrides so every widget uses its built-in default palette.
+const WIDGET_THEMES: { name: string; palettes: Record<string, WidgetPalette> }[] = [
+  { name: 'Default', palettes: {} },
   {
     name: 'Neon',
-    accents: {
-      legend: '#39d353', stats: '#58a6ff', languages: '#d29922', cellInfo: '#f778ba',
-      scaleBar: '#39d353', coordinates: '#7d8590', distribution: '#f78166', timeline: '#58a6ff',
-      activity: '#a371f7', topCells: '#f778ba', weekday: '#39d353', streak: '#f78166',
-      monthly: '#58a6ff', geo: '#a371f7', minimap: '#39d353',
+    palettes: {
+      legend:       { accent: '#39d353', secondary: '#2ea043' },
+      stats:        { accent: '#58a6ff', secondary: '#388bfd' },
+      languages:    { accent: '#d29922', secondary: '#9e6a03' },
+      cellInfo:     { accent: '#f778ba', secondary: '#db61a2' },
+      scaleBar:     { accent: '#39d353', secondary: '#2ea043' },
+      coordinates:  { accent: '#7d8590', secondary: '#6e7681' },
+      distribution: { accent: '#f78166', secondary: '#e34d2f' },
+      timeline:     { accent: '#58a6ff', secondary: '#388bfd' },
+      activity:     { accent: '#a371f7', secondary: '#8957e5' },
+      topCells:     { accent: '#f778ba', secondary: '#db61a2' },
+      weekday:      { accent: '#39d353', secondary: '#2ea043' },
+      streak:       { accent: '#f78166', secondary: '#e34d2f' },
+      monthly:      { accent: '#58a6ff', secondary: '#388bfd' },
+      geo:          { accent: '#a371f7', secondary: '#8957e5' },
+      minimap:      { accent: '#39d353', secondary: '#2ea043' },
     },
   },
   {
     name: 'Cool',
-    accents: {
-      legend: '#2dd4bf', stats: '#38bdf8', languages: '#34d399', cellInfo: '#60a5fa',
-      scaleBar: '#2dd4bf', coordinates: '#7d8590', distribution: '#22d3ee', timeline: '#38bdf8',
-      activity: '#6366f1', topCells: '#60a5fa', weekday: '#34d399', streak: '#2dd4bf',
-      monthly: '#38bdf8', geo: '#6366f1', minimap: '#2dd4bf',
+    palettes: {
+      legend:       { accent: '#2dd4bf', secondary: '#0f766e' },
+      stats:        { accent: '#38bdf8', secondary: '#0284c7' },
+      languages:    { accent: '#34d399', secondary: '#059669' },
+      cellInfo:     { accent: '#60a5fa', secondary: '#2563eb' },
+      scaleBar:     { accent: '#2dd4bf', secondary: '#0f766e' },
+      coordinates:  { accent: '#94a3b8', secondary: '#64748b' },
+      distribution: { accent: '#22d3ee', secondary: '#0891b2' },
+      timeline:     { accent: '#38bdf8', secondary: '#0284c7' },
+      activity:     { accent: '#6366f1', secondary: '#4f46e5' },
+      topCells:     { accent: '#60a5fa', secondary: '#2563eb' },
+      weekday:      { accent: '#34d399', secondary: '#059669' },
+      streak:       { accent: '#2dd4bf', secondary: '#0f766e' },
+      monthly:      { accent: '#38bdf8', secondary: '#0284c7' },
+      geo:          { accent: '#6366f1', secondary: '#4f46e5' },
+      minimap:      { accent: '#2dd4bf', secondary: '#0f766e' },
     },
   },
   {
     name: 'Warm',
-    accents: {
-      legend: '#fbbf24', stats: '#fb923c', languages: '#f59e0b', cellInfo: '#f472b6',
-      scaleBar: '#fbbf24', coordinates: '#7d8590', distribution: '#f87171', timeline: '#fb923c',
-      activity: '#f59e0b', topCells: '#f472b6', weekday: '#fbbf24', streak: '#f87171',
-      monthly: '#fb923c', geo: '#f59e0b', minimap: '#fbbf24',
+    palettes: {
+      legend:       { accent: '#fbbf24', secondary: '#b45309' },
+      stats:        { accent: '#fb923c', secondary: '#c2410c' },
+      languages:    { accent: '#f59e0b', secondary: '#b45309' },
+      cellInfo:     { accent: '#f472b6', secondary: '#be185d' },
+      scaleBar:     { accent: '#fbbf24', secondary: '#b45309' },
+      coordinates:  { accent: '#a8a29e', secondary: '#78716c' },
+      distribution: { accent: '#f87171', secondary: '#b91c1c' },
+      timeline:     { accent: '#fb923c', secondary: '#c2410c' },
+      activity:     { accent: '#f59e0b', secondary: '#b45309' },
+      topCells:     { accent: '#f472b6', secondary: '#be185d' },
+      weekday:      { accent: '#fbbf24', secondary: '#b45309' },
+      streak:       { accent: '#f87171', secondary: '#b91c1c' },
+      monthly:      { accent: '#fb923c', secondary: '#c2410c' },
+      geo:          { accent: '#f59e0b', secondary: '#b45309' },
+      minimap:      { accent: '#fbbf24', secondary: '#b45309' },
     },
   },
   {
     name: 'Pastel',
-    accents: {
-      legend: '#86efac', stats: '#93c5fd', languages: '#fcd34d', cellInfo: '#f9a8d4',
-      scaleBar: '#86efac', coordinates: '#9ca3af', distribution: '#fdba74', timeline: '#93c5fd',
-      activity: '#c4b5fd', topCells: '#f9a8d4', weekday: '#86efac', streak: '#fdba74',
-      monthly: '#93c5fd', geo: '#c4b5fd', minimap: '#86efac',
+    palettes: {
+      legend:       { accent: '#86efac', secondary: '#4ade80' },
+      stats:        { accent: '#93c5fd', secondary: '#60a5fa' },
+      languages:    { accent: '#fcd34d', secondary: '#fbbf24' },
+      cellInfo:     { accent: '#f9a8d4', secondary: '#f472b6' },
+      scaleBar:     { accent: '#86efac', secondary: '#4ade80' },
+      coordinates:  { accent: '#cbd5e1', secondary: '#94a3b8' },
+      distribution: { accent: '#fdba74', secondary: '#fb923c' },
+      timeline:     { accent: '#93c5fd', secondary: '#60a5fa' },
+      activity:     { accent: '#c4b5fd', secondary: '#a78bfa' },
+      topCells:     { accent: '#f9a8d4', secondary: '#f472b6' },
+      weekday:      { accent: '#86efac', secondary: '#4ade80' },
+      streak:       { accent: '#fdba74', secondary: '#fb923c' },
+      monthly:      { accent: '#93c5fd', secondary: '#60a5fa' },
+      geo:          { accent: '#c4b5fd', secondary: '#a78bfa' },
+      minimap:      { accent: '#86efac', secondary: '#4ade80' },
     },
   },
 ];
 
 /**
- * Widget Colors section (Theme tab): widget theme bar + one accent picker per
- * widget, logically separate from the editor theme. Widgets fall back to the
- * editor accent when left on 'theme'.
+ * Widget Colors section (Theme tab): widget theme bar + accent/secondary
+ * pickers per widget, fully independent from the editor theme.
  */
-const widgetColorPickers: Record<string, ColorPicker> = {};
+interface WidgetPickerSet {
+  accent: ColorPicker;
+  secondary: ColorPicker;
+}
+
+const widgetColorPickers: Record<string, WidgetPickerSet> = {};
 
 function initThemeWidgetColors(): void {
   const host = document.getElementById('theme-widget-colors');
@@ -1705,9 +1753,11 @@ function initThemeWidgetColors(): void {
     btn.title = `Apply the ${wt.name} widget palette`;
     btn.addEventListener('click', () => {
       for (const { id } of listWidgetMeta()) {
-        const hex = wt.accents[id] || '';
-        setWidgetSetting(id, 'accent', hex);
-        widgetColorPickers[id]?.setValue(hex || state.theme.accent);
+        const pal = wt.palettes[id];
+        setWidgetSetting(id, 'accent', pal?.accent ?? '');
+        setWidgetSetting(id, 'secondary', pal?.secondary ?? '');
+        widgetColorPickers[id]?.accent.setValue(pal?.accent ?? DEFAULT_WIDGET_PALETTES[id].accent);
+        widgetColorPickers[id]?.secondary.setValue(pal?.secondary ?? DEFAULT_WIDGET_PALETTES[id].secondary);
       }
       renderAllWidgets();
     });
@@ -1715,36 +1765,43 @@ function initThemeWidgetColors(): void {
   }
   host.appendChild(bar);
 
-  // Per-widget accent rows
+  // Per-widget accent + secondary rows
   for (const { id, title } of listWidgetMeta()) {
     const row = document.createElement('div');
-    row.className = 'theme-row';
+    row.className = 'theme-row widget-color-row';
 
     const label = document.createElement('label');
     label.textContent = title;
+    label.title = title;
     row.appendChild(label);
 
-    const getAccent = (): string =>
-      (getWidgetSetting(id, 'accent', '') as string) || '';
-
-    const apply = (hex: string): void => {
-      setWidgetSetting(id, 'accent', hex.toLowerCase());
-      renderAllWidgets();
+    const makePicker = (key: 'accent' | 'secondary'): ColorPicker => {
+      const get = (): string =>
+        (getWidgetSetting(id, key, '') as string) || DEFAULT_WIDGET_PALETTES[id][key];
+      const picker = createColorPicker({
+        value: get(),
+        onChange: (hex) => {
+          setWidgetSetting(id, key, hex.toLowerCase());
+          renderAllWidgets();
+        },
+        onCommit: (hex) => {
+          setWidgetSetting(id, key, hex.toLowerCase());
+          renderAllWidgets();
+        },
+        resetLabel: 'theme',
+        onReset: () => {
+          setWidgetSetting(id, key, '');
+          picker.setValue(DEFAULT_WIDGET_PALETTES[id][key]);
+          renderAllWidgets();
+        },
+      }, row);
+      return picker;
     };
 
-    const picker = createColorPicker({
-      // Show the effective color: the widget's accent, or the editor fallback
-      value: getAccent() || state.theme.accent,
-      onChange: apply,
-      onCommit: apply,
-      resetLabel: 'theme',
-      onReset: () => {
-        setWidgetSetting(id, 'accent', '');
-        picker.setValue(state.theme.accent);
-        renderAllWidgets();
-      },
-    }, row);
-    widgetColorPickers[id] = picker;
+    widgetColorPickers[id] = {
+      accent: makePicker('accent'),
+      secondary: makePicker('secondary'),
+    };
 
     host.appendChild(row);
   }

@@ -3,12 +3,13 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, widgetFontScale, widgetAccent } from './dashboard';
+import { registerWidget, widgetFontScale, widgetAccent, widgetSecondary } from './dashboard';
 import type { WidgetId } from '../types';
 import { activePaletteId, intensityToColor } from '../rendering/colors';
 
 function renderStats(container: HTMLElement, id: string): void {
   const accent = widgetAccent(id as WidgetId);
+  const secondary = widgetSecondary(id as WidgetId);
   const c = state.contributions;
   const grid = state.grid;
   const cellData = state.cellData;
@@ -32,7 +33,7 @@ function renderStats(container: HTMLElement, id: string): void {
     valDiv.style.cssText = `font-size:${18 * f}px;font-weight:700;color:${accent};line-height:1.2`;
     valDiv.textContent = val;
     const labelDiv = document.createElement('div');
-    labelDiv.style.cssText = `font-size:${8 * f}px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em`;
+    labelDiv.style.cssText = `font-size:${8 * f}px;color:${secondary};text-transform:uppercase;letter-spacing:0.05em`;
     labelDiv.textContent = label;
     g.appendChild(valDiv);
     g.appendChild(labelDiv);

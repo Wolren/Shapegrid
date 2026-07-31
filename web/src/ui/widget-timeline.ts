@@ -133,7 +133,7 @@ function renderTimeline(container: HTMLElement, id: string): void {
     maxLabel.setAttribute('x', maxX.toFixed(1));
     maxLabel.setAttribute('y', String(maxY - 5));
     maxLabel.setAttribute('text-anchor', 'middle');
-    maxLabel.setAttribute('fill', '#39d353');
+    maxLabel.setAttribute('fill', accent);
     maxLabel.setAttribute('font-size', (7 * f).toFixed(1));
     maxLabel.setAttribute('font-weight', '600');
     maxLabel.textContent = `Max: ${bestCount}`;

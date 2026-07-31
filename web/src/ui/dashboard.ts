@@ -88,13 +88,52 @@ export function widgetFontScale(id: WidgetId): number {
 const HEX_RE = /^#([0-9a-f]{6})$/i;
 
 /**
- * Accent color for a widget: its own 'accent' setting when set, otherwise the
- * site theme accent. Invalid values fall back to the theme accent.
+ * Per-widget color palette. Widget colors are fully independent from the
+ * editor theme: changing editor themes never touches widgets, and changing
+ * widget colors never touches the editor. Each widget has an accent (its
+ * primary color) and a secondary (labels, captions, sub-elements).
+ */
+export interface WidgetPalette {
+  accent: string;
+  secondary: string;
+}
+
+export const DEFAULT_WIDGET_PALETTES: Record<WidgetId, WidgetPalette> = {
+  legend:       { accent: '#39d353', secondary: '#8b949e' },
+  stats:        { accent: '#58a6ff', secondary: '#8b949e' },
+  languages:    { accent: '#d29922', secondary: '#e6edf3' },
+  cellInfo:     { accent: '#f778ba', secondary: '#8b949e' },
+  scaleBar:     { accent: '#39d353', secondary: '#8b949e' },
+  coordinates:  { accent: '#7d8590', secondary: '#8b949e' },
+  distribution: { accent: '#f78166', secondary: '#8b949e' },
+  timeline:     { accent: '#58a6ff', secondary: '#8b949e' },
+  activity:     { accent: '#a371f7', secondary: '#8b949e' },
+  topCells:     { accent: '#f778ba', secondary: '#8b949e' },
+  weekday:      { accent: '#39d353', secondary: '#8b949e' },
+  streak:       { accent: '#f78166', secondary: '#8b949e' },
+  monthly:      { accent: '#58a6ff', secondary: '#8b949e' },
+  geo:          { accent: '#a371f7', secondary: '#8b949e' },
+  minimap:      { accent: '#39d353', secondary: '#8b949e' },
+};
+
+function widgetColor(id: WidgetId, key: keyof WidgetPalette): string {
+  const custom = getWidgetSetting(id, key, '') as string;
+  if (typeof custom === 'string' && HEX_RE.test(custom)) return custom.toLowerCase();
+  return DEFAULT_WIDGET_PALETTES[id]?.[key] ?? (key === 'accent' ? '#39d353' : '#8b949e');
+}
+
+/**
+ * A widget's primary color: its own 'accent' setting, or its fixed default.
+ * NEVER falls back to the editor theme accent - widget colors are decoupled
+ * from editor themes.
  */
 export function widgetAccent(id: WidgetId): string {
-  const custom = getWidgetSetting(id, 'accent', '') as string;
-  if (typeof custom === 'string' && HEX_RE.test(custom)) return custom.toLowerCase();
-  return state.theme.accent;
+  return widgetColor(id, 'accent');
+}
+
+/** A widget's secondary color (labels, captions, sub-elements). */
+export function widgetSecondary(id: WidgetId): string {
+  return widgetColor(id, 'secondary');
 }
 
 /** The site theme accent (used by non-widget UI like the measure overlay). */

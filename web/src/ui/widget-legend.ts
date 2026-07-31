@@ -3,11 +3,12 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, widgetFontScale, widgetAccent } from './dashboard';
+import { registerWidget, widgetFontScale, widgetAccent, widgetSecondary } from './dashboard';
 import { activePaletteId, PALETTES } from '../rendering/colors';
 
 function renderLegend(container: HTMLElement, _id: string): void {
   const accent = widgetAccent('legend');
+  const secondary = widgetSecondary('legend');
   const palette = PALETTES[activePaletteId] || PALETTES.github;
   const maxVal = state.contributions?.total ?? state.cellData.reduce((m, d) => Math.max(m, d.count), 0);
   const minVal = 0;
@@ -33,9 +34,10 @@ function renderLegend(container: HTMLElement, _id: string): void {
   const labels = document.createElement('div');
   labels.style.cssText = `display:flex;justify-content:space-between;font-size:${10 * f}px;font-family:var(--mono);color:var(--text)`;
   const minLabel = document.createElement('span');
+  minLabel.style.color = secondary;
   minLabel.textContent = minVal.toLocaleString();
   const midLabel = document.createElement('span');
-  midLabel.style.cssText = `color:var(--muted);font-size:${9 * f}px`;
+  midLabel.style.cssText = `color:${secondary};font-size:${9 * f}px`;
   midLabel.textContent = 'per day';
   const maxLabel = document.createElement('span');
   maxLabel.style.fontWeight = '600';
