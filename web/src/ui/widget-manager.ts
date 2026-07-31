@@ -6,14 +6,13 @@ import type { WidgetId, WidgetConfig } from '../types';
 import { state } from './state';
 import { toggleWidget, setWidgetPosition, setWidgetSetting, toggleManager, resetDashboard } from './dashboard';
 import { renderAllWidgets, saveCurrentLayoutAs, loadDashboardLayout, deleteDashboardLayout, listDashboardLayouts } from './dashboard';
-import { createColorPicker } from './color-picker';
 
 // ── Widget metadata (title + settings UI) ────────────────────────────────────
 
 interface WidgetSettingDef {
   key: string;
   label: string;
-  type: 'range' | 'checkbox' | 'select' | 'color';
+  type: 'range' | 'checkbox' | 'select';
   min?: number;
   max?: number;
   step?: number;
@@ -627,34 +626,6 @@ function buildSettingsRow(def: WidgetSettingDef, widgetId: WidgetId): HTMLElemen
     });
 
     row.appendChild(select);
-  } else if (def.type === 'color') {
-    const cfg = state.dashboard.widgets.find(w => w.id === widgetId);
-    const current = (cfg?.settings?.[def.key] as string) || '';
-
-    const apply = (value: string) => {
-      const clean = value.trim();
-      if (clean === '') {
-        setWidgetSetting(widgetId, def.key, '');
-      } else if (/^#([0-9a-f]{6})$/i.test(clean)) {
-        setWidgetSetting(widgetId, def.key, clean.toLowerCase());
-      } else {
-        return; // invalid — ignore
-      }
-      renderAllWidgets();
-    };
-
-    const picker = createColorPicker({
-      // Show the effective color: the widget's accent, or the theme fallback
-      value: current || state.theme.accent,
-      onChange: apply,
-      onCommit: apply,
-      resetLabel: 'theme',
-      onReset: () => {
-        setWidgetSetting(widgetId, def.key, '');
-        picker.setValue(state.theme.accent);
-        renderAllWidgets();
-      },
-    }, row);
   }
 
   return row;
@@ -672,10 +643,13 @@ function buildSettingsSection(meta: WidgetMeta): HTMLElement | null {
   for (const sDef of meta.settings) {
     section.appendChild(buildSettingsRow(sDef, meta.id));
   }
-  // Every widget gets an accent-color picker (empty = follow the site theme).
-  section.appendChild(buildSettingsRow({ key: 'accent', label: 'Accent', type: 'color' }, meta.id));
 
   return section;
+}
+
+/** Widget id + display title list, used by the Theme tab's Widget Colors. */
+export function listWidgetMeta(): { id: WidgetId; title: string }[] {
+  return WIDGET_META.map(m => ({ id: m.id, title: m.title }));
 }
 
 // ── Update the displayed value for a widget's settings ───────────────────────

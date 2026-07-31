@@ -508,7 +508,7 @@
       </div>
 <div class="tab-panel" data-panel="theme">
 <div class="section">
-          <div class="section-title">Theme Colors</div>
+  <div class="section-title">Editor Colors</div>
           <div class="theme-row">
             <label>Accent</label>
             <input type="color" id="inp-theme-accent" value="#39d353"/>
@@ -559,7 +559,15 @@
             <button id="btn-theme-reset" style="font-size:10px;padding:3px 10px;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer">Reset theme</button>
           </div>
           <div class="rt-note" style="font-size:9px;color:var(--muted);line-height:1.5;margin-top:6px">
-            Site colors: panels, buttons, text. The 3D scene background is set in the Background section above; per-widget accents live in the widget manager (each widget's settings).
+            Editor colors: panels, buttons, text. The 3D scene background is set in the Style tab's Background section.
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Widget Colors</div>
+          <div id="theme-widget-colors"></div>
+          <div class="rt-note" style="font-size:9px;color:var(--muted);line-height:1.5;margin-top:6px">
+            Per-widget accent colors. Leave a widget on 'theme' to follow the editor accent.
           </div>
         </div>
 

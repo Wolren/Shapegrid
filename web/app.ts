@@ -27,9 +27,9 @@ import { initToolbar, syncToolbarState } from './src/ui/toolbar';
 import { initMeasureOverlay, updateMeasureOverlay, handleMeasureClick, clearMeasureOverlay, isMeasuring } from './src/ui/measure';
 import { getEditor, setSelectedCells, cancelMeasurement } from './src/ui/editor-state';
 import { updateCellInfoWidget } from './src/ui/widget-cell-info';
-import { initWidgetManager } from './src/ui/widget-manager';
+import { initWidgetManager, listWidgetMeta } from './src/ui/widget-manager';
 import { fetchAndUpdateLanguages } from './src/ui/github-langs';
-import { renderAllWidgets } from './src/ui/dashboard';
+import { renderAllWidgets, getWidgetSetting, setWidgetSetting } from './src/ui/dashboard';
 import { createColorPicker, type ColorPicker } from './src/ui/color-picker';
 import './src/ui/widget-legend';
 import './src/ui/widget-stats';
@@ -1582,6 +1582,46 @@ const THEME_PRESETS: { name: string; theme: ThemeColors }[] = [
   },
 ];
 
+/**
+ * Widget Colors section (Theme tab): one accent picker per widget, logically
+ * separate from the editor theme. Widgets fall back to the editor accent.
+ */
+function initThemeWidgetColors(): void {
+  const host = document.getElementById('theme-widget-colors');
+  if (!host) return;
+  for (const { id, title } of listWidgetMeta()) {
+    const row = document.createElement('div');
+    row.className = 'theme-row';
+
+    const label = document.createElement('label');
+    label.textContent = title;
+    row.appendChild(label);
+
+    const getAccent = (): string =>
+      (getWidgetSetting(id, 'accent', '') as string) || '';
+
+    const apply = (hex: string): void => {
+      setWidgetSetting(id, 'accent', hex.toLowerCase());
+      renderAllWidgets();
+    };
+
+    const picker = createColorPicker({
+      // Show the effective color: the widget's accent, or the editor fallback
+      value: getAccent() || state.theme.accent,
+      onChange: apply,
+      onCommit: apply,
+      resetLabel: 'theme',
+      onReset: () => {
+        setWidgetSetting(id, 'accent', '');
+        picker.setValue(state.theme.accent);
+        renderAllWidgets();
+      },
+    }, row);
+
+    host.appendChild(row);
+  }
+}
+
 function initThemePresets(): void {
   const host = document.getElementById('theme-presets');
   if (!host) return;
@@ -2101,6 +2141,7 @@ async function bootstrap() {
     // Theme colors (applies defaults, wires the pickers)
     initThemeControls();
     initThemePresets();
+    initThemeWidgetColors();
     applyTheme();
     syncThemeInputs();
 

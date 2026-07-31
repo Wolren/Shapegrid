@@ -100,11 +100,11 @@
       flex-shrink: 0;
     }
 
-    /* Color picker: swatch + native dialog + preset chips */
+    /* Color picker: swatch + popover */
     .cp-wrap {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 4px;
       min-width: 0;
     }
     .cp-swatch {
@@ -120,33 +120,37 @@
     .cp-swatch:hover {
       border-color: var(--text);
     }
-    .cp-native {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
+    .cp-popover {
+      position: fixed;
+      z-index: 70;
+      width: 190px;
+      padding: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     }
-    .cp-chips {
+    .cp-popover hex-color-picker {
+      display: block;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .cp-popover hex-input {
+      display: block;
+      margin-top: 8px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+    }
+    .cp-footer {
       display: flex;
-      gap: 3px;
-      flex-shrink: 0;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 8px;
     }
-    .cp-chip {
-      width: 13px;
-      height: 13px;
-      border-radius: 3px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      cursor: pointer;
-      padding: 0;
-      flex-shrink: 0;
-      transition: transform 0.1s, border-color 0.15s;
-    }
-    .cp-chip:hover {
-      transform: scale(1.15);
-      border-color: var(--text);
-    }
-    .cp-reset {
+    .cp-reset,
+    .cp-close {
       font-size: 9px;
       font-family: var(--mono);
       color: var(--muted);
@@ -155,12 +159,15 @@
       border-radius: var(--radius);
       padding: 3px 8px;
       cursor: pointer;
-      flex-shrink: 0;
       transition: color 0.15s, border-color 0.15s;
     }
     .cp-reset:hover {
       color: var(--danger);
       border-color: var(--danger);
+    }
+    .cp-close:hover {
+      color: var(--text);
+      border-color: var(--text);
     }
 
     /* ── Layout ────────────────────────────────────────────────────────────────── */
