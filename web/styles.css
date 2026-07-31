@@ -1250,10 +1250,30 @@
       flex: 1;
       min-width: 0;
       font-size: 9px;
+      font-family: var(--mono);
       color: var(--text);
+      background: none;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: var(--radius);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      transition: color 0.15s, background 0.15s;
+    }
+    .dm-layout-name:hover {
+      color: var(--accent);
+      background: var(--surface3);
+    }
+    .dm-layout-empty {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--muted);
+      font-style: italic;
+      line-height: 1.5;
+      padding: 4px 2px;
     }
     .dm-layout-load,
     .dm-layout-del {

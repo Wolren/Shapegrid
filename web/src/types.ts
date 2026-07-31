@@ -268,6 +268,56 @@ export interface DataExportRender {
   showBoundary: boolean;
   background: string;
   gap: number;
+  gridType?: string;
+  coverage?: number;
+  scaleMode?: string;
+  showCoordAxes?: boolean;
+  coordAxesScale?: number;
+  coordAxesPosition?: string;
+  coordAxesXOffset?: number;
+  coordAxesYOffset?: number;
+  coordAxesTickLength?: number;
+  coordAxesLabelOffset?: number;
+  coordAxesLineColor?: string;
+  coordAxesLabelColor?: string;
+}
+
+export interface DataExportEffects {
+  bloomEnabled?: boolean;
+  bloomStrength?: number;
+  bloomRadius?: number;
+  bloomThreshold?: number;
+  fogEnabled?: boolean;
+  fogDensity?: number;
+  toneMapping?: number;
+  envMapEnabled?: boolean;
+  rayTracingEnabled?: boolean;
+  rayTracingSamples?: number;
+  rayTracingBounces?: number;
+}
+
+export interface DataExportData {
+  daysMode?: string;
+  selectedYears?: number[];
+  orgName?: string;
+  includeOrgRepos?: boolean;
+}
+
+export interface DataExportBoundary {
+  type?: string;
+  preset?: string;
+  country?: string | null;
+}
+
+export interface DataExportExportSettings {
+  width?: number;
+  height?: number;
+  autocrop?: boolean;
+  vertical?: boolean;
+  pad?: number;
+  title?: string;
+  format?: string;
+  scale?: number;
 }
 
 export interface DataExportTheme {
@@ -289,5 +339,25 @@ export interface DataExport {
     camera: DataExportCamera;
     render: DataExportRender;
     theme?: DataExportTheme;
+    effects?: DataExportEffects;
+    data?: DataExportData;
+    boundary?: DataExportBoundary;
+    export?: DataExportExportSettings;
+    dashboard?: {
+      widgets?: unknown[];
+      collapsed?: boolean;
+      layout?: string;
+    };
+    layouts?: unknown[];
+    overlay?: {
+      legendPos?: string;
+      statsPos?: string;
+      showLegend?: boolean;
+      showStats?: boolean;
+      legendFontSize?: number;
+      legendBarWidth?: number;
+      statsFontSize?: number;
+      statsInline?: boolean;
+    };
   };
 }

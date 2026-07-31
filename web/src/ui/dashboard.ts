@@ -325,6 +325,14 @@ export function deleteDashboardLayout(name: string): void {
   localStorage.setItem(LAYOUTS_KEY, JSON.stringify(layouts));
 }
 
+/** Replace the whole saved-layout store (used by config import). */
+export function setDashboardLayouts(layouts: DashboardLayout[]): void {
+  const clean = Array.isArray(layouts)
+    ? layouts.map(sanitizeLayout).filter((l): l is DashboardLayout => l !== null)
+    : [];
+  localStorage.setItem(LAYOUTS_KEY, JSON.stringify(clean));
+}
+
 export function saveCurrentLayoutAs(name: string): void {
   const trimmed = name.trim();
   if (!trimmed) return;

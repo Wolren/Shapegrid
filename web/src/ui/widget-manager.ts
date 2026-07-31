@@ -732,14 +732,26 @@ function buildWidgetRow(meta: WidgetMeta): HTMLElement {
 function renderLayoutsList(listEl: HTMLElement): void {
   listEl.innerHTML = '';
   const layouts = listDashboardLayouts();
+  if (layouts.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'dm-layout-empty';
+    empty.textContent = 'No saved layouts yet. Save the current widget layout above, then load it from here.';
+    listEl.appendChild(empty);
+    return;
+  }
   for (const layout of layouts) {
     const row = document.createElement('div');
     row.className = 'dm-layout-row';
 
-    const name = document.createElement('span');
+    const name = document.createElement('button');
+    name.type = 'button';
     name.className = 'dm-layout-name';
     name.textContent = layout.name;
-    name.title = layout.name;
+    name.title = `Load layout: ${layout.name}`;
+    name.addEventListener('click', () => {
+      loadDashboardLayout(layout.name);
+      buildPanel();
+    });
     row.appendChild(name);
 
     const loadBtn = document.createElement('button');

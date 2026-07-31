@@ -29,7 +29,7 @@ import { getEditor, setSelectedCells, cancelMeasurement } from './src/ui/editor-
 import { updateCellInfoWidget } from './src/ui/widget-cell-info';
 import { initWidgetManager, listWidgetMeta } from './src/ui/widget-manager';
 import { fetchAndUpdateLanguages } from './src/ui/github-langs';
-import { renderAllWidgets, getWidgetSetting, setWidgetSetting, DEFAULT_WIDGET_PALETTES, type WidgetPalette } from './src/ui/dashboard';
+import { renderAllWidgets, getWidgetSetting, setWidgetSetting, DEFAULT_WIDGET_PALETTES, listDashboardLayouts, type WidgetPalette } from './src/ui/dashboard';
 import { createColorPicker, type ColorPicker } from './src/ui/color-picker';
 import './src/ui/widget-legend';
 import './src/ui/widget-stats';
@@ -876,8 +876,18 @@ window.addEventListener('keydown', e => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function exportConfig() {
+  // Export settings live in the Export tab's inputs
+  const expW = +(document.getElementById('inp-export-w') as HTMLInputElement)?.value || 1920;
+  const expH = +(document.getElementById('inp-export-h') as HTMLInputElement)?.value || 1080;
+  const expAutocrop = (document.getElementById('inp-export-autocrop') as HTMLInputElement)?.checked ?? true;
+  const expVertical = (document.getElementById('inp-export-vertical') as HTMLInputElement)?.checked ?? false;
+  const expPad = +(document.getElementById('inp-export-pad') as HTMLInputElement)?.value || 40;
+  const expTitle = ((document.getElementById('inp-export-title') as HTMLInputElement)?.value || '').trim();
+  const expFormat = (document.getElementById('inp-export-format') as HTMLSelectElement)?.value || 'png';
+  const expScale = parseFloat((document.getElementById('inp-export-scale') as HTMLSelectElement)?.value) || 1;
+
   const config = {
-    version: 2,
+    version: 3,
     generated: new Date().toISOString(),
     username: state.contributions?.username || '',
     totalContributions: state.contributions?.total || 0,
@@ -896,14 +906,60 @@ function exportConfig() {
       })),
     } : null,
     config: {
-      camera: { yaw: state.yaw, pitch: state.pitch },
+      camera: { yaw: state.yaw, pitch: state.pitch, zoom: state.zoom },
       render: {
         heightScale: state.heightScale,
         showBoundary: state.showBoundary,
         background: state.background,
         gap: state.gap,
+        gridType: state.gridType,
+        coverage: state.coverage,
+        scaleMode: state.scaleMode,
+        showCoordAxes: state.showCoordAxes,
+        coordAxesScale: state.coordAxesScale,
+        coordAxesPosition: state.coordAxesPosition,
+        coordAxesXOffset: state.coordAxesXOffset,
+        coordAxesYOffset: state.coordAxesYOffset,
+        coordAxesTickLength: state.coordAxesTickLength,
+        coordAxesLabelOffset: state.coordAxesLabelOffset,
+        coordAxesLineColor: state.coordAxesLineColor,
+        coordAxesLabelColor: state.coordAxesLabelColor,
+      },
+      effects: {
+        bloomEnabled: state.bloomEnabled,
+        bloomStrength: state.bloomStrength,
+        bloomRadius: state.bloomRadius,
+        bloomThreshold: state.bloomThreshold,
+        fogEnabled: state.fogEnabled,
+        fogDensity: state.fogDensity,
+        toneMapping: state.toneMapping,
+        envMapEnabled: state.envMapEnabled,
+        rayTracingEnabled: state.rayTracingEnabled,
+        rayTracingSamples: state.rayTracingSamples,
+        rayTracingBounces: state.rayTracingBounces,
       },
       theme: { palette: state.palette, colors: state.theme },
+      data: {
+        daysMode: state.daysMode,
+        selectedYears: [...state.selectedYears],
+        orgName: state.orgName,
+        includeOrgRepos: state.includeOrgRepos,
+      },
+      boundary: {
+        type: state.boundaryType,
+        preset: state.preset,
+        country: state.country,
+      },
+      export: {
+        width: expW, height: expH, autocrop: expAutocrop, vertical: expVertical,
+        pad: expPad, title: expTitle, format: expFormat, scale: expScale,
+      },
+      dashboard: {
+        widgets: state.dashboard.widgets,
+        collapsed: state.dashboard.collapsed,
+        layout: state.dashboard.layout,
+      },
+      layouts: listDashboardLayouts(),
       overlay: {
         legendPos: state.overlay.legendPos,
         statsPos: state.overlay.statsPos,
@@ -2036,6 +2092,7 @@ configFileInput.addEventListener('change', () => {
       loadFromJson(data);
       applyTheme();
       syncThemeInputs();
+      buildYearChips();
       scheduleRebuild();
       setStatus(`✓ Loaded config ${file.name}`, 'ok');
     } catch (e: any) {
