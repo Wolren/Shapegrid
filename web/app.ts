@@ -1086,7 +1086,12 @@ function syncDaysToCount() {
 
 // Also sync when days slider changes
 const daysSlider = document.getElementById('inp-days') as HTMLInputElement;
+// Cap the "Last N days" slider at the day GitHub itself was created
+// (2007-10-19, the first commit), so the whole history is reachable.
+// Computed dynamically so the cap grows with time.
+const GITHUB_EPOCH_MS = Date.UTC(2007, 9, 19);
 if (daysSlider) {
+  daysSlider.max = String(Math.max(365, Math.ceil((Date.now() - GITHUB_EPOCH_MS) / 86400000)));
   daysSlider.addEventListener('input', () => {
     document.getElementById('val-days')!.textContent = daysSlider.value;
     syncDaysToCount();
