@@ -156,23 +156,23 @@ export interface WidgetPalette {
   secondary: string;
 }
 
-// Default widget palette: green family to stay coloristically compatible with
-// the default editor theme (GitHub green), with a couple of warm accents and
-// a neutral gray for the readout widgets. Deliberately no blue - blue is an
-// explicit opt-in theme (Cool/Ocean), never the default look.
+// Default widget palette: one coherent green family (GitHub green), so the
+// default look is coloristically compatible with the default editor theme.
+// Only the coordinates readout stays neutral gray. Blue and other hues are
+// explicit opt-in themes, never the default look.
 export const DEFAULT_WIDGET_PALETTES: Record<WidgetId, WidgetPalette> = {
   legend:       { accent: '#39d353', secondary: '#2ea043' },
   stats:        { accent: '#56d364', secondary: '#2ea043' },
-  languages:    { accent: '#d29922', secondary: '#9e6a03' },
+  languages:    { accent: '#4ac26b', secondary: '#2ea043' },
   cellInfo:     { accent: '#7ee787', secondary: '#3fb950' },
   scaleBar:     { accent: '#39d353', secondary: '#2ea043' },
   coordinates:  { accent: '#8b949e', secondary: '#6e7681' },
-  distribution: { accent: '#f78166', secondary: '#e34d2f' },
+  distribution: { accent: '#3fb950', secondary: '#2ea043' },
   timeline:     { accent: '#4ac26b', secondary: '#2ea043' },
   activity:     { accent: '#3fb950', secondary: '#2ea043' },
   topCells:     { accent: '#7ee787', secondary: '#3fb950' },
   weekday:      { accent: '#39d353', secondary: '#2ea043' },
-  streak:       { accent: '#f78166', secondary: '#e34d2f' },
+  streak:       { accent: '#56d364', secondary: '#2ea043' },
   monthly:      { accent: '#4ac26b', secondary: '#2ea043' },
   geo:          { accent: '#3fb950', secondary: '#2ea043' },
   minimap:      { accent: '#39d353', secondary: '#2ea043' },
