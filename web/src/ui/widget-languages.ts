@@ -3,14 +3,15 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, renderAllWidgets } from './dashboard';
+import { registerWidget, getWidgetSetting, renderAllWidgets, widgetFontScale } from './dashboard';
 import type { GitHubLanguage } from '../types';
 
 function renderLanguages(container: HTMLElement, _id: string): void {
   const maxItems = getWidgetSetting('languages', 'maxItems', 5) as number;
   const langs = (state.languages ?? []).slice(0, maxItems);
+  const f = widgetFontScale('languages');
 
-  container.style.fontSize = '10px';
+  container.style.fontSize = (10 * f) + 'px';
   container.style.padding = '6px 8px';
 
   if (langs.length === 0) {
@@ -46,7 +47,7 @@ function renderLanguages(container: HTMLElement, _id: string): void {
     name.textContent = lang.name;
     name.style.color = '#e6edf3';
     name.style.minWidth = '60px';
-    name.style.fontSize = '10px';
+    name.style.fontSize = (10 * f) + 'px';
     name.style.flexShrink = '0';
 
     // Percentage bar
@@ -69,7 +70,7 @@ function renderLanguages(container: HTMLElement, _id: string): void {
     const pct = document.createElement('span');
     pct.textContent = `${lang.percentage.toFixed(1)}%`;
     pct.style.color = 'rgba(255,255,255,0.5)';
-    pct.style.fontSize = '9px';
+    pct.style.fontSize = (9 * f) + 'px';
     pct.style.minWidth = '38px';
     pct.style.textAlign = 'right';
     pct.style.fontVariantNumeric = 'tabular-nums';

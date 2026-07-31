@@ -2,7 +2,10 @@
 // Coordinate system projection utilities
 // ══════════════════════════════════════════════════════════════════════════════
 
-import type { Point2D, CoordSystem } from '../types';
+import type { Point2D, CoordSystem, GeoBounds } from '../types';
+
+// Approximate ground distance of one degree of latitude, in km.
+const KM_PER_DEG = 111.32;
 
 export function norm(pts: Point2D[]): Point2D[] {
   const xs = pts.map(([x]) => x), ys = pts.map(([,y]) => y);
@@ -60,4 +63,79 @@ export function normWithCoordSystem(pts: Point2D[], coordSystem: CoordSystem | n
   }
   
   return normalized;
+}
+
+// ── Real-world unit conversion (km / km²) ───────────────────────────────────
+
+/**
+ * True when geographic data is loaded: bounds are set and the coordinate
+ * system is wgs84 or mercator.
+ */
+export function isGeoState(
+  geoBounds: GeoBounds | null,
+  coordSystem: CoordSystem | null
+): geoBounds is GeoBounds {
+  return (
+    geoBounds !== null &&
+    (coordSystem === 'wgs84' || coordSystem === 'mercator')
+  );
+}
+
+/**
+ * Scale factors converting normalized-unit distances/areas to km / km² for
+ * the current geo dataset, or null when no geographic data is loaded.
+ *
+ * Derivation (mirrors normWithCoordSystem exactly): norm() shifts projected
+ * coords by their min and divides by span = max(projSpanX, projSpanY).
+ * So for a normalized delta dn, the projected delta is dn * span.
+ *
+ *  - wgs84: projectWgs84 maps lon -> lon * cos(midLatRad), lat -> lat.
+ *      dLon(deg) = dn * span / cos(midLatRad)
+ *      dKm_x = dLon(deg) * 111.32 * cos(midLatRad) = dn * span * 111.32
+ *    The cos(midLatRad) terms cancel, giving kmPerUnitX = kmPerUnitY = span * 111.32.
+ *
+ *  - mercator: projectMercator maps lon -> lon, lat -> mercY(lat), which is
+ *    conformal: locally d(latRad)/d(mercY) = cos(lat). Evaluating at midLat:
+ *      dKm_x = dn * span * 111.32 * cos(midLatRad)
+ *      dKm_y = dn * span * (180/π) * cos(midLatRad) * 111.32   (radians -> degrees)
+ *    The (180/π) factor appears because mercY units are radian-like, so the
+ *    y-axis scale exceeds the x-axis scale by 57.3×.
+ */
+export function geoKmPerUnit(
+  geoBounds: GeoBounds | null,
+  coordSystem: CoordSystem | null
+): { kmPerUnitX: number; kmPerUnitY: number } | null {
+  if (!isGeoState(geoBounds, coordSystem)) return null;
+  const { minLon, maxLon, minLat, maxLat } = geoBounds;
+
+  const midLatRad = (((minLat + maxLat) / 2) * Math.PI) / 180;
+  const cosMid = Math.cos(midLatRad);
+
+  // Recompute the projected span exactly as normWithCoordSystem does.
+  let projSpanX: number;
+  let projSpanY: number;
+  if (coordSystem === 'wgs84') {
+    projSpanX = (maxLon - minLon) * cosMid;
+    projSpanY = maxLat - minLat;
+  } else {
+    // mercator
+    const mercY = (lat: number): number => {
+      const clamped = Math.max(-85.05, Math.min(85.05, lat));
+      const latRad = (clamped * Math.PI) / 180;
+      return Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+    };
+    projSpanX = maxLon - minLon;
+    projSpanY = mercY(maxLat) - mercY(minLat);
+  }
+  const span = Math.max(projSpanX, projSpanY) || 1;
+
+  if (coordSystem === 'wgs84') {
+    // cos(midLatRad) cancels between the projection and the km conversion.
+    const perUnit = span * KM_PER_DEG;
+    return { kmPerUnitX: perUnit, kmPerUnitY: perUnit };
+  }
+  // mercator: mercY units are radian-like; x is in degrees.
+  const perUnitX = span * KM_PER_DEG * cosMid;
+  const perUnitY = span * KM_PER_DEG * cosMid * (180 / Math.PI);
+  return { kmPerUnitX: perUnitX, kmPerUnitY: perUnitY };
 }

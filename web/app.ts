@@ -9,7 +9,7 @@ import { state, updateState, setPreset } from './src/ui/state';
 import { norm, normWithCoordSystem, isLikelyLonLat } from './src/geometry/projection';
 import { parseGeoJsonFile, parseSvgFile } from './src/geometry/parsers';
 import { intensityToColor, colToHex, activePaletteId, setActivePalette, buildLegend } from './src/rendering/colors';
-import { loadDemo, computeGrid, loadData, setStatus, loadFromUrl } from './src/ui/data';
+import { loadDemo, computeGrid, loadData, setStatus, loadFromUrl, loadFromJson } from './src/ui/data';
 import { createPresets } from './src/data/presets';
 import { initPaletteUI } from './src/ui/palette-ui';
 import { scheduleRebuild, needsRebuild } from './src/ui/rebuild';
@@ -18,7 +18,11 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { COUNTRIES, searchCountries, getCountryList, initCountries } from './src/data/countries';
+import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
+import { WebGLPathTracer, DenoiseMaterial } from 'three-gpu-pathtracer';
+import html2canvas from 'html2canvas';
+import { showExportModal } from './src/ui/export-modal';
+import { COUNTRIES, searchCountries, getCountryList, initCountries, getCountryBounds, getContinents } from './src/data/countries';
 import { initToolbar, syncToolbarState } from './src/ui/toolbar';
 import { initMeasureOverlay, updateMeasureOverlay, handleMeasureClick, clearMeasureOverlay, isMeasuring } from './src/ui/measure';
 import { getEditor, setSelectedCells, cancelMeasurement } from './src/ui/editor-state';
@@ -35,7 +39,12 @@ import './src/ui/widget-coords';
 import './src/ui/widget-distribution';
 import './src/ui/widget-timeline';
 import './src/ui/widget-activity';
-import './src/ui/widget-overview';
+import './src/ui/widget-top-cells';
+import './src/ui/widget-weekday';
+import './src/ui/widget-streak';
+import './src/ui/widget-monthly';
+import './src/ui/widget-geo';
+import './src/ui/widget-minimap';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Three.js Scene
@@ -47,6 +56,10 @@ let dirLight: THREE.DirectionalLight, mesh: THREE.InstancedMesh | null, boundary
 let groundMesh: THREE.Mesh;
 let coordAxesGroup: THREE.Group | null;
 let composer: EffectComposer | null = null;
+// Color-managed background — required for the composer path: the EffectComposer
+// renders into a linear HDR target, and a raw clear color (sRGB) would be
+// re-encoded by OutputPass, brightening dark backgrounds to grey.
+let bgColor: THREE.Color | null = null;
 // Initialize presets after norm is available
 createPresets(norm);
 
@@ -115,6 +128,18 @@ function posCamera() {
   camera.left = -fs * asp / 2; camera.right = fs * asp / 2;
   camera.top = fs / 2; camera.bottom = -fs / 2;
   camera.updateProjectionMatrix();
+
+  notifyRTViewChanged();
+}
+
+function scaleIntensity(raw: number): number {
+  const clamped = Math.max(0, Math.min(1, raw));
+  switch (state.scaleMode) {
+    case 'sqrt': return Math.sqrt(clamped);
+    case 'cbrt': return Math.cbrt(clamped);
+    case 'log': return clamped <= 0 ? 0 : Math.log(1 + clamped * 9) / Math.log(10);
+    default: return clamped;
+  }
 }
 
 function buildMesh() {
@@ -135,8 +160,6 @@ function buildMesh() {
       case 'sqrt': return Math.sqrt(clamped);
       case 'cbrt': return Math.cbrt(clamped);
       case 'log': return clamped <= 0 ? 0 : Math.log(1 + clamped * 9) / Math.log(10);
-      case 'quad': return clamped * clamped;
-      case 'inverse': return 1 - clamped;
       default: return clamped;
     }
   };
@@ -343,6 +366,8 @@ let bloomNode: any = null;
 
 function applyPostProcessing() {
   if (!renderer || !scene) return;
+  // Ray tracing replaces the whole post chain — skip bloom/fog/env management
+  if (state.rayTracingEnabled) return;
   // Bloom
   if (bloomNode) {
     bloomNode.strength = state.bloomEnabled ? state.bloomStrength : 0;
@@ -373,6 +398,244 @@ function applyPostProcessing() {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// Ray tracing — GPU path tracing via three-gpu-pathtracer
+// The instanced grid is converted into a merged, vertex-colored geometry
+// (the path tracer does not support InstancedMesh).
+// ══════════════════════════════════════════════════════════════════════════════
+
+let pathTracer: any = null;
+let rtSceneGroup: THREE.Group | null = null;
+let rtReady = false;
+let rtPendingReset = false;
+
+// Ray tracing options - read from DOM controls, kept as module lets so the
+// path tracer loop can consult them without touching ui/state.ts
+let rtDenoise = false;
+let rtRenderScale = 1;
+// Denoise blit state (three-gpu-pathtracer DenoiseMaterial is the final pass)
+let denoiseMat: any = null;
+let denoiseQuad: any = null;
+let lastBlitSamples = -1;
+
+/**
+ * Lazily create the denoise fullscreen pass. DenoiseMaterial (verified from
+ * the installed package source) extends MaterialBase, which proxies uniform
+ * keys to properties, so `mat.map = texture` sets `uniforms.map.value`.
+ * Its fragment shader does glslSmartDeNoise then includes
+ * <tonemapping_fragment> and <colorspace_fragment>, so it is designed to be
+ * the last pass to the screen. Defaults: sigma 5.0, kSigma 1.0, threshold 0.03.
+ */
+function ensureDenoiseSetup(): void {
+  if (denoiseQuad || !pathTracer) return;
+  denoiseMat = new DenoiseMaterial();
+  denoiseMat.map = pathTracer.target.texture;
+  denoiseQuad = new FullScreenQuad(denoiseMat);
+}
+
+/** Blit the accumulated RT target through the denoise material to the canvas. */
+function denoiseBlit(): void {
+  if (!denoiseMat || !denoiseQuad || !pathTracer) return;
+  denoiseMat.map = pathTracer.target.texture;
+  renderer.setRenderTarget(null);
+  renderer.autoClear = false;
+  denoiseQuad.render(renderer);
+  renderer.autoClear = true;
+}
+
+function isRTAvailable(): boolean {
+  return rtReady && !!pathTracer;
+}
+
+function initRayTracing(): boolean {
+  if (pathTracer) return rtReady;
+  if (!renderer.capabilities.isWebGL2) {
+    rtReady = false;
+    return false;
+  }
+  try {
+    pathTracer = new WebGLPathTracer(renderer);
+    pathTracer.tiles.set(3, 3);
+    pathTracer.dynamicLowRes = true;
+    pathTracer.lowResScale = 0.15;
+    pathTracer.fadeDuration = 250;
+    pathTracer.minSamples = 3;
+    pathTracer.bounces = state.rayTracingBounces;
+    pathTracer.renderScale = rtRenderScale;
+    rtReady = true;
+  } catch (e) {
+    console.warn('[rt] path tracer init failed:', e);
+    rtReady = false;
+    pathTracer = null;
+  }
+  return rtReady;
+}
+
+/** Build the merged vertex-colored grid geometry for path tracing. */
+function buildRTGridGeometry(): THREE.BufferGeometry {
+  const grid = state.grid;
+  const geo = new THREE.BufferGeometry();
+  if (!grid || grid.cells.length === 0) return geo;
+
+  const { cells, cellSize, gridType } = grid;
+  const unit = gridType === 'square'
+    ? new THREE.BoxGeometry(1, 1, 1)
+    : new THREE.CylinderGeometry(1, 1, 1, 6);
+  const posAttr = unit.attributes.position as THREE.BufferAttribute;
+  const norAttr = unit.attributes.normal as THREE.BufferAttribute;
+  const idxAttr = unit.index as THREE.BufferAttribute;
+  const unitVerts = posAttr.count;
+
+  const sx = gridType === 'square'
+    ? cellSize * (1 - state.gap)
+    : cellSize / Math.sqrt(3) * (1 - state.gap);
+
+  const positions: number[] = [];
+  const normals: number[] = [];
+  const colorsArr: number[] = [];
+  const indices: number[] = [];
+
+  const v = new THREE.Vector3();
+  const n = new THREE.Vector3();
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const s = new THREE.Vector3();
+  const t = new THREE.Vector3();
+  const col = new THREE.Color();
+  let base = 0;
+
+  const scaleIntensityRT = (raw: number): number => {
+    const clamped = Math.max(0, Math.min(1, raw));
+    switch (state.scaleMode) {
+      case 'sqrt': return Math.sqrt(clamped);
+      case 'cbrt': return Math.cbrt(clamped);
+      case 'log': return clamped <= 0 ? 0 : Math.log(1 + clamped * 9) / Math.log(10);
+      default: return clamped;
+    }
+  };
+
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i];
+    const d = state.cellData[i] || { intensity: 0, count: 0 };
+    const scaled = scaleIntensityRT(d.intensity);
+    const h = Math.max(0.008, scaled * state.heightScale * 0.12 + 0.008);
+
+    t.set(cell.cx - 0.5, h / 2, cell.cy - 0.5);
+    s.set(sx, h, sx);
+    m.compose(t, q, s);
+
+    const css = intensityToColor(scaled, activePaletteId);
+    const [r, g, b] = colToHex(css);
+    col.setRGB(r, g, b);
+
+    for (let j = 0; j < unitVerts; j++) {
+      v.fromBufferAttribute(posAttr, j).applyMatrix4(m);
+      positions.push(v.x, v.y, v.z);
+      n.fromBufferAttribute(norAttr, j);
+      normals.push(n.x, n.y, n.z);
+      colorsArr.push(col.r, col.g, col.b);
+    }
+    for (let j = 0; j < idxAttr.count; j++) {
+      indices.push(idxAttr.getX(j) + base);
+    }
+    base += unitVerts;
+  }
+
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colorsArr, 3));
+  geo.setIndex(indices);
+  unit.dispose();
+  return geo;
+}
+
+function ensureRTEnvironment(): void {
+  if (scene.environment) return;
+  const pmremGenerator = new THREE.PMREMGenerator(renderer);
+  const envTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
+  scene.environment = envTexture.texture;
+  pmremGenerator.dispose();
+}
+
+function disposeRTScene(): void {
+  if (rtSceneGroup) {
+    scene.remove(rtSceneGroup);
+    rtSceneGroup.traverse(obj => {
+      const meshObj = obj as THREE.Mesh;
+      if (meshObj.geometry) meshObj.geometry.dispose();
+      if (meshObj.material) (meshObj.material as THREE.Material).dispose();
+    });
+    rtSceneGroup = null;
+  }
+  // Restore the normal scene objects
+  if (mesh) mesh.visible = true;
+  if (boundaryLine) boundaryLine.visible = true;
+  if (coordAxesGroup) coordAxesGroup.visible = true;
+  groundMesh.visible = true;
+}
+
+function rebuildRTScene(): void {
+  if (!isRTAvailable()) return;
+  disposeRTScene();
+
+  const group = new THREE.Group();
+
+  const gridGeo = buildRTGridGeometry();
+  const gridMat = new THREE.MeshStandardMaterial({
+    vertexColors: true,
+    roughness: 0.85,
+    metalness: 0.0,
+  });
+  group.add(new THREE.Mesh(gridGeo, gridMat));
+
+  // Ground plane — path tracer needs a real surface material (no ShadowMaterial)
+  const gGeo = new THREE.PlaneGeometry(6, 6);
+  const gMat = new THREE.MeshStandardMaterial({ color: 0x1b2129, roughness: 1.0, metalness: 0.0 });
+  const ground = new THREE.Mesh(gGeo, gMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.002;
+  group.add(ground);
+
+  rtSceneGroup = group;
+  scene.add(group);
+
+  // Hide WebGL-only scene chrome
+  if (mesh) mesh.visible = false;
+  if (boundaryLine) boundaryLine.visible = false;
+  if (coordAxesGroup) coordAxesGroup.visible = false;
+  groundMesh.visible = false;
+
+  ensureRTEnvironment();
+  pathTracer.setScene(scene, camera);
+  rtPendingReset = false;
+}
+
+/** Restart RT accumulation after any view change. */
+function notifyRTViewChanged(): void {
+  if (!isRTAvailable() || !state.rayTracingEnabled) return;
+  pathTracer.updateCamera();
+  rtPendingReset = true;
+}
+
+/** Block until the path tracer has accumulated the quality target (async). */
+async function ensureRTSamples(): Promise<void> {
+  if (!isRTAvailable() || !state.rayTracingEnabled) return;
+  const target = Math.min(state.rayTracingSamples, 256);
+  const statusEl = document.getElementById('rt-status');
+  while (pathTracer.samples < target) {
+    pathTracer.renderSample();
+    if (statusEl) statusEl.textContent = `· ${pathTracer.samples}/${target}`;
+    await new Promise(r => requestAnimationFrame(r));
+  }
+  // Denoise the final accumulated frame before capture
+  if (rtDenoise) {
+    ensureDenoiseSetup();
+    denoiseBlit();
+    lastBlitSamples = pathTracer.samples;
+  }
+  if (statusEl) statusEl.textContent = '';
+}
+
 function loop() {
   requestAnimationFrame(loop);
   const pr = renderer.getPixelRatio();
@@ -386,12 +649,40 @@ function loop() {
     posCamera();
   }
   if (needsRebuild()) {
-    buildMesh();
+    if (isRTAvailable() && state.rayTracingEnabled) {
+      rebuildRTScene();
+    } else {
+      buildMesh();
+    }
   }
   applyPostProcessing();
-  // Clear to background — use renderer.clearColor (matches original pre-composer path)
-  // Don't set scene.background (it goes through color space conversion differently)
+  // Color-managed scene background (works identically in the direct and
+  // composer paths — three.js converts it to the render target's color space)
+  if (!bgColor) bgColor = new THREE.Color();
+  if (!scene.background) scene.background = bgColor;
+  if (bgColor.getStyle() !== state.background) bgColor.set(state.background);
+  // Keep the clear color in sync too (used for the underlying RT clear)
   renderer.setClearColor(state.background, 1);
+
+  // Ray tracing path — accumulate samples to the quality target
+  if (isRTAvailable() && state.rayTracingEnabled && pathTracer) {
+    if (rtPendingReset) {
+      pathTracer.reset();
+      rtPendingReset = false;
+      lastBlitSamples = -1;
+    }
+    if (pathTracer.samples < state.rayTracingSamples) {
+      pathTracer.renderSample();
+    }
+    // Once accumulation reaches the target, run the denoise final pass
+    // (re-blit only when the sample count changed since the last blit)
+    if (rtDenoise && pathTracer.samples >= state.rayTracingSamples && pathTracer.samples !== lastBlitSamples) {
+      ensureDenoiseSetup();
+      denoiseBlit();
+      lastBlitSamples = pathTracer.samples;
+    }
+    return;
+  }
 
   // Skip composer when all effects are off — matches original direct render path
   const effectsActive = (composer !== null) && (state.bloomEnabled || state.toneMapping !== 0 || state.fogEnabled || state.envMapEnabled);
@@ -434,6 +725,7 @@ canvas.addEventListener('wheel', e => {
   camera.left = -state.zoom * asp / 2; camera.right = state.zoom * asp / 2;
   camera.top = state.zoom / 2; camera.bottom = -state.zoom / 2;
   camera.updateProjectionMatrix();
+  notifyRTViewChanged();
 }, { passive: false });
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -724,6 +1016,11 @@ function updateLabels() {
   el('val-coord-axes-y-offset')!.textContent = state.coordAxesYOffset.toFixed(2);
   el('val-coord-axes-tick')!.textContent = state.coordAxesTickLength.toFixed(3);
   el('val-coord-axes-label-off')!.textContent = state.coordAxesLabelOffset.toFixed(2);
+  el('val-bloom-strength')!.textContent = state.bloomStrength.toFixed(2);
+  el('val-bloom-radius')!.textContent = state.bloomRadius.toFixed(2);
+  el('val-bloom-threshold')!.textContent = state.bloomThreshold.toFixed(2);
+  el('val-fog-density')!.textContent = state.fogDensity.toFixed(2);
+  el('val-rt-bounces')!.textContent = String(state.rayTracingBounces);
 }
 
 // Sliders — map input IDs to state keys where they differ
@@ -866,6 +1163,7 @@ if (daysNumInput) {
     el.addEventListener('input', () => {
       state[key] = parseFloat(el.value);
       syncPP();
+      updateLabels();
     });
   });
   // Fog toggle
@@ -877,6 +1175,7 @@ if (daysNumInput) {
   (document.getElementById('inp-fog-density') as HTMLInputElement).addEventListener('input', e => {
     state.fogDensity = parseFloat((e.target as HTMLInputElement).value);
     syncPP();
+    updateLabels();
   });
   // Env map toggle
   (document.getElementById('inp-env-map') as HTMLInputElement).addEventListener('change', e => {
@@ -889,9 +1188,68 @@ if (daysNumInput) {
     syncPP();
   });
 
+  // ── Ray tracing controls ──────────────────────────────────────────────
+  (document.getElementById('inp-ray-tracing') as HTMLInputElement).addEventListener('change', e => {
+    const enabled = (e.target as HTMLInputElement).checked;
+    const statusEl = document.getElementById('rt-status');
+    if (enabled) {
+      const ok = initRayTracing();
+      if (!ok) {
+        (e.target as HTMLInputElement).checked = false;
+        state.rayTracingEnabled = false;
+        if (statusEl) statusEl.textContent = '· unavailable (WebGL2 required)';
+        return;
+      }
+      state.rayTracingEnabled = true;
+      rebuildRTScene();
+      if (statusEl) statusEl.textContent = '';
+    } else {
+      state.rayTracingEnabled = false;
+      disposeRTScene();
+    }
+  });
+  (document.getElementById('inp-rt-samples') as HTMLSelectElement).addEventListener('change', e => {
+    state.rayTracingSamples = parseInt((e.target as HTMLSelectElement).value);
+    if (isRTAvailable() && state.rayTracingEnabled) {
+      pathTracer.reset();
+      rtPendingReset = false;
+      lastBlitSamples = -1;
+    }
+  });
+  (document.getElementById('inp-rt-bounces') as HTMLInputElement).addEventListener('input', e => {
+    state.rayTracingBounces = parseInt((e.target as HTMLInputElement).value);
+    if (isRTAvailable() && state.rayTracingEnabled) {
+      pathTracer.bounces = state.rayTracingBounces;
+      pathTracer.reset();
+      rtPendingReset = false;
+      lastBlitSamples = -1;
+    }
+    updateLabels();
+  });
+  // Denoise toggle - when enabled after the target is already accumulated,
+  // blit immediately so the canvas switches to the denoised image
+  (document.getElementById('inp-rt-denoise') as HTMLInputElement).addEventListener('change', e => {
+    rtDenoise = (e.target as HTMLInputElement).checked;
+    if (rtDenoise && isRTAvailable() && state.rayTracingEnabled && pathTracer.samples >= state.rayTracingSamples) {
+      ensureDenoiseSetup();
+      denoiseBlit();
+    }
+    lastBlitSamples = -1;
+  });
+  // Render scale - restart accumulation at the new internal resolution
+  (document.getElementById('inp-rt-scale') as HTMLSelectElement).addEventListener('change', e => {
+    rtRenderScale = parseFloat((e.target as HTMLSelectElement).value);
+    if (isRTAvailable() && state.rayTracingEnabled) {
+      pathTracer.renderScale = rtRenderScale;
+      pathTracer.reset();
+      rtPendingReset = false;
+      lastBlitSamples = -1;
+    }
+  });
+
   // Intensity scale mode
   (document.getElementById('inp-scale-mode') as HTMLSelectElement).addEventListener('change', e => {
-    state.scaleMode = (e.target as HTMLSelectElement).value as 'linear' | 'sqrt' | 'cbrt' | 'log' | 'quad' | 'inverse';
+    state.scaleMode = (e.target as HTMLSelectElement).value as 'linear' | 'sqrt' | 'cbrt' | 'log';
     scheduleRebuild();
   });
 
@@ -963,90 +1321,226 @@ if (daysNumInput) {
   await fetchAndUpdateLanguages();
 });
 
-// Export PNG
-(document.getElementById('btn-export') as HTMLButtonElement).addEventListener('click', () => {
+// Export PNG — capture the FINAL render: 3D view + dashboard widgets, with
+// all editor chrome stripped, matching the CI-rendered output.
+
+async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement; w: number; h: number; format: string; scale: number } | null> {
   let w = +(document.getElementById('inp-export-w') as HTMLInputElement).value;
   let h = +(document.getElementById('inp-export-h') as HTMLInputElement).value;
   const autocrop = (document.getElementById('inp-export-autocrop') as HTMLInputElement).checked;
   const vertical = (document.getElementById('inp-export-vertical') as HTMLInputElement).checked;
   const padding = +(document.getElementById('inp-export-pad') as HTMLInputElement).value || 40;
+  const exportTitle = ((document.getElementById('inp-export-title') as HTMLInputElement)?.value || '').trim();
+  const exportFormat = ((document.getElementById('inp-export-format') as HTMLSelectElement)?.value || 'png');
+  const exportScale = parseFloat((document.getElementById('inp-export-scale') as HTMLSelectElement)?.value) || 1;
+
+  // Apply scale multiplier BEFORE the camera/autocrop math (1200x600 @2x → 2400x1200)
+  w = Math.round(w * exportScale);
+  h = Math.round(h * exportScale);
 
   // Swap for vertical/portrait
   if (vertical) { const t = w; w = h; h = t; }
 
-  const offscreen = document.createElement('canvas');
-  offscreen.width = w; offscreen.height = h;
-  const ctx = offscreen.getContext('2d')!;
+  const wrap = document.getElementById('canvas-wrap')!;
+  const wrapRect = wrap.getBoundingClientRect();
+  if (wrapRect.width < 10 || wrapRect.height < 10) return null;
 
   const origW = renderer.domElement.width, origH = renderer.domElement.height;
   const origLeft = camera.left, origRight = camera.right;
   const origTop = camera.top, origBottom = camera.bottom;
 
-  if (autocrop && state.grid && state.grid.cells.length > 0) {
-    // Compute bounding box of grid cells in world coords
-    const xs = state.grid.cells.map(c => c.cx);
-    const ys = state.grid.cells.map(c => c.cy);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const spanX = maxX - minX || 1;
-    const spanY = maxY - minY || 1;
-    const asp = w / h;
+  // Strip editor chrome (toolbar, tooltip, measure overlay, widget close buttons)
+  document.body.classList.add('export-mode');
 
-    // Add padding proportionally
-    const padWorldX = (padding / w) * spanX;
-    const padWorldY = (padding / h) * spanY;
+  try {
+    if (autocrop && state.grid && state.grid.cells.length > 0) {
+      // Grid world-space AABB. Cells are centered at (cx - 0.5, cy - 0.5)
+      // and raised to h in Y (same math as buildMesh).
+      const xs = state.grid.cells.map(c => c.cx - 0.5);
+      const zs = state.grid.cells.map(c => c.cy - 0.5);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minZ = Math.min(...zs), maxZ = Math.max(...zs);
+      let maxY = 0.008;
+      state.grid.cells.forEach((_cell, i) => {
+        const d = state.cellData[i] || { intensity: 0, count: 0 };
+        const h = Math.max(0.008, scaleIntensity(d.intensity) * state.heightScale * 0.12 + 0.008);
+        if (h > maxY) maxY = h;
+      });
+      const center = new THREE.Vector3((minX + maxX) / 2, maxY / 2, (minZ + maxZ) / 2);
 
-    // Center the grid in the view
-    const centerX = (minX + maxX) / 2 - 0.5;
-    const centerY = (minY + maxY) / 2 - 0.5;
+      // Keep the current orbit orientation (yaw/pitch); only the fit changes.
+      const yaw = (state.yaw * Math.PI) / 180;
+      const pitch = (state.pitch * Math.PI) / 180;
+      const dir = new THREE.Vector3(
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch)
+      );
+      camera.position.copy(center).addScaledVector(dir, 2.5);
+      camera.up.set(0, 1, 0);
+      camera.lookAt(center);
+      camera.updateMatrixWorld();
 
-    // Fit with aspect ratio
-    let viewW = (spanX + padWorldX * 2) / 2;
-    let viewH = (spanY + padWorldY * 2) / 2;
-    if (viewW / viewH > asp) viewH = viewW / asp;
-    else viewW = viewH * asp;
+      // Project the AABB corners onto the camera right/up axes.
+      const f = new THREE.Vector3();
+      camera.getWorldDirection(f);
+      let right = new THREE.Vector3().crossVectors(f, camera.up);
+      if (right.lengthSq() < 1e-8) right.set(1, 0, 0); // pitch ~90° guard
+      right.normalize();
+      const up = new THREE.Vector3().crossVectors(right, f);
 
-    camera.left = -viewW;
-    camera.right = viewW;
-    camera.top = viewH;
-    camera.bottom = -viewH;
+      let halfW = 0, halfH = 0;
+      for (const cx of [minX, maxX]) {
+        for (const cy of [0, maxY]) {
+          for (const cz of [minZ, maxZ]) {
+            const d = new THREE.Vector3(cx - center.x, cy - center.y, cz - center.z);
+            halfW = Math.max(halfW, Math.abs(d.dot(right)));
+            halfH = Math.max(halfH, Math.abs(d.dot(up)));
+          }
+        }
+      }
 
-    // Shift camera to center the grid
-    camera.position.x = centerX;
-    camera.position.y = 0.5;
-    camera.position.z = centerY;
-    camera.lookAt(centerX, 0, centerY);
+      const asp = w / h;
+      const padW = (padding / w) * (halfW * 2);
+      const padH = (padding / h) * (halfH * 2);
+      let viewW = halfW + padW, viewH = halfH + padH;
+      if (viewW / viewH > asp) viewH = viewW / asp;
+      else viewW = viewH * asp;
 
+      camera.left = -viewW; camera.right = viewW;
+      camera.top = viewH; camera.bottom = -viewH;
+      camera.updateProjectionMatrix();
+      notifyRTViewChanged();
+    } else {
+      renderer.setSize(w, h, false);
+      posCamera();
+    }
+
+    // Ray tracing: accumulate to the quality target before capturing
+    if (isRTAvailable() && state.rayTracingEnabled) {
+      await ensureRTSamples();
+    } else {
+      const effectsActive = (composer !== null) && (state.bloomEnabled || state.toneMapping !== 0 || state.fogEnabled || state.envMapEnabled);
+      if (effectsActive) {
+        composer!.render();
+      } else {
+        renderer.render(scene, camera);
+      }
+    }
+
+    // ── Composite: background → 3D view → widgets ───────────────────────
+    const out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    const ctx = out.getContext('2d')!;
+    ctx.fillStyle = state.background;
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(renderer.domElement, 0, 0, w, h);
+
+    // Widgets: capture each widget DOM subtree and draw it at its position
+    const widgets = wrap.querySelectorAll<HTMLElement>('.dashboard-widget');
+    const widgetScale = Math.min(Math.max(w / wrapRect.width, 0.5), 3);
+    for (const el of widgets) {
+      const r = el.getBoundingClientRect();
+      // Skip widgets outside the visible wrap area
+      if (r.bottom < wrapRect.top || r.top > wrapRect.bottom) continue;
+      if (r.width < 4 || r.height < 4) continue;
+
+      const dx = ((r.left - wrapRect.left) / wrapRect.width) * w;
+      const dy = ((r.top - wrapRect.top) / wrapRect.height) * h;
+      const dw = (r.width / wrapRect.width) * w;
+      const dh = (r.height / wrapRect.height) * h;
+
+      try {
+        const widgetCanvas = await html2canvas(el, {
+          backgroundColor: null,
+          scale: widgetScale,
+          logging: false,
+          useCORS: true,
+        });
+        ctx.drawImage(widgetCanvas, dx, dy, dw, dh);
+      } catch (e) {
+        console.warn('[export] widget capture failed:', e);
+      }
+    }
+
+    // Optional title text — drawn on top of the composite, scaled with the render
+    if (exportTitle) {
+      const titleText = exportTitle.length > 60 ? exportTitle.slice(0, 60) + '…' : exportTitle;
+      ctx.font = `600 ${Math.round(44 * w / 1200)}px "IBM Plex Mono", monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillText(titleText, w / 2 + 3, 56 * w / 1200 + 3);
+      ctx.fillStyle = '#e6edf3';
+      ctx.fillText(titleText, w / 2, 56 * w / 1200);
+    }
+
+    return { canvas: out, w, h, format: exportFormat, scale: exportScale };
+  } finally {
+    // Restore
+    document.body.classList.remove('export-mode');
+    renderer.setSize(origW, origH, false);
+    camera.left = origLeft; camera.right = origRight;
+    camera.top = origTop; camera.bottom = origBottom;
+    camera.position.x = 0; camera.position.y = 0; camera.position.z = 0;
     camera.updateProjectionMatrix();
-  } else {
-    renderer.setSize(w, h, false);
     posCamera();
   }
+}
 
-  renderer.render(scene, camera);
-
-  // Copy to offscreen canvas
-  ctx.fillStyle = state.background;
-  ctx.fillRect(0, 0, w, h);
-  ctx.drawImage(renderer.domElement, 0, 0, w, h);
-
-  // Download
+function downloadCanvas(canvas: HTMLCanvasElement, format: string = 'png'): void {
   const link = document.createElement('a');
-  link.download = `shapegrid-${Date.now()}.png`;
-  link.href = offscreen.toDataURL('image/png');
+  const ext = format === 'jpg' ? 'jpg' : format === 'webp' ? 'webp' : 'png';
+  link.download = `shapegrid-${Date.now()}.${ext}`;
+  if (format === 'jpg') link.href = canvas.toDataURL('image/jpeg', 0.92);
+  else if (format === 'webp') link.href = canvas.toDataURL('image/webp', 0.92);
+  else link.href = canvas.toDataURL('image/png');
   link.click();
+}
 
-  // Restore
-  renderer.setSize(origW, origH, false);
-  camera.left = origLeft; camera.right = origRight;
-  camera.top = origTop; camera.bottom = origBottom;
-  camera.position.x = 0; camera.position.y = 0; camera.position.z = 0;
-  camera.updateProjectionMatrix();
-  posCamera();
-});
+/** Run the final-render capture and show the preview modal. */
+async function showExportPreview(): Promise<void> {
+  const result = await captureFinalRender();
+  if (!result) return;
+  const format = result.format;
+  showExportModal(result.canvas, result.w, result.h, () => {
+    downloadCanvas(result.canvas, format);
+  });
+}
 
 // Export Config button
 (document.getElementById('btn-export-config') as HTMLButtonElement).addEventListener('click', exportConfig);
+
+// Load Config button - import an exported config JSON via loadFromJson()
+const configFileInput = document.createElement('input');
+configFileInput.type = 'file';
+configFileInput.accept = '.json';
+configFileInput.style.display = 'none';
+document.body.appendChild(configFileInput);
+
+(document.getElementById('btn-load-config') as HTMLButtonElement).addEventListener('click', () => configFileInput.click());
+
+configFileInput.addEventListener('change', () => {
+  const file = configFileInput.files?.[0];
+  // Reset the input so the same file can be re-picked
+  configFileInput.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result as string);
+      if (!data || typeof data !== 'object' || !data.grid) {
+        throw new Error('Not a valid Shapegrid config: missing grid data');
+      }
+      loadFromJson(data);
+      scheduleRebuild();
+      setStatus(`✓ Loaded config ${file.name}`, 'ok');
+    } catch (e: any) {
+      setStatus(e.message, 'error');
+    }
+  };
+  reader.onerror = () => setStatus('Failed to read config file', 'error');
+  reader.readAsText(file);
+});
 // Create Export Config
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1086,10 +1580,30 @@ document.querySelectorAll('.boundary-tab').forEach(tab => {
 const countrySearch = document.getElementById('country-search') as HTMLInputElement;
 const countryDropdown = document.getElementById('country-dropdown')!;
 const countryGrid = document.getElementById('country-grid')!;
+const continentSelect = document.getElementById('inp-continent') as HTMLSelectElement;
+
+function activeContinent(): string {
+  return continentSelect ? continentSelect.value : 'all';
+}
+
+function populateContinents() {
+  if (!continentSelect) return;
+  const continents = getContinents();
+  // Keep the 'all' option, add continents (idempotent)
+  for (const c of continents) {
+    if (![...continentSelect.options].some(o => o.value === c)) {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      continentSelect.appendChild(opt);
+    }
+  }
+}
 
 function renderCountryList() {
   countryGrid.innerHTML = '';
-  const entries = getCountryList();
+  const continent = activeContinent();
+  const entries = getCountryList().filter(c => continent === 'all' || c.continent === continent);
   if (entries.length === 0) {
     countryGrid.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted);font-size:10px">Loading countries...</div>';
     return;
@@ -1112,9 +1626,13 @@ function selectCountry(code: string) {
   const country = COUNTRIES[code];
   if (!country) return;
   const coordCs = countryCoordSelect.value as any;
+  const resolvedCs = coordCs === 'auto' ? (isLikelyLonLat(country.coords) ? 'wgs84' : 'planar') : coordCs;
   const normalized = normWithCoordSystem(country.coords, coordCs);
   updateState('poly', normalized);
-  updateState('coordSystem', coordCs === 'auto' ? (isLikelyLonLat(country.coords) ? 'wgs84' : 'planar') : coordCs);
+  updateState('coordSystem', resolvedCs);
+  // Real-world unit support: keep the raw lon/lat bounds when a geographic
+  // coordinate system is active (cleared for planar so units stay normalized).
+  updateState('geoBounds', (resolvedCs === 'wgs84' || resolvedCs === 'mercator') ? getCountryBounds(code) : null);
   updateState('country', code);
   updateState('preset', '');
   updateState('boundaryType', 'country');
@@ -1133,7 +1651,8 @@ countrySearch.addEventListener('input', () => {
     renderCountryList();
     return;
   }
-  const results = searchCountries(q);
+  const continent = activeContinent();
+  const results = searchCountries(q).filter(c => continent === 'all' || c.continent === continent);
   countryDropdown.innerHTML = '';
   countryGrid.style.display = 'none';
   if (results.length === 0) {
@@ -1155,6 +1674,15 @@ countrySearch.addEventListener('input', () => {
     countryDropdown.appendChild(item);
   });
   countryDropdown.classList.add('visible');
+});
+
+// Continent filter
+continentSelect.addEventListener('change', () => {
+  countrySearch.value = '';
+  countryDropdown.innerHTML = '';
+  countryDropdown.classList.remove('visible');
+  countryGrid.style.display = '';
+  renderCountryList();
 });
 
 renderFeaturedCountries();
@@ -1300,6 +1828,11 @@ async function bootstrap() {
     setSliderValue('inp-fog-density', state.fogDensity);
     setSelectValue('inp-tone-mapping', String(state.toneMapping));
     setSelectValue('inp-scale-mode', state.scaleMode);
+    setSelectValue('inp-rt-samples', String(state.rayTracingSamples));
+    setSliderValue('inp-rt-bounces', state.rayTracingBounces);
+    setCheckboxValue('inp-ray-tracing', state.rayTracingEnabled);
+    setCheckboxValue('inp-rt-denoise', rtDenoise);
+    setSelectValue('inp-rt-scale', String(rtRenderScale));
     setCheckboxValue('inp-include-org', state.includeOrgRepos);
     const orgInput = document.getElementById('inp-org-name') as HTMLInputElement;
     if (orgInput) orgInput.value = state.orgName;
@@ -1352,6 +1885,7 @@ async function bootstrap() {
 
     // Preload country boundaries
     initCountries().then(() => {
+      populateContinents();
       renderFeaturedCountries();
     });
 
@@ -1386,25 +1920,8 @@ async function bootstrap() {
         scheduleRebuild();
       },
       screenshot: () => {
-        // Reuse export PNG logic
-        const w = +(document.getElementById('inp-export-w') as HTMLInputElement).value;
-        const h = +(document.getElementById('inp-export-h') as HTMLInputElement).value;
-        const offscreen = document.createElement('canvas');
-        offscreen.width = w; offscreen.height = h;
-        const ctx = offscreen.getContext('2d')!;
-        const origW = renderer.domElement.width, origH = renderer.domElement.height;
-        renderer.setSize(w, h, false);
-        posCamera();
-        renderer.render(scene, camera);
-        ctx.fillStyle = state.background;
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(canvas, 0, 0, w, h);
-        const link = document.createElement('a');
-        link.download = `shapegrid-${Date.now()}.png`;
-        link.href = offscreen.toDataURL('image/png');
-        link.click();
-        renderer.setSize(origW, origH, false);
-        posCamera();
+        // Final-render capture with preview modal (3D + widgets, chrome stripped)
+        showExportPreview().catch(e => console.error('Screenshot failed:', e));
       },
     });
     syncToolbarState();

@@ -67,20 +67,23 @@ function generateHexCandidates(
 ): Cell[] {
   const { minX, minY, maxX, maxY } = boundingBox(poly);
 
-  // Flat-top hex: width = cellSize, height = cellSize * sqrt(3)/2 * 2
-  const hexW = cellSize;
-  const hexH = cellSize * Math.sqrt(3);
-  const halfW = hexW / 2;
-  const halfH = hexH / 2;
+  // Pointy-top hex (vertices at top/bottom — the SVG renderer draws corners at
+  // halfSize = cellSize / 2, i.e. circumradius R = cellSize / 2). For touching
+  // neighbors: east-west step = √3R, row step = 1.5R, odd rows offset by √3R/2.
+  const R = cellSize / 2;
+  const xStep = R * Math.sqrt(3);   // ≈ 0.866 · cellSize
+  const yStep = R * 1.5;            // = 0.75 · cellSize
+  const halfW = R * Math.sqrt(3) / 2;
+  const halfH = R;
   const cells: Cell[] = [];
 
-  const cols = Math.ceil((maxX - minX) / (hexW * 0.75)) + 3;
-  const rows = Math.ceil((maxY - minY) / hexH) + 3;
+  const cols = Math.ceil((maxX - minX) / xStep) + 3;
+  const rows = Math.ceil((maxY - minY) / yStep) + 3;
 
   for (let col = -1; col < cols; col++) {
     for (let row = -1; row < rows; row++) {
-      const cx = minX + col * hexW * 0.75;
-      const cy = minY + (col % 2 === 0 ? row : row + 0.5) * hexH;
+      const cx = minX + (col + (row & 1) * 0.5) * xStep;
+      const cy = minY + row * yStep;
       const cov = cellCoverage(cx, cy, halfW, halfH, poly);
       if (cov >= coverageThreshold) {
         cells.push({ cx, cy, col, row, coverage: cov });

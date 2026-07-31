@@ -44,6 +44,7 @@ export interface GeoBounds {
 export interface CountryData {
   name: string;
   coords: Point2D[];
+  continent: string;
 }
 
 export interface Palette {
@@ -109,7 +110,7 @@ export interface OverlayState {
 // Dashboard widget system — GIS display widgets
 // ══════════════════════════════════════════════════════════════════════════════
 
-export type WidgetId = 'legend' | 'stats' | 'languages' | 'cellInfo' | 'scaleBar' | 'coordinates' | 'distribution' | 'timeline' | 'activity' | 'overview';
+export type WidgetId = 'legend' | 'stats' | 'languages' | 'cellInfo' | 'scaleBar' | 'coordinates' | 'distribution' | 'timeline' | 'activity' | 'topCells' | 'weekday' | 'streak' | 'monthly' | 'geo' | 'minimap';
 
 export interface WidgetConfig {
   id: WidgetId;
@@ -208,7 +209,7 @@ export interface AppState {
   fogDensity: number;
   toneMapping: number;
   envMapEnabled: boolean;
-  scaleMode: 'linear' | 'sqrt' | 'cbrt' | 'log' | 'quad' | 'inverse';
+  scaleMode: 'linear' | 'sqrt' | 'cbrt' | 'log';
   orgName: string;
   includeOrgRepos: boolean;
   background: string;
@@ -222,6 +223,9 @@ export interface AppState {
   dashboard: DashboardState;
   languages: GitHubLanguage[];
   editor: EditorState;
+  rayTracingEnabled: boolean;
+  rayTracingSamples: number;
+  rayTracingBounces: number;
 }
 
 /**

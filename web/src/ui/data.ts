@@ -6,7 +6,7 @@ import { state, updateState } from './state';
 import { fetchContributions } from './github';
 import { generateGrid } from '../geometry/engine';
 import { scheduleRebuild } from './rebuild';
-import type { DataExport, GridResult, Cell, CellData } from '../types';
+import type { DataExport, GridResult, Cell, CellData, GitHubDay } from '../types';
 
 // Safe textContent setter — guard against removed DOM elements
 function setText(id: string, text: string): void {
@@ -83,12 +83,25 @@ export function loadDemo(): void {
   }
   const N = state.count;
   const max = 15;
-  updateState('cellData', Array.from({ length: N }, (_, i) => {
+  // Demo data carries real dates so date-driven widgets (Top Cells, Weekday,
+  // Timeline, Activity) show meaningful content instead of empty states.
+  const days: GitHubDay[] = [];
+  const today = new Date();
+  const cellData = Array.from({ length: N }, (_, i) => {
     const noise = Math.sin(i * 0.3) * Math.cos(i * 0.07) * 0.5 + 0.5;
     const count = Math.round(noise * max);
-    return { date: '', count, intensity: count / max };
-  }));
-  updateState('contributions', { username: 'demo', total: state.cellData.reduce((s, d) => s + d.count, 0), days: [] });
+    const d = new Date(today);
+    d.setDate(today.getDate() - (N - 1 - i));
+    const iso = d.toISOString().slice(0, 10);
+    days.push({ date: iso, contributionCount: count, color: '', weekday: d.getDay() });
+    return { date: iso, count, intensity: count / max };
+  });
+  updateState('cellData', cellData);
+  updateState('contributions', {
+    username: 'demo',
+    total: state.cellData.reduce((s, d) => s + d.count, 0),
+    days,
+  });
   setText('stat-contrib', state.contributions!.total.toLocaleString());
 }
 

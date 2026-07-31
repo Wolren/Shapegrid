@@ -89,6 +89,8 @@ const CAMERA_ACTIONS = [
   { id: 'top-down', label: 'Top-down view', iconKey: 'topDown' },
 ] as const;
 
+const EXPORT_ACTION = { id: 'export-png', label: 'Export PNG', iconKey: 'screenshot' } as const;
+
 const LAYER_KEYS: Array<{ id: keyof LayerVisibility; label: string }> = [
   { id: 'boundary', label: 'Boundary' },
   { id: 'grid', label: 'Grid' },
@@ -412,11 +414,11 @@ export function initToolbar(callbacks?: Partial<ToolbarCallbacks>): HTMLElement 
   spacer.className = 'toolbar-spacer';
   toolbar.appendChild(spacer);
 
-  // ── Group 4: Screenshot ──────────────────────────────────────────────
+  // ── Group 4: Export PNG ────────────────────────────────────────────────
   const ssGroup = document.createElement('div');
   ssGroup.className = 'toolbar-group';
 
-  const ssBtn = createActionBtn('screenshot', 'Screenshot', 'screenshot');
+  const ssBtn = createActionBtn(EXPORT_ACTION.id, EXPORT_ACTION.label, EXPORT_ACTION.iconKey);
   ssBtn.addEventListener('click', () => {
     callbacks?.screenshot?.();
   });

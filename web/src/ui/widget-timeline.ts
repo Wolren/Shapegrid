@@ -4,14 +4,15 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
 import type { GitHubDay } from '../types';
 
 function renderTimeline(container: HTMLElement, _id: string): void {
   const maxDays = getWidgetSetting('timeline', 'days', 90) as number;
   const days = state.contributions?.days ?? [];
+  const f = widgetFontScale('timeline');
 
-  container.style.fontSize = '10px';
+  container.style.fontSize = (10 * f) + 'px';
   container.style.padding = '4px 8px';
 
   if (days.length === 0) {
@@ -131,7 +132,7 @@ function renderTimeline(container: HTMLElement, _id: string): void {
     maxLabel.setAttribute('y', String(maxY - 5));
     maxLabel.setAttribute('text-anchor', 'middle');
     maxLabel.setAttribute('fill', '#39d353');
-    maxLabel.setAttribute('font-size', '7');
+    maxLabel.setAttribute('font-size', (7 * f).toFixed(1));
     maxLabel.setAttribute('font-weight', '600');
     maxLabel.textContent = `Max: ${bestCount}`;
     svg.appendChild(maxLabel);

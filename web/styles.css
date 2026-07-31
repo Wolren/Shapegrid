@@ -760,8 +760,9 @@
     #legend.dragging .drag-handle,
     #stats-bar.dragging .drag-handle { cursor: grabbing; }
 
-    /* ── Export Config button ─────────────────────────────────────────────────────── */
-    #btn-export-config {
+    /* ── Export / Load Config buttons ─────────────────────────────────────── */
+    #btn-export-config,
+    #btn-load-config {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -775,7 +776,8 @@
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
     }
-    #btn-export-config:hover { border-color: var(--accent2); background: #0a1a2e; color: var(--accent2); }
+    #btn-export-config:hover,
+    #btn-load-config:hover { border-color: var(--accent2); background: #0a1a2e; color: var(--accent2); }
 
     /* ── Legend ──────────────────────────────────────────────────────────────────── */
     #legend {
@@ -1088,6 +1090,8 @@
     .dashboard-widget {
       position: absolute;
       pointer-events: auto;
+      display: flex;
+      flex-direction: column;
       background: rgba(13, 17, 23, 0.85);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -1096,7 +1100,7 @@
       font-family: var(--sans);
       color: var(--text);
       min-width: 120px;
-      max-width: 240px;
+      max-width: 420px;
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       transition: box-shadow 0.15s;
@@ -1107,6 +1111,12 @@
     .dashboard-widget.dragging {
       opacity: 0.9;
       z-index: 100;
+    }
+    .dashboard-widget.locked {
+      cursor: default;
+    }
+    .dashboard-widget.locked .dw-header {
+      cursor: default;
     }
     .dw-header {
       display: flex;
@@ -1137,10 +1147,216 @@
     }
     .dw-close:hover { opacity: 1; color: var(--danger); }
     .dw-body {
+      flex: 1;
+      min-height: 0;
       padding: 8px 10px;
       font-size: 10px;
       font-family: var(--sans);
       line-height: 1.5;
+    }
+    /* ── Widget manager: layout presets ─────────────────────────────────── */
+    .dm-layouts {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+    }
+    .dm-layouts-header {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .dm-layouts-save {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .dm-layouts-save .dm-btn {
+      flex: 0 0 auto;
+    }
+    .dm-layout-input {
+      flex: 1;
+      min-width: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 8px;
+      padding: 3px 4px;
+      outline: none;
+      transition: border-color 0.12s;
+    }
+    .dm-layout-input:focus {
+      border-color: var(--accent);
+    }
+    .dm-layout-input::placeholder {
+      color: var(--muted);
+    }
+    .dm-layouts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+    .dm-layout-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .dm-layout-name {
+      flex: 1;
+      min-width: 0;
+      font-size: 9px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dm-layout-load,
+    .dm-layout-del {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 8px;
+      padding: 2px 5px;
+      cursor: pointer;
+      transition: all 0.12s;
+      flex-shrink: 0;
+    }
+    .dm-layout-load:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .dm-layout-del:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    /* ── Export mode: strip editor chrome for final renders ─────────────── */
+    body.export-mode #editor-toolbar,
+    body.export-mode #tooltip,
+    body.export-mode #measure-overlay,
+    body.export-mode #btn-dashboard-manager {
+      display: none !important;
+    }
+    body.export-mode .dw-close {
+      display: none !important;
+    }
+
+    /* ── Export preview modal ──────────────────────────────────────────── */
+    .export-preview-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 8, 12, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      pointer-events: auto;
+      padding: 24px;
+    }
+    .export-preview-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface1, #0d1117);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+      max-width: min(94vw, 1200px);
+      max-height: 92vh;
+      overflow: hidden;
+    }
+    .export-preview-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(22, 27, 34, 0.6);
+      flex-shrink: 0;
+    }
+    .export-preview-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .export-preview-meta {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .export-preview-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      font-family: var(--mono);
+    }
+    .export-preview-close:hover {
+      color: var(--danger);
+    }
+    .export-preview-image-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      background:
+        repeating-conic-gradient(rgba(255,255,255,0.04) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px;
+    }
+    .export-preview-image {
+      max-width: 100%;
+      max-height: calc(92vh - 110px);
+      object-fit: contain;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+    }
+    .export-preview-actions {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      background: rgba(22, 27, 34, 0.6);
+      flex-shrink: 0;
+      justify-content: flex-end;
+    }
+    .export-preview-btn {
+      padding: 6px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 10px;
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .export-preview-btn:hover {
+      border-color: var(--accent);
+    }
+    .export-preview-btn.primary {
+      background: #0e2a0e;
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .export-preview-btn.primary:hover {
+      background: #123512;
     }
     /* ── Responsive ─────────────────────────────────────────────────────── */
     @media (max-width: 768px) {

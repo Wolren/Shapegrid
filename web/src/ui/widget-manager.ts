@@ -5,7 +5,7 @@
 import type { WidgetId, WidgetConfig } from '../types';
 import { state } from './state';
 import { toggleWidget, setWidgetPosition, setWidgetSetting, toggleManager, resetDashboard } from './dashboard';
-import { renderAllWidgets } from './dashboard';
+import { renderAllWidgets, saveCurrentLayoutAs, loadDashboardLayout, deleteDashboardLayout, listDashboardLayouts } from './dashboard';
 
 // ── Widget metadata (title + settings UI) ────────────────────────────────────
 
@@ -31,7 +31,9 @@ const WIDGET_META: WidgetMeta[] = [
     title: 'Legend',
     settings: [
       { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 120, max: 400, step: 10 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
@@ -39,7 +41,9 @@ const WIDGET_META: WidgetMeta[] = [
     title: 'Statistics',
     settings: [
       { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 160, max: 400, step: 10 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
@@ -47,7 +51,9 @@ const WIDGET_META: WidgetMeta[] = [
     title: 'Distribution',
     settings: [
       { key: 'bins', label: 'Number of bins', type: 'range', min: 3, max: 20, step: 1 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 140, max: 400, step: 10 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
@@ -55,7 +61,9 @@ const WIDGET_META: WidgetMeta[] = [
     title: 'Timeline',
     settings: [
       { key: 'days', label: 'Days shown', type: 'range', min: 14, max: 365, step: 7 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 140, max: 400, step: 10 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
@@ -63,15 +71,20 @@ const WIDGET_META: WidgetMeta[] = [
     title: 'Activity',
     settings: [
       { key: 'days', label: 'Days shown', type: 'range', min: 14, max: 182, step: 7 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 140, max: 400, step: 10 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
-    id: 'overview',
-    title: 'Overview',
+    id: 'topCells',
+    title: 'Top Cells',
     settings: [
-      { key: 'size', label: 'Map size', type: 'range', min: 60, max: 200, step: 10 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 120, max: 350, step: 10 },
+      { key: 'maxItems', label: 'Max items', type: 'range', min: 3, max: 12, step: 1 },
+      { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
@@ -79,7 +92,10 @@ const WIDGET_META: WidgetMeta[] = [
     title: 'Languages',
     settings: [
       { key: 'maxItems', label: 'Max items', type: 'range', min: 1, max: 20, step: 1 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 140, max: 350, step: 10 },
+      { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
@@ -87,14 +103,19 @@ const WIDGET_META: WidgetMeta[] = [
     title: 'Cell Info',
     settings: [
       { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 140, max: 350, step: 10 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
     id: 'scaleBar',
     title: 'Scale',
     settings: [
-      { key: 'width', label: 'Widget width', type: 'range', min: 120, max: 350, step: 10 },
+      { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
     ],
   },
   {
@@ -102,7 +123,51 @@ const WIDGET_META: WidgetMeta[] = [
     title: 'Coordinates',
     settings: [
       { key: 'decimals', label: 'Decimals', type: 'range', min: 0, max: 6, step: 1 },
-      { key: 'width', label: 'Widget width', type: 'range', min: 120, max: 350, step: 10 },
+      { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
+    ],
+  },
+  {
+    id: 'weekday',
+    title: 'Weekday',
+    settings: [
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+      { key: 'locked', label: 'Locked', type: 'checkbox' },
+      { key: 'opacity', label: 'Opacity', type: 'range', min: 0.3, max: 1, step: 0.05 },
+    ],
+  },
+  {
+    id: 'streak',
+    title: 'Streak',
+    settings: [
+      { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+    ],
+  },
+  {
+    id: 'monthly',
+    title: 'Monthly',
+    settings: [
+      { key: 'height', label: 'Height', type: 'range', min: 90, max: 420, step: 10 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+    ],
+  },
+  {
+    id: 'geo',
+    title: 'Geo Info',
+    settings: [
+      { key: 'fontSize', label: 'Font size', type: 'range', min: 8, max: 24, step: 1 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
+    ],
+  },
+  {
+    id: 'minimap',
+    title: 'Mini Map',
+    settings: [
+      { key: 'height', label: 'Height', type: 'range', min: 90, max: 420, step: 10 },
+      { key: 'scale', label: 'Scale', type: 'range', min: 0.5, max: 2, step: 0.05 },
     ],
   },
 ];
@@ -492,7 +557,8 @@ function buildSettingsRow(def: WidgetSettingDef, widgetId: WidgetId): HTMLElemen
     valSpan.className = 'dm-settings-value';
     valSpan.dataset.settingKey = def.key;
     valSpan.dataset.widgetId = widgetId;
-    valSpan.textContent = input.value;
+    const initVal = cfg?.settings?.[def.key] ?? def.min ?? 0;
+    valSpan.textContent = def.key === 'scale' ? `${Math.round(initVal * 100)}%` : String(initVal);
     row.appendChild(valSpan);
   } else if (def.type === 'checkbox') {
     const input = document.createElement('input');
@@ -560,7 +626,8 @@ function updateSettingsValue(widgetId: WidgetId): void {
   for (const span of valueSpans) {
     const key = span.dataset.settingKey;
     if (key && cfg.settings[key] !== undefined) {
-      span.textContent = String(cfg.settings[key]);
+      const v = cfg.settings[key];
+      span.textContent = key === 'scale' ? `${Math.round(v * 100)}%` : String(v);
     }
   }
 }
@@ -621,6 +688,88 @@ function buildWidgetRow(meta: WidgetMeta): HTMLElement {
   return row;
 }
 
+// ── Layout presets section ──────────────────────────────────────────────────
+
+function renderLayoutsList(listEl: HTMLElement): void {
+  listEl.innerHTML = '';
+  const layouts = listDashboardLayouts();
+  for (const layout of layouts) {
+    const row = document.createElement('div');
+    row.className = 'dm-layout-row';
+
+    const name = document.createElement('span');
+    name.className = 'dm-layout-name';
+    name.textContent = layout.name;
+    name.title = layout.name;
+    row.appendChild(name);
+
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'dm-layout-load';
+    loadBtn.textContent = 'Load';
+    loadBtn.addEventListener('click', () => {
+      loadDashboardLayout(layout.name);
+      buildPanel();
+    });
+    row.appendChild(loadBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'dm-layout-del';
+    delBtn.textContent = '\u2715';
+    delBtn.title = 'Delete layout';
+    delBtn.addEventListener('click', () => {
+      deleteDashboardLayout(layout.name);
+      renderLayoutsList(listEl);
+    });
+    row.appendChild(delBtn);
+
+    listEl.appendChild(row);
+  }
+}
+
+function buildLayoutsSection(): HTMLElement {
+  const section = document.createElement('div');
+  section.className = 'dm-layouts';
+
+  const header = document.createElement('div');
+  header.className = 'dm-layouts-header';
+  header.textContent = 'Layouts';
+  section.appendChild(header);
+
+  const listEl = document.createElement('div');
+  listEl.id = 'dm-layouts-list';
+  listEl.className = 'dm-layouts-list';
+
+  const saveRow = document.createElement('div');
+  saveRow.className = 'dm-layouts-save';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'dm-btn';
+  saveBtn.textContent = 'Save';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'dm-layout-input';
+  input.placeholder = 'Layout name';
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveBtn.click();
+  });
+  saveBtn.addEventListener('click', () => {
+    saveCurrentLayoutAs(input.value);
+    input.value = '';
+    renderLayoutsList(listEl);
+  });
+
+  saveRow.appendChild(input);
+  saveRow.appendChild(saveBtn);
+  section.appendChild(saveRow);
+
+  section.appendChild(listEl);
+
+  renderLayoutsList(listEl);
+
+  return section;
+}
+
 // ── Build the manager panel ─────────────────────────────────────────────────
 
 function buildPanel(): HTMLElement {
@@ -655,6 +804,9 @@ function buildPanel(): HTMLElement {
   // Body
   const body = document.createElement('div');
   body.className = 'dm-body';
+
+  // Layout presets section (top of panel)
+  body.appendChild(buildLayoutsSection());
 
   for (const meta of WIDGET_META) {
     // Widget row

@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
 import type { CoordSystem, GeoBounds } from '../types';
 
 // Mutable coordinate state updated by canvas mousemove
@@ -13,11 +13,12 @@ let _coordsBody: HTMLElement | null = null;
 
 function renderCoords(container: HTMLElement, _id: string): void {
   const decimals = getWidgetSetting('coordinates', 'decimals', 2) as number;
+  const f = widgetFontScale('coordinates');
 
   // Store reference for external updates
   _coordsBody = container;
   _coordsBody.id = 'coords-body';
-  _coordsBody.style.fontSize = '10px';
+  _coordsBody.style.fontSize = (10 * f) + 'px';
   _coordsBody.style.padding = '4px 8px';
   _coordsBody.style.whiteSpace = 'pre';
   _coordsBody.style.fontFamily = 'ui-monospace, SFMono-Regular, SF Mono, Consolas, monospace';

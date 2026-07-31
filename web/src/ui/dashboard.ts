@@ -6,20 +6,29 @@ import type { WidgetId, WidgetConfig, DashboardState } from '../types';
 import { state } from './state';
 
 const DEFAULT_WIDGETS: WidgetConfig[] = [
-  { id: 'legend',      title: 'Legend',      visible: true,  position: 'bottomLeft',  order: 0, settings: { width: 180 }, customPos: null },
-  { id: 'stats',       title: 'Statistics',  visible: true,  position: 'topRight',    order: 1, settings: { width: 220 }, customPos: null },
-  { id: 'distribution',title: 'Distribution',visible: false, position: 'bottomLeft',  order: 2, settings: { bins: 8, width: 200 }, customPos: null },
-  { id: 'timeline',    title: 'Timeline',    visible: false, position: 'left',       order: 3, settings: { days: 90, width: 180 }, customPos: null },
-  { id: 'activity',    title: 'Activity',    visible: false, position: 'bottomRight', order: 4, settings: { days: 49, width: 180 }, customPos: null },
-  { id: 'overview',    title: 'Overview',    visible: false, position: 'topLeft',     order: 5, settings: { size: 100, width: 160 }, customPos: null },
-  { id: 'languages',   title: 'Languages',   visible: false, position: 'bottomRight', order: 6, settings: { maxItems: 5, width: 200 }, customPos: null },
-  { id: 'cellInfo',    title: 'Cell Info',   visible: true,  position: 'bottomLeft',  order: 7, settings: { width: 200 }, customPos: null },
-  { id: 'scaleBar',    title: 'Scale',       visible: false, position: 'bottomLeft',  order: 8, settings: { width: 160 }, customPos: null },
-  { id: 'coordinates', title: 'Coordinates', visible: false, position: 'bottomRight', order: 9, settings: { decimals: 2, width: 160 }, customPos: null },
+  { id: 'legend',      title: 'Legend',      visible: true,  position: 'bottomLeft',  order: 0, settings: { width: 180, scale: 1 }, customPos: null },
+  { id: 'stats',       title: 'Statistics',  visible: true,  position: 'topRight',    order: 1, settings: { width: 220, scale: 1 }, customPos: null },
+  { id: 'distribution',title: 'Distribution',visible: false, position: 'bottomLeft',  order: 2, settings: { bins: 8, width: 200, height: 130, scale: 1 }, customPos: null },
+  { id: 'timeline',    title: 'Timeline',    visible: false, position: 'left',       order: 3, settings: { days: 90, width: 180, height: 110, scale: 1 }, customPos: null },
+  { id: 'activity',    title: 'Activity',    visible: false, position: 'bottomRight', order: 4, settings: { days: 49, width: 180, height: 110, scale: 1 }, customPos: null },
+  { id: 'topCells',    title: 'Top Cells',   visible: false, position: 'topLeft',     order: 5, settings: { maxItems: 5, width: 200, height: 150, scale: 1 }, customPos: null },
+  { id: 'languages',   title: 'Languages',   visible: false, position: 'bottomRight', order: 6, settings: { maxItems: 5, width: 200, scale: 1 }, customPos: null },
+  { id: 'cellInfo',    title: 'Cell Info',   visible: true,  position: 'bottomLeft',  order: 7, settings: { width: 200, scale: 1 }, customPos: null },
+  { id: 'scaleBar',    title: 'Scale',       visible: false, position: 'bottomLeft',  order: 8, settings: { width: 180, scale: 1 }, customPos: null },
+  { id: 'coordinates', title: 'Coordinates', visible: false, position: 'bottomRight', order: 9, settings: { decimals: 2, width: 160, scale: 1 }, customPos: null },
+  { id: 'weekday',     title: 'Weekday',     visible: false, position: 'bottomRight', order: 10, settings: { width: 180, height: 130, scale: 1 }, customPos: null },
+  { id: 'streak',      title: 'Streak',      visible: false, position: 'topRight',    order: 11, settings: { fontSize: 10, scale: 1 }, customPos: null },
+  { id: 'monthly',     title: 'Monthly',     visible: false, position: 'bottomLeft',  order: 12, settings: { height: 130, scale: 1 }, customPos: null },
+  { id: 'geo',         title: 'Geo Info',    visible: false, position: 'topLeft',     order: 13, settings: { fontSize: 10, scale: 1 }, customPos: null },
+  { id: 'minimap',     title: 'Mini Map',    visible: false, position: 'topLeft',     order: 14, settings: { height: 160, scale: 1 }, customPos: null },
 ];
 
 function cloneWidgets(): WidgetConfig[] {
-  return DEFAULT_WIDGETS.map(w => ({ ...w, settings: { ...w.settings }, customPos: null }));
+  return DEFAULT_WIDGETS.map(w => ({
+    ...w,
+    settings: { locked: false, opacity: 1, ...w.settings },
+    customPos: null,
+  }));
 }
 
 export function getDefaultDashboard(): DashboardState {
@@ -56,6 +65,26 @@ export function getWidgetSetting(id: WidgetId, key: string, fallback?: any): any
   return w.settings[key] !== undefined ? w.settings[key] : fallback;
 }
 
+// ── Widget scaling helpers ────────────────────────────────────────────────
+// A single scale factor zooms the whole widget (layout + fonts). The font
+// size setting scales the text within the widget independently.
+
+export function widgetScaleOf(id: WidgetId): number {
+  const s = getWidgetSetting(id, 'scale', 1) as number;
+  return (typeof s === 'number' && s > 0) ? s : 1;
+}
+
+/** Effective base font size (px) for a widget: fontSize setting × scale. */
+export function widgetFont(id: WidgetId, base = 10): number {
+  const fs = getWidgetSetting(id, 'fontSize', base) as number;
+  return ((typeof fs === 'number' && fs > 0) ? fs : base) * widgetScaleOf(id);
+}
+
+/** Multiplier to apply to every hardcoded px font size in a renderer. */
+export function widgetFontScale(id: WidgetId): number {
+  return widgetFont(id, 10) / 10;
+}
+
 export function setWidgetPosition(id: WidgetId, pos: WidgetConfig['position']): void {
   const w = getWidgetConfig(id);
   if (w) {
@@ -81,6 +110,68 @@ export function resetDashboard(): void {
   state.dashboard.widgets = cloneWidgets();
   state.dashboard.collapsed = false;
   state.dashboard.layout = 'floating';
+}
+
+// ── Layout presets (localStorage) ───────────────────────────────────────────
+
+export interface DashboardLayout {
+  name: string;
+  savedAt: number;
+  widgets: WidgetConfig[];
+  collapsed: boolean;
+  layout: 'floating' | 'grid';
+}
+
+const LAYOUTS_KEY = 'shapegrid.dashboard.layouts';
+
+function deepCloneWidgets(widgets: WidgetConfig[]): WidgetConfig[] {
+  return widgets.map(w => ({ ...w, settings: { ...w.settings }, customPos: w.customPos ? { ...w.customPos } : null }));
+}
+
+export function listDashboardLayouts(): DashboardLayout[] {
+  try {
+    const raw = localStorage.getItem(LAYOUTS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as DashboardLayout[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveDashboardLayout(name: string): void {
+  const layouts = listDashboardLayouts();
+  const saved: DashboardLayout = {
+    name,
+    savedAt: Date.now(),
+    widgets: deepCloneWidgets(state.dashboard.widgets),
+    collapsed: state.dashboard.collapsed,
+    layout: state.dashboard.layout,
+  };
+  const existing = layouts.findIndex(l => l.name === name);
+  if (existing >= 0) layouts[existing] = saved;
+  else layouts.push(saved);
+  localStorage.setItem(LAYOUTS_KEY, JSON.stringify(layouts));
+}
+
+export function loadDashboardLayout(name: string): void {
+  const layout = listDashboardLayouts().find(l => l.name === name);
+  if (!layout) return;
+  state.dashboard.widgets = deepCloneWidgets(layout.widgets);
+  state.dashboard.collapsed = layout.collapsed;
+  state.dashboard.layout = layout.layout;
+  renderAllWidgets();
+}
+
+export function deleteDashboardLayout(name: string): void {
+  const layouts = listDashboardLayouts().filter(l => l.name !== name);
+  localStorage.setItem(LAYOUTS_KEY, JSON.stringify(layouts));
+}
+
+export function saveCurrentLayoutAs(name: string): void {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  saveDashboardLayout(trimmed);
 }
 
 // ── Widget renderer registry ────────────────────────────────────────────────
@@ -177,14 +268,25 @@ export function renderAllWidgets(): void {
     wrapper.dataset.zone = w.position;
     wrapper.dataset.order = String(w.order);
 
+    // Per-widget lock: no drag, no close button, default cursor
+    const locked = !!w.settings.locked;
+    if (locked) {
+      wrapper.classList.add('locked');
+    }
+    // Per-widget opacity
+    if (typeof w.settings.opacity === 'number') {
+      wrapper.style.opacity = String(w.settings.opacity);
+    }
+
     if (w.customPos) {
+      wrapper.dataset.custom = '1';
       wrapper.style.left = w.customPos.x + '%';
       wrapper.style.top = w.customPos.y + '%';
       wrapper.style.right = 'auto';
       wrapper.style.bottom = 'auto';
       wrapper.style.transform = 'none';
     } else {
-      // Zone-based anchor
+      // Zone-based anchor (exact anchor; pass 2 handles vertical stacking)
       const anchor = ZONE_ANCHORS[w.position];
       if (!anchor) continue;
       if (anchor.top) wrapper.style.top = anchor.top;
@@ -192,11 +294,6 @@ export function renderAllWidgets(): void {
       if (anchor.left) wrapper.style.left = anchor.left;
       if (anchor.right) wrapper.style.right = anchor.right;
       if (anchor.translateY) wrapper.style.transform = anchor.translateY;
-
-      // Initial offset by order within zone (will be corrected in pass 2)
-      const orderOffset = w.order * 80; // 80px estimated height
-      if (anchor.top) wrapper.style.top = (parseFloat(anchor.top) + orderOffset) + 'px';
-      if (anchor.bottom) wrapper.style.bottom = (parseFloat(anchor.bottom) + orderOffset) + 'px';
     }
 
     // Header
@@ -212,29 +309,42 @@ export function renderAllWidgets(): void {
       setWidgetVisible(w.id, false);
       renderAllWidgets();
     });
+    if (locked) {
+      close.style.display = 'none';
+    }
     header.appendChild(title);
     header.appendChild(close);
     wrapper.appendChild(header);
 
-    // Apply per-widget settings
+    // Apply per-widget settings — base size × scale factor
+    const wScale = widgetScaleOf(w.id);
     if (w.settings.width) {
-      wrapper.style.width = w.settings.width + 'px';
+      wrapper.style.width = Math.round((w.settings.width as number) * wScale) + 'px';
+    }
+    if (w.settings.height) {
+      wrapper.style.height = Math.round((w.settings.height as number) * wScale) + 'px';
     }
 
     // Body
     const body = document.createElement('div');
     body.className = 'dw-body';
+    body.style.fontSize = (10 * wScale) + 'px';
     wrapper.appendChild(body);
     container.appendChild(wrapper);
 
     // Let widget fill body
     render(body, w.id);
 
-    // Init drag
-    initWidgetDrag(header, wrapper, w.id);
+    // Init drag (skipped for locked widgets)
+    if (!locked) {
+      initWidgetDrag(header, wrapper, w.id);
+    }
   }
 
-  // Second pass: zone-based vertical stacking
+  // Second pass: zone-based vertical stacking — ALWAYS reposition zone
+  // widgets (including single-widget zones) so the first widget in a zone
+  // sits exactly at its anchor, and shift entire stacks that would overflow
+  // the wrap bounds so every widget stays visible.
   const zones = new Map<string, HTMLElement[]>();
   container.querySelectorAll('.dashboard-widget[data-zone]').forEach(el => {
     const zone = (el as HTMLElement).dataset.zone!;
@@ -243,37 +353,67 @@ export function renderAllWidgets(): void {
     zones.set(zone, list);
   });
 
+  const wrapHeight = container.clientHeight || window.innerHeight;
+
   for (const [zone, els] of zones) {
-    if (els.length < 2) continue; // No stacking needed
+    // Left/right zones are vertically centered anchors, not stacks — pass 1
+    // already placed them exactly (no order offset).
+    if (zone === 'left' || zone === 'right') continue;
+
     const isBottom = zone === 'bottomLeft' || zone === 'bottomRight';
     // Sort by order within zone
     els.sort((a, b) => parseInt(a.dataset.order || '0') - parseInt(b.dataset.order || '0'));
 
-    // Measure heights and stack
+    // Widgets dragged to a custom position keep it — never re-stack them
+    const stackEls = els.filter(el => el.dataset.custom !== '1');
+    if (stackEls.length === 0) continue;
+
+    // Measure heights first so positioning math is exact
+    const heights = stackEls.map(el => el.offsetHeight || 40);
+    const totalStack = heights.reduce((s, h) => s + h, 0) + ZONE_GAP * (stackEls.length - 1);
+
+    const anchorTop = parseFloat(ZONE_ANCHORS[zone]?.top || '36');
+    const anchorBottom = parseFloat(ZONE_ANCHORS[zone]?.bottom || '4');
+
     let accumulated = 0;
     if (isBottom) {
-      // Stack upward: first widget (lowest order) at bottom anchor, rest above
-      for (let i = 0; i < els.length; i++) {
-        const el = els[i];
-        if (i > 0) {
-          const prevEl = els[i - 1];
-          accumulated += (prevEl.offsetHeight || 40) + ZONE_GAP;
-          const currentBottom = parseFloat(ZONE_ANCHORS[zone]?.bottom || '4');
-          el.style.bottom = (currentBottom + accumulated) + 'px';
+      // Stack upward from the bottom anchor
+      if (anchorBottom + totalStack > wrapHeight) {
+        // Overflow past the top: pin the stack top to the wrap top and
+        // stack downward from there.
+        for (let i = 0; i < stackEls.length; i++) {
+          const el = stackEls[i];
+          el.style.bottom = 'auto';
+          el.style.top = accumulated + 'px';
+          accumulated += heights[i] + ZONE_GAP;
         }
-        void el.offsetHeight;
+      } else {
+        for (let i = 0; i < stackEls.length; i++) {
+          const el = stackEls[i];
+          el.style.top = 'auto';
+          el.style.bottom = (anchorBottom + accumulated) + 'px';
+          accumulated += heights[i] + ZONE_GAP;
+        }
       }
     } else {
-      // Stack downward from top
-      for (let i = 0; i < els.length; i++) {
-        const el = els[i];
-        const h = el.offsetHeight || 40;
-        if (i > 0) {
-          accumulated += h + ZONE_GAP;
-          const currentTop = parseFloat(ZONE_ANCHORS[zone]?.top || '36');
-          el.style.top = (currentTop + accumulated) + 'px';
+      // Stack downward from the top anchor
+      if (anchorTop + totalStack > wrapHeight) {
+        // Overflow past the bottom: shift the ENTIRE stack up so the
+        // bottom of the last widget sits at the wrap bottom.
+        const overflow = anchorTop + totalStack - wrapHeight;
+        for (let i = 0; i < stackEls.length; i++) {
+          const el = stackEls[i];
+          el.style.bottom = 'auto';
+          el.style.top = (anchorTop + accumulated - overflow) + 'px';
+          accumulated += heights[i] + ZONE_GAP;
         }
-        void el.offsetHeight;
+      } else {
+        for (let i = 0; i < stackEls.length; i++) {
+          const el = stackEls[i];
+          el.style.bottom = 'auto';
+          el.style.top = (anchorTop + accumulated) + 'px';
+          accumulated += heights[i] + ZONE_GAP;
+        }
       }
     }
   }

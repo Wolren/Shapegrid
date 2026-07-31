@@ -29,19 +29,19 @@
       shapegrid
     </div>
     <span id="header-meta">boundary-fit activity grid · WebGL renderer</span>
-    <button id="btn-export">
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/>
-        <path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.97a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.779a.749.749 0 1 1 1.06-1.06l1.97 1.97Z"/>
-      </svg>
-      Export PNG
-    </button>
     <button id="btn-export-config">
       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 1.5a.75.75 0 0 1 .75.75V4.5h2.25a.75.75 0 0 1 0 1.5h-2.25v2.25a.75.75 0 0 1-1.5 0V6H4.75a.75.75 0 0 1 0-1.5H7V2.25A.75.75 0 0 1 7.75 1.5z"/>
         <path d="M2.75 10a.75.75 0 0 1 .75.75v2.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-2.5a.75.75 0 0 1 .75-.75z"/>
       </svg>
       Export Config
+    </button>
+    <button id="btn-load-config">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M8 1.5a.75.75 0 0 1 .75.75V8h3.5a.75.75 0 0 1 0 1.5h-3.5v3.5a.75.75 0 0 1-1.5 0V9.5h-3.5A.75.75 0 0 1 3 8h3.5V2.25A.75.75 0 0 1 7.25 1.5z"/>
+        <path d="M2.75 10a.75.75 0 0 1 .75.75v2.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-2.5a.75.75 0 0 1 .75-.75z"/>
+      </svg>
+      Load Config
     </button>
   </header>
 
@@ -151,7 +151,7 @@
           <div class="section-title">Boundary Shape</div>
           <div class="boundary-tabs">
             <button class="boundary-tab active" data-tab="presets">Presets</button>
-            <button class="boundary-tab" data-tab="countries">Countries</button>
+            <button class="boundary-tab" data-tab="countries">Region</button>
             <button class="boundary-tab" data-tab="file">File</button>
           </div>
           <div id="panel-presets" class="boundary-panel active">
@@ -213,6 +213,12 @@
             </div>
           </div>
           <div id="panel-countries" class="boundary-panel">
+            <div class="row" style="margin-bottom:6px">
+              <label style="font-size:10px">Continent</label>
+              <select id="inp-continent">
+                <option value="all">All continents</option>
+              </select>
+            </div>
             <div id="country-search-container">
               <input type="text" id="country-search" placeholder="Search countries..." autocomplete="off"/>
               <div id="country-dropdown"></div>
@@ -375,8 +381,6 @@
               <option value="sqrt">Square root</option>
               <option value="cbrt">Cube root</option>
               <option value="log">Logarithmic</option>
-              <option value="quad">Quadratic</option>
-              <option value="inverse">Inverse</option>
             </select>
           </div>
         </div>
@@ -402,15 +406,15 @@
             </label>
           </div>
           <div class="row">
-            <label>Bloom strength</label>
+            <label>Bloom strength <span id="val-bloom-strength">0.15</span></label>
             <input type="range" id="inp-bloom-strength" min="0" max="1" step="0.01" value="0.15"/>
           </div>
           <div class="row">
-            <label>Bloom radius</label>
+            <label>Bloom radius <span id="val-bloom-radius">0.50</span></label>
             <input type="range" id="inp-bloom-radius" min="0" max="1" step="0.01" value="0.5"/>
           </div>
           <div class="row">
-            <label>Bloom threshold</label>
+            <label>Bloom threshold <span id="val-bloom-threshold">0.30</span></label>
             <input type="range" id="inp-bloom-threshold" min="0" max="1" step="0.01" value="0.3"/>
           </div>
           <div class="row-inline">
@@ -421,7 +425,7 @@
             </label>
           </div>
           <div class="row">
-            <label>Fog density</label>
+            <label>Fog density <span id="val-fog-density">0.12</span></label>
             <input type="range" id="inp-fog-density" min="0" max="0.5" step="0.01" value="0.12"/>
           </div>
           <div class="row-inline">
@@ -440,6 +444,48 @@
               <option value="1">Linear</option>
               <option value="6">AgX</option>
             </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Ray Tracing</div>
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Ray traced rendering <span id="rt-status" style="color:var(--muted)"></span></label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-ray-tracing"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="row">
+            <label>Samples (quality)</label>
+            <select id="inp-rt-samples">
+              <option value="32">Low · 32</option>
+              <option value="64" selected>Medium · 64</option>
+              <option value="128">High · 128</option>
+              <option value="256">Ultra · 256</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Bounces <span id="val-rt-bounces">4</span></label>
+            <input type="range" id="inp-rt-bounces" min="1" max="8" step="1" value="4"/>
+          </div>
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Denoise (final pass)</label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-rt-denoise"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="row">
+            <label>Render scale</label>
+            <select id="inp-rt-scale">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+            </select>
+          </div>
+          <div class="rt-note" style="font-size:9px;color:var(--muted);line-height:1.5;margin-top:4px">
+            Ray tracing replaces the WebGL renderer with GPU path tracing (soft shadows, reflections, global illumination). Bloom and fog are bypassed while active. Requires WebGL2.
           </div>
         </div>
 
@@ -470,6 +516,26 @@
           <div class="row-inline">
             <label style="font-size:10px;color:var(--muted);flex:1">Crop padding (px)</label>
             <input type="number" id="inp-export-pad" value="40" min="0" max="200" style="width:60px;font-size:10px"/>
+          </div>
+          <div class="row">
+            <label>Title text</label>
+            <input type="text" id="inp-export-title" placeholder="Optional title for the render"/>
+          </div>
+          <div class="row">
+            <label>Format</label>
+            <select id="inp-export-format">
+              <option value="png" selected>PNG</option>
+              <option value="jpg">JPG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Scale</label>
+            <select id="inp-export-scale">
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+              <option value="3">3x</option>
+            </select>
           </div>
         </div>
       </div>

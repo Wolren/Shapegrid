@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { feature } from 'topojson-client';
-import type { Point2D, CountryData } from '../types';
+import type { Point2D, CountryData, GeoBounds } from '../types';
 import { normWithCoordSystem } from '../geometry/projection';
 
 const TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
@@ -41,7 +41,48 @@ const NAME_OVERRIDES: Record<string, string> = {
   MM: 'Myanmar', MK: 'North Macedonia',
 };
 
+// Continent per ISO alpha-2 code (UN M49-style grouping). Covers every code
+// in NUM2A2 so the Region tab can filter countries by continent.
+const CONTINENT_BY_CODE: Record<string, string> = {
+  // Africa
+  DZ: 'Africa', AO: 'Africa', BJ: 'Africa', BW: 'Africa', BF: 'Africa', BI: 'Africa',
+  CM: 'Africa', TD: 'Africa', CD: 'Africa', CI: 'Africa', EG: 'Africa', ET: 'Africa',
+  GA: 'Africa', GM: 'Africa', GH: 'Africa', GN: 'Africa', GW: 'Africa', KE: 'Africa',
+  LS: 'Africa', LR: 'Africa', LY: 'Africa', MG: 'Africa', MW: 'Africa', ML: 'Africa',
+  MR: 'Africa', MA: 'Africa', MZ: 'Africa', NA: 'Africa', NE: 'Africa', NG: 'Africa',
+  RW: 'Africa', SN: 'Africa', SL: 'Africa', ZA: 'Africa', SS: 'Africa', SD: 'Africa',
+  EH: 'Africa', SZ: 'Africa', TZ: 'Africa', TG: 'Africa', TN: 'Africa', UG: 'Africa',
+  ZM: 'Africa', ZW: 'Africa',
+  // Asia
+  AM: 'Asia', AZ: 'Asia', BD: 'Asia', BT: 'Asia', KH: 'Asia', CN: 'Asia', TW: 'Asia',
+  GE: 'Asia', IN: 'Asia', ID: 'Asia', IR: 'Asia', IQ: 'Asia', IL: 'Asia', JP: 'Asia',
+  JO: 'Asia', KZ: 'Asia', KW: 'Asia', KG: 'Asia', LA: 'Asia', LB: 'Asia', MY: 'Asia',
+  MN: 'Asia', MM: 'Asia', NP: 'Asia', KP: 'Asia', OM: 'Asia', PK: 'Asia', PH: 'Asia',
+  QA: 'Asia', SA: 'Asia', SG: 'Asia', KR: 'Asia', LK: 'Asia', SY: 'Asia', TJ: 'Asia',
+  TH: 'Asia', TR: 'Asia', TM: 'Asia', AE: 'Asia', UZ: 'Asia', VN: 'Asia', YE: 'Asia',
+  CY: 'Asia',
+  // Europe
+  AL: 'Europe', AD: 'Europe', AT: 'Europe', BY: 'Europe', BE: 'Europe', BG: 'Europe',
+  HR: 'Europe', CZ: 'Europe', DK: 'Europe', EE: 'Europe', FI: 'Europe', FR: 'Europe',
+  DE: 'Europe', GR: 'Europe', HU: 'Europe', IS: 'Europe', IE: 'Europe', IT: 'Europe',
+  LV: 'Europe', LT: 'Europe', LU: 'Europe', MK: 'Europe', NL: 'Europe', NO: 'Europe',
+  PL: 'Europe', PT: 'Europe', RO: 'Europe', RU: 'Europe', SK: 'Europe', SI: 'Europe',
+  ES: 'Europe', SE: 'Europe', CH: 'Europe', UA: 'Europe', GB: 'Europe',
+  // North America
+  CA: 'North America', CR: 'North America', CU: 'North America', DO: 'North America',
+  SV: 'North America', GT: 'North America', HT: 'North America', HN: 'North America',
+  JM: 'North America', MX: 'North America', NI: 'North America', PA: 'North America',
+  TT: 'North America', US: 'North America',
+  // Oceania
+  AU: 'Oceania', NC: 'Oceania', NZ: 'Oceania', PG: 'Oceania',
+  // South America
+  AR: 'South America', BO: 'South America', BR: 'South America', CL: 'South America',
+  CO: 'South America', EC: 'South America', GY: 'South America', PY: 'South America',
+  PE: 'South America', SR: 'South America', UY: 'South America', VE: 'South America',
+};
+
 let cache: Record<string, CountryData> | null = null;
+let boundsCache: Record<string, GeoBounds> | null = null;
 let loading: Promise<Record<string, CountryData>> | null = null;
 
 export async function loadCountries(): Promise<Record<string, CountryData>> {
@@ -55,6 +96,7 @@ export async function loadCountries(): Promise<Record<string, CountryData>> {
       const countries = feature(topology, topology.objects.countries) as any;
 
       const result: Record<string, CountryData> = {};
+      const bounds: Record<string, GeoBounds> = {};
 
       for (const feat of countries.features) {
         const numId = String(feat.id).padStart(3, '0');
@@ -84,6 +126,17 @@ export async function loadCountries(): Promise<Record<string, CountryData>> {
 
         const finalCoords = coords;
 
+        // Keep the raw lon/lat bounds BEFORE projection/decimation so the
+        // viewer can report real-world units (km / km²) for countries.
+        const rawXs = finalCoords.map((p: Point2D) => p[0]);
+        const rawYs = finalCoords.map((p: Point2D) => p[1]);
+        bounds[alpha2] = {
+          minLon: Math.min(...rawXs),
+          maxLon: Math.max(...rawXs),
+          minLat: Math.min(...rawYs),
+          maxLat: Math.max(...rawYs),
+        };
+
         // Decimate to ~150 points max for performance
         if (finalCoords.length > 150) {
           const step = Math.ceil(finalCoords.length / 150);
@@ -92,10 +145,11 @@ export async function loadCountries(): Promise<Record<string, CountryData>> {
 
         // Project to normalized coordinates using WGS84 correction
         const projected = normWithCoordSystem(coords!, 'wgs84');
-        result[alpha2] = { name, coords: projected };
+        result[alpha2] = { name, coords: projected, continent: CONTINENT_BY_CODE[alpha2] ?? 'Other' };
       }
 
       cache = result;
+      boundsCache = bounds;
       console.log(`[countries] Loaded ${Object.keys(result).length} countries`);
       return result;
     } catch (e) {
@@ -109,4 +163,9 @@ export async function loadCountries(): Promise<Record<string, CountryData>> {
 
 export function getLoadedCountries(): Record<string, CountryData> | null {
   return cache;
+}
+
+/** Raw lon/lat bounds for a country, or null when unavailable. */
+export function getCountryBounds(code: string): GeoBounds | null {
+  return boundsCache?.[code] ?? null;
 }

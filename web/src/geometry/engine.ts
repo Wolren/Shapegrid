@@ -49,13 +49,18 @@ export function genSquare(poly: Point2D[], cs: number, thr = 0.3): Cell[] {
 export function genHex(poly: Point2D[], cs: number, thr = 0.3): Cell[] {
   const { minX, minY, maxX, maxY } = bbox(poly);
   const hw = cs / 2, hh = cs * Math.sqrt(3) / 2, cells: Cell[] = [];
-  // Proper pointy-topped hex grid with center-to-center distance = cs
-  const xStep = cs * Math.sqrt(3) / 2;
-  const zStep = cs * 1.5;
+  // Hex tiling matching the renderer: CylinderGeometry places radial vertices
+  // at (r·sin θ, r·cos θ) → vertices at ±Z, edges at ±X. With circumradius
+  // R = cs / √3 (buildMesh), touching neighbors sit at (±cs, 0) [east-west]
+  // and (±cs/2, ±√3·cs/2) [diagonals]. So: column step = cs, row step =
+  // √3·cs/2, odd rows offset by cs/2.
+  const xStep = cs;
+  const zStep = cs * Math.sqrt(3) / 2;
   const cols = Math.ceil((maxX - minX) / xStep) + 3, rows = Math.ceil((maxY - minY) / zStep) + 3;
   for (let col = -1; col < cols; col++)
     for (let row = -1; row < rows; row++) {
-      const cx = minX + col * xStep, cy = minY + (col % 2 === 0 ? row : row + 0.5) * zStep;
+      const cx = minX + (col + (row & 1) * 0.5) * xStep;
+      const cy = minY + row * zStep;
       const cov = cellCov(cx, cy, hw, hh, poly);
       if (cov >= thr) cells.push({ cx, cy, col, row, coverage: cov });
     }

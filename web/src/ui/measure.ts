@@ -8,6 +8,8 @@ import {
   startMeasurement,
   addMeasurementPoint,
 } from './editor-state';
+import { state } from './state';
+import { geoKmPerUnit } from '../geometry/projection';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const ACCENT = '#39d353';
@@ -259,6 +261,58 @@ function createLabel(
   return g;
 }
 
+// ── Geo-aware formatting ────────────────────────────────────────────────────
+
+/**
+ * Conversion factors from normalized world units to km / km², or null when
+ * no geographic data is loaded (normalized units stay as-is in that case).
+ */
+function geoConversion(): { kmPerUnitX: number; kmPerUnitY: number } | null {
+  return geoKmPerUnit(state.geoBounds, state.coordSystem);
+}
+
+/** Adaptive decimals: sub-10 values get 2, larger values get 1. */
+function geoDecimals(v: number): number {
+  return v < 10 ? 2 : 1;
+}
+
+function formatGeoDistance(v: number): string {
+  return `${v.toFixed(geoDecimals(v))} km`;
+}
+
+function formatGeoArea(v: number): string {
+  return `${v.toFixed(geoDecimals(v))} km²`;
+}
+
+/**
+ * Convert a polyline length in normalized units to km.
+ * Exact for wgs84 (kmPerUnitX === kmPerUnitY); for mercator the y-axis scale
+ * is 57.3x the x-axis scale, so the average is a documented approximation
+ * for mixed directions (per-axis factors would need per-segment deltas).
+ */
+function geoDistance(v: number): number {
+  const g = geoConversion();
+  if (!g) return v;
+  return v * ((g.kmPerUnitX + g.kmPerUnitY) / 2);
+}
+
+/** Convert a shoelace area in normalized units squared to km². */
+function geoArea(v: number): number {
+  const g = geoConversion();
+  if (!g) return v;
+  return v * g.kmPerUnitX * g.kmPerUnitY;
+}
+
+function formatDistanceValue(v: number | undefined): string {
+  if (v === undefined) return '—';
+  return geoConversion() ? formatGeoDistance(geoDistance(v)) : v.toFixed(2);
+}
+
+function formatAreaValue(v: number | undefined): string {
+  if (v === undefined) return '—';
+  return geoConversion() ? formatGeoArea(geoArea(v)) : v.toFixed(2);
+}
+
 // ── Measurement rendering ───────────────────────────────────────────────────
 
 function pointsToScreen(
@@ -315,8 +369,8 @@ export function updateMeasureOverlay(
 
     // Label
     const label = m.type === 'distance'
-      ? `Dist: ${m.distance !== undefined ? m.distance.toFixed(2) : '—'}`
-      : `Area: ${m.area !== undefined ? m.area.toFixed(2) : '—'}`;
+      ? `Dist: ${formatDistanceValue(m.distance)}`
+      : `Area: ${formatAreaValue(m.area)}`;
     const labelG = createLabel(label, screenPts, camera, canvasRect);
     svg.appendChild(labelG);
   }
@@ -346,20 +400,20 @@ export function updateMeasureOverlay(
       let liveLabel: string;
       if (am.type === 'distance') {
         if (am.distance !== undefined) {
-          liveLabel = `Dist: ${am.distance.toFixed(2)}`;
+          liveLabel = `Dist: ${formatDistanceValue(am.distance)}`;
         } else {
           liveLabel = `Dist: —`;
         }
       } else {
         if (am.area !== undefined) {
-          liveLabel = `Area: ${am.area.toFixed(2)}`;
+          liveLabel = `Area: ${formatAreaValue(am.area)}`;
         } else if (am.points.length >= 2) {
           // Show running distance until area is computable
           const last = am.points[am.points.length - 1];
           const prev = am.points[am.points.length - 2];
           const dx = last[0] - prev[0];
           const dy = last[1] - prev[1];
-          liveLabel = `Edge: ${Math.sqrt(dx * dx + dy * dy).toFixed(2)}`;
+          liveLabel = `Edge: ${formatDistanceValue(Math.sqrt(dx * dx + dy * dy))}`;
         } else {
           liveLabel = `Area: —`;
         }

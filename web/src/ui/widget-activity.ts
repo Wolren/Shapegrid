@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, renderAllWidgets } from './dashboard';
+import { registerWidget, getWidgetSetting, renderAllWidgets, widgetFontScale } from './dashboard';
 import { PALETTES, activePaletteId } from '../rendering/colors';
 
 // Column mapping: GitHub weekday (0=Sun, 1=Mon … 6=Sat) → grid col (Mon=0..Sun=6)
@@ -20,8 +20,9 @@ function renderActivity(container: HTMLElement, _id: string): void {
   const contribs = state.contributions;
   const allDays = contribs?.days ?? [];
   const palette = PALETTES[activePaletteId]?.colors ?? PALETTES.github.colors;
+  const f = widgetFontScale('activity');
 
-  container.style.fontSize = '10px';
+  container.style.fontSize = (10 * f) + 'px';
   container.style.padding = '4px';
 
   if (allDays.length === 0) {
@@ -98,7 +99,7 @@ function renderActivity(container: HTMLElement, _id: string): void {
       txt.setAttribute('x', `${padL}`);
       txt.setAttribute('y', `${padT + row * step + cellSize - 1}`);
       txt.setAttribute('fill', 'rgba(255,255,255,0.5)');
-      txt.setAttribute('font-size', '7');
+      txt.setAttribute('font-size', (7 * f).toFixed(1));
       txt.setAttribute('font-family', 'ui-monospace, SFMono-Regular, monospace');
       txt.textContent = label;
       svg.appendChild(txt);

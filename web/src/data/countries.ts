@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { CountryData } from '../types';
-import { loadCountries, getLoadedCountries } from './country-loader';
+import { loadCountries, getLoadedCountries, getCountryBounds } from './country-loader';
 
 export const FEATURED_COUNTRIES = [
   'US','CA','GB','FR','DE','IT','ES','JP','CN','KR','IN','AU','BR','MX','NL','SE','PL','NO','CH','AR',
@@ -24,15 +24,29 @@ export function getCountries(): Record<string, CountryData> {
   return getLoadedCountries() || {};
 }
 
-export function getCountryList(): Array<{ code: string; name: string }> {
+export function getCountryList(): Array<{ code: string; name: string; continent: string }> {
   const data = getLoadedCountries();
-  if (!data) return FEATURED_COUNTRIES.map(c => ({ code: c, name: c }));
+  if (!data) return FEATURED_COUNTRIES.map(c => ({ code: c, name: c, continent: '' }));
   return Object.entries(data)
-    .map(([code, d]) => ({ code, name: d.name }))
+    .map(([code, c]) => ({ code, name: c.name, continent: c.continent }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function searchCountries(query: string): Array<{ code: string; name: string }> {
+/** Distinct continents present in the loaded country data, sorted. */
+export function getContinents(): string[] {
+  const data = getLoadedCountries();
+  if (!data) return [];
+  const set = new Set<string>();
+  for (const c of Object.values(data)) {
+    if (c.continent && c.continent !== 'Other') set.add(c.continent);
+  }
+  return [...set].sort();
+}
+
+/** Raw lon/lat bounds for a country (for real-world unit conversion). */
+export { getCountryBounds };
+
+export function searchCountries(query: string): Array<{ code: string; name: string; continent: string }> {
   const lq = query.toLowerCase();
   return getCountryList().filter(c =>
     c.name.toLowerCase().includes(lq) || c.code.toLowerCase().includes(lq)

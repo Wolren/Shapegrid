@@ -119,6 +119,8 @@ async function main() {
       content: `
         #panel, #header, #footer { display: none !important; }
         #overlay { display: none !important; }
+        #editor-toolbar, #tooltip, #measure-overlay, #btn-dashboard-manager { display: none !important; }
+        .dw-close { display: none !important; }
         body { overflow: hidden !important; margin: 0 !important; }
         #app {
           display: grid !important;
@@ -138,6 +140,8 @@ async function main() {
     await page.evaluate(() => {
       const bg = document.body.style.backgroundColor;
       document.documentElement.style.setProperty('--bg', bg || '#0d1117');
+      // Belt and braces: strip editor chrome via the app's own export mode
+      document.body.classList.add('export-mode');
     });
 
     // Settle after CSS injection

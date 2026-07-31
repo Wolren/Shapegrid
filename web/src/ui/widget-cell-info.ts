@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget } from './dashboard';
+import { registerWidget, widgetFontScale } from './dashboard';
 import { getEditor } from './editor-state';
 import { activePaletteId, intensityToColor } from '../rendering/colors';
 
@@ -15,7 +15,7 @@ function renderCellInfo(container: HTMLElement, _id: string): void {
   container.id = 'cell-info-body';
   container.style.padding = '6px 8px';
   container.style.minHeight = '36px';
-  container.style.fontSize = '10px';
+  container.style.fontSize = widgetFontScale('cellInfo') * 10 + 'px';
 
   // Always update content
   populateCellInfo();
@@ -24,6 +24,7 @@ function renderCellInfo(container: HTMLElement, _id: string): void {
 function populateCellInfo(): void {
   const body = _bodyEl;
   if (!body) return;
+  const f = widgetFontScale('cellInfo');
   const editor = getEditor();
   const indices = editor.selectedCellIndices;
   const grid = state.grid;
@@ -53,7 +54,7 @@ function populateCellInfo(): void {
     line1.style.display = 'flex';
     line1.style.justifyContent = 'space-between';
     line1.style.alignItems = 'center';
-    line1.innerHTML = `<span style="color:#e6edf3;font-weight:600">${date}</span><span style="color:rgba(255,255,255,0.4);font-size:9px">(${cell.col},${cell.row})</span>`;
+    line1.innerHTML = `<span style="color:#e6edf3;font-weight:600">${date}</span><span style="color:rgba(255,255,255,0.4);font-size:${9 * f}px">(${cell.col},${cell.row})</span>`;
     entry.appendChild(line1);
 
     // Count + intensity bar
@@ -85,7 +86,7 @@ function populateCellInfo(): void {
   if (indices.length > 5) {
     const more = document.createElement('div');
     more.textContent = `+${indices.length - 5} more`;
-    more.style.cssText = 'color:rgba(255,255,255,0.4);font-size:9px;margin-top:4px';
+    more.style.cssText = `color:rgba(255,255,255,0.4);font-size:${9 * f}px;margin-top:4px`;
     body.appendChild(more);
   }
 }
