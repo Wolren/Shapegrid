@@ -100,11 +100,12 @@
       flex-shrink: 0;
     }
 
-    /* Color picker: swatch + popover */
+    /* Color picker: swatch + native dialog + preset chips */
     .cp-wrap {
-      position: relative;
       display: flex;
       align-items: center;
+      gap: 4px;
+      min-width: 0;
     }
     .cp-swatch {
       width: 34px;
@@ -113,45 +114,39 @@
       border-radius: var(--radius);
       cursor: pointer;
       padding: 0;
+      flex-shrink: 0;
       transition: border-color 0.15s;
-      background-size: 100% 100%;
     }
     .cp-swatch:hover {
       border-color: var(--text);
     }
-    .cp-popover {
+    .cp-native {
       position: absolute;
-      top: 100%;
-      left: 0;
-      z-index: 60;
-      width: 190px;
-      padding: 10px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
     }
-    .cp-popover hex-color-picker {
-      display: block;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    .cp-popover hex-input {
-      display: block;
-      background: var(--surface3);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-    }
-    .cp-footer {
+    .cp-chips {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 8px;
-      gap: 6px;
+      gap: 3px;
+      flex-shrink: 0;
     }
-    .cp-reset,
-    .cp-close {
+    .cp-chip {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: transform 0.1s, border-color 0.15s;
+    }
+    .cp-chip:hover {
+      transform: scale(1.15);
+      border-color: var(--text);
+    }
+    .cp-reset {
       font-size: 9px;
       font-family: var(--mono);
       color: var(--muted);
@@ -160,15 +155,12 @@
       border-radius: var(--radius);
       padding: 3px 8px;
       cursor: pointer;
+      flex-shrink: 0;
       transition: color 0.15s, border-color 0.15s;
     }
     .cp-reset:hover {
       color: var(--danger);
       border-color: var(--danger);
-    }
-    .cp-close:hover {
-      color: var(--text);
-      border-color: var(--text);
     }
 
     /* ── Layout ────────────────────────────────────────────────────────────────── */

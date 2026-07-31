@@ -1645,9 +1645,8 @@ function initThemeControls(): void {
         apply(v);
       },
       onCommit: apply,
-    });
+    }, null, host);
     themePickers[key] = picker;
-    host.replaceWith(picker.el);
     hex?.addEventListener('change', () => {
       const v = hex.value.trim();
       if (/^#([0-9a-f]{6})$/i.test(v)) picker.setValue(v.toLowerCase());

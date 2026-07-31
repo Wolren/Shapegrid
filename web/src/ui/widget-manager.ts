@@ -654,9 +654,7 @@ function buildSettingsRow(def: WidgetSettingDef, widgetId: WidgetId): HTMLElemen
         picker.setValue(state.theme.accent);
         renderAllWidgets();
       },
-    });
-
-    row.appendChild(picker.el);
+    }, row);
   }
 
   return row;
