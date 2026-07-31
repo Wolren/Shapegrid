@@ -125,7 +125,7 @@ function renderScaleBar(container: HTMLElement, _id: string): void {
 
   // ── Units caption ──────────────────────────────────────────────────────
   const caption = document.createElement('div');
-  caption.style.color = 'rgba(255,255,255,0.35)';
+  caption.style.color = 'rgba(255,255,255,0.4)';
   caption.style.fontSize = (8 * f) + 'px';
   caption.style.fontStyle = 'italic';
   caption.textContent = geo

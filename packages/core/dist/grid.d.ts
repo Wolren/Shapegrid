@@ -21,6 +21,17 @@ export interface GridResult {
     cellSize: number;
     gridType: GridType;
 }
+export interface CandidateOptions {
+    /** Stop collecting once this many qualifying cells are found (binary-search counting). */
+    maxCount?: number;
+    /** Polygon is convex; enables the cellCoverage bbox fast path. */
+    convex?: boolean;
+    /**
+     * Counting mode: coverage tests early-exit once the threshold is reached,
+     * so binary-search iterations never pay for full 9-sample coverage.
+     */
+    countMode?: boolean;
+}
 export interface GridOptions {
     /** Exact number of cells to place */
     count: number;

@@ -142,6 +142,20 @@ function scaleIntensity(raw: number): number {
   }
 }
 
+// Fast '#rrggbb' → [0..1] rgb, replacing colToHex() in the per-cell hot loops.
+// colToHex allocates a 1×1 canvas + 2D context + getImageData per call
+// (~0.05–0.3ms each) — pure waste at thousands of cells, and intensityToColor
+// always returns a hex string. Falls back to colToHex for any non-hex color.
+const HEX6_RE = /^#([0-9a-f]{6})$/i;
+function cssToRgb01(css: string): [number, number, number] {
+  const m = HEX6_RE.exec(css);
+  if (m) {
+    const v = parseInt(m[1], 16);
+    return [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255];
+  }
+  return colToHex(css);
+}
+
 function buildMesh() {
   if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); mesh = null; }
   if (boundaryLine) { scene.remove(boundaryLine); boundaryLine.geometry.dispose(); boundaryLine = null; }
@@ -193,7 +207,7 @@ function buildMesh() {
     mesh!.setMatrixAt(i, dummy.matrix);
 
     const css = intensityToColor(scaled, activePaletteId);
-    const [r, g, b] = colToHex(css);
+    const [r, g, b] = cssToRgb01(css);
     col.setRGB(r, g, b);
     mesh!.setColorAt(i, col);
   });
@@ -244,7 +258,32 @@ function formatCoord(value: number, isLat: boolean): string {
   return `${absVal.toFixed(1)}°${dir}`;
 }
 
+// Cache key of the last-built axes — buildMesh calls buildCoordAxes() on every
+// rebuild, but the axes only depend on a handful of state fields (not gap,
+// height, palette, cellData). Skipping unchanged rebuilds avoids re-creating
+// all the tick-line geometries and canvas label textures on every mesh change.
+let coordAxesKey = '';
+
 function buildCoordAxes() {
+  const isGeo = state.coordSystem === 'wgs84' || state.coordSystem === 'mercator';
+  const isFileLoaded = state.fileType !== null;
+  const shouldShow = isGeo && !!state.geoBounds && state.showCoordAxes && isFileLoaded && getEditor().layerVisibility.axes;
+  const key = JSON.stringify([
+    shouldShow,
+    state.geoBounds,
+    state.coordSystem,
+    state.coordAxesLineColor,
+    state.coordAxesLabelColor,
+    state.coordAxesScale,
+    state.coordAxesPosition,
+    state.coordAxesXOffset ?? 0.04,
+    state.coordAxesYOffset ?? 0.04,
+    state.coordAxesTickLength ?? 0.015,
+    state.coordAxesLabelOffset ?? 0.03,
+  ]);
+  if (key === coordAxesKey) return;
+  coordAxesKey = key;
+
   if (coordAxesGroup) {
     scene.remove(coordAxesGroup);
     coordAxesGroup.traverse(obj => {
@@ -257,8 +296,6 @@ function buildCoordAxes() {
     });
   }
 
-  const isGeo = state.coordSystem === 'wgs84' || state.coordSystem === 'mercator';
-  const isFileLoaded = state.fileType !== null;
   if (!isGeo || !state.geoBounds || !state.showCoordAxes || !isFileLoaded || !getEditor().layerVisibility.axes) return;
 
   coordAxesGroup = new THREE.Group();
@@ -525,7 +562,7 @@ function buildRTGridGeometry(): THREE.BufferGeometry {
     m.compose(t, q, s);
 
     const css = intensityToColor(scaled, activePaletteId);
-    const [r, g, b] = colToHex(css);
+    const [r, g, b] = cssToRgb01(css);
     col.setRGB(r, g, b);
 
     for (let j = 0; j < unitVerts; j++) {
@@ -976,10 +1013,13 @@ function updateLabels() {
   if (el) {
     el.addEventListener('input', () => {
       sync(key);
-      if (['gap', 'coverage'].includes(key)) {
+      if (key === 'coverage') {
+        // Coverage threshold changes which cells survive generation — regen.
         computeGrid();
         loadDemo();
       }
+      // 'gap' only affects mesh geometry (buildMesh); the cell layout is
+      // gap-independent, so a full grid regen per input event is pure waste.
       if (['yaw', 'pitch'].includes(key)) posCamera();
       else scheduleRebuild();
     });

@@ -6,17 +6,17 @@ import type { Palette } from '../types';
 
 export const PALETTES: Record<string, Palette> = {
   github: { name: 'GitHub', colors: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'] },
-  warm:   { name: 'Warm',   colors: ['#1a0a00', '#7a2e00', '#c05000', '#e88030', '#ffe0b0'] },
-  cool:   { name: 'Cool',   colors: ['#0a0a1a', '#0d3060', '#1560a8', '#40a0e0', '#b0e0ff'] },
+  warm:   { name: 'Warm',   colors: ['#1a0a00', '#6b2800', '#ad4f00', '#e07f2e', '#ffd9a8'] },
+  cool:   { name: 'Cool',   colors: ['#0a0a1a', '#0f3568', '#1560a8', '#40a0e0', '#b0e0ff'] },
   mono:   { name: 'Mono',   colors: ['#1a1a1a', '#3a3a3a', '#666666', '#a0a0a0', '#e0e0e0'] },
-  neon:   { name: 'Neon',   colors: ['#050510', '#1a0040', '#4400cc', '#8800ff', '#cc44ff'] },
+  neon:   { name: 'Neon',   colors: ['#050510', '#42158f', '#7a35f0', '#b070ff', '#eec0ff'] },
   forest: { name: 'Forest', colors: ['#0d1a0d', '#1a3d1a', '#2d6e2d', '#4caf50', '#a8e6a3'] },
-  sunset: { name: 'Sunset', colors: ['#1a0010', '#6b0030', '#c0005a', '#ff4090', '#ffb0d0'] },
-  ocean:  { name: 'Ocean',  colors: ['#000d1a', '#003060', '#0070b0', '#00aad0', '#80e8ff'] },
-  fire:   { name: 'Fire',   colors: ['#1a0000', '#6b1000', '#c04000', '#ff8000', '#ffee00'] },
-  pastel: { name: 'Pastel', colors: ['#1a1a2e', '#6a4c93', '#c9a0dc', '#f4c6e0', '#fff5f0'] },
-  arctic: { name: 'Arctic', colors: ['#001020', '#003080', '#0080d0', '#60c8f0', '#e0f8ff'] },
-  gold:   { name: 'Gold',   colors: ['#1a1200', '#5a3c00', '#b07000', '#e0a800', '#ffe060'] },
+  sunset: { name: 'Sunset', colors: ['#1a0010', '#7a0038', '#c0005a', '#ff4090', '#ffb0d0'] },
+  ocean:  { name: 'Ocean',  colors: ['#000d1a', '#0a3a70', '#0a68b0', '#00aad0', '#80e8ff'] },
+  fire:   { name: 'Fire',   colors: ['#1a0000', '#7a1400', '#c04000', '#ff8000', '#ffee00'] },
+  pastel: { name: 'Pastel', colors: ['#1a1a2e', '#4a2d6e', '#8a5fb0', '#cfa8e0', '#ffe8f4'] },
+  arctic: { name: 'Arctic', colors: ['#001020', '#104090', '#0078c8', '#60c8f0', '#e0f8ff'] },
+  gold:   { name: 'Gold',   colors: ['#1a1200', '#553800', '#a86c00', '#e0a800', '#ffe060'] },
 };
 
 export let activePaletteId = 'github';

@@ -192,24 +192,65 @@ export function pointInPolygon(px, py, poly) {
     let inside = false;
     const n = poly.length;
     for (let i = 0, j = n - 1; i < n; j = i++) {
-        const [xi, yi] = poly[i];
-        const [xj, yj] = poly[j];
+        const xi = poly[i][0], yi = poly[i][1];
+        const xj = poly[j][0], yj = poly[j][1];
         if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) {
             inside = !inside;
         }
     }
     return inside;
 }
+/** True if the polygon is convex (all edge turns share the same sign).
+ *  Convexity enables the cellCoverage bbox fast path (whole-cell tests). */
+export function isConvexPolygon(poly) {
+    const n = poly.length;
+    if (n < 4)
+        return true;
+    let sign = 0;
+    for (let i = 0; i < n; i++) {
+        const x0 = poly[i][0], y0 = poly[i][1];
+        const x1 = poly[(i + 1) % n][0], y1 = poly[(i + 1) % n][1];
+        const x2 = poly[(i + 2) % n][0], y2 = poly[(i + 2) % n][1];
+        const cross = (x1 - x0) * (y2 - y1) - (y1 - y0) * (x2 - x1);
+        if (Math.abs(cross) < 1e-12)
+            continue; // collinear, skip
+        const s = cross > 0 ? 1 : -1;
+        if (sign === 0)
+            sign = s;
+        else if (s !== sign)
+            return false;
+    }
+    return true;
+}
 /** Return fraction of a cell's sample points that are inside the polygon */
-export function cellCoverage(cx, cy, halfW, halfH, poly, samples = 3) {
-    let hits = 0;
+export function cellCoverage(cx, cy, halfW, halfH, poly, samples = 3, opts = {}) {
+    const { convex = false, minCoverage = 0 } = opts;
     const total = samples * samples;
+    // Fast path: every corner of the cell bbox is inside a convex polygon, so the
+    // whole cell (their convex hull) is inside. Saves 9 point-in-polygon tests per
+    // interior cell, which dominates large grids.
+    if (convex) {
+        if (pointInPolygon(cx - halfW, cy - halfH, poly) &&
+            pointInPolygon(cx + halfW, cy - halfH, poly) &&
+            pointInPolygon(cx + halfW, cy + halfH, poly) &&
+            pointInPolygon(cx - halfW, cy + halfH, poly)) {
+            return 1;
+        }
+    }
+    const need = minCoverage > 0 ? Math.ceil(minCoverage * total) : 0;
+    const stepX = (halfW * 2) / samples;
+    const stepY = (halfH * 2) / samples;
+    const startX = cx - halfW + stepX / 2;
+    const startY = cy - halfH + stepY / 2;
+    let hits = 0;
     for (let si = 0; si < samples; si++) {
+        const px = startX + si * stepX;
         for (let sj = 0; sj < samples; sj++) {
-            const px = cx - halfW + (halfW * 2 * (si + 0.5)) / samples;
-            const py = cy - halfH + (halfH * 2 * (sj + 0.5)) / samples;
-            if (pointInPolygon(px, py, poly))
+            if (pointInPolygon(px, startY + sj * stepY, poly)) {
                 hits++;
+                if (need > 0 && hits >= need)
+                    return hits / total;
+            }
         }
     }
     return hits / total;

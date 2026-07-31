@@ -132,6 +132,12 @@ async function runGenerate(cfg, configDir) {
     log(chalk.bold.green('\nDone!'));
     log(`To embed in your README:\n  ![Activity Grid](${cfg.output.svgFilename ?? 'shapegrid-data.json'})`);
 }
+/** Unit vectors for the 6 pointy-top hex corners (angles -30..270 deg).
+ *  Hoisted: per-cell corner offsets are then a multiply, not a cos/sin. */
+const HEX_CORNER_DIRS = Array.from({ length: 6 }, (_, i) => {
+    const a = ((i * 60 - 30) * Math.PI) / 180;
+    return [Math.cos(a), Math.sin(a)];
+});
 function generateSvg(data, cfg) {
     const W = cfg.output.width ?? 1200;
     const H = cfg.output.height ?? 630;
@@ -141,7 +147,7 @@ function generateSvg(data, cfg) {
     const gap = cfg.render.gap ?? 0.08;
     const bgColor = cfg.render.background ?? '';
     const zoom = cfg.camera.zoom ?? 1.0; // 1.0 = normal, <1 = zoomed in, >1 = zoomed out
-    // If dayBorder is set, empty days render as border-only (no fill)
+    // If dayBorder is set, empty days render as a subtle outline (translucent fill)
     const dayBorder = cfg.theme?.dayBorder ?? '';
     // Isometric projection parameters
     const ISO_YAW = (cfg.camera.yaw ?? 30) * Math.PI / 180;
@@ -152,189 +158,216 @@ function generateSvg(data, cfg) {
         throw new Error('Cannot render SVG: grid has no cells');
     }
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    cells.forEach(cell => {
-        minX = Math.min(minX, cell.cx);
-        maxX = Math.max(maxX, cell.cx);
-        minY = Math.min(minY, cell.cy);
-        maxY = Math.max(maxY, cell.cy);
-    });
+    for (const cell of cells) {
+        if (cell.cx < minX)
+            minX = cell.cx;
+        if (cell.cx > maxX)
+            maxX = cell.cx;
+        if (cell.cy < minY)
+            minY = cell.cy;
+        if (cell.cy > maxY)
+            maxY = cell.cy;
+    }
     const gridCenterX = (minX + maxX) / 2;
     const gridCenterY = (minY + maxY) / 2;
     const gridWidth = maxX - minX;
     const gridHeight = maxY - minY;
     // Cell sizing
     const cellSize = data.grid.cellSize * (1 - gap);
+    const halfSize = cellSize / 2;
     const maxExtrusion = 0.15 * heightScale; // max height for cells
-    // Isometric projection with proper 3D math
-    function projectIso(x, y, z = 0) {
-        // Center the grid
-        const cx = x - gridCenterX;
-        const cy = y - gridCenterY;
-        // Isometric transformation
-        const screenX = (cx - cy) * Math.cos(ISO_PITCH);
-        const screenY = (cx + cy) * Math.sin(ISO_PITCH) - z;
-        // Scale and position (zoom affects the scale factor)
-        const baseScale = Math.min(W * 0.65 / (gridWidth + gridHeight), H * 0.55 / (gridWidth + gridHeight));
-        const scale = baseScale / zoom; // lower zoom = more zoomed in
-        return [
-            W / 2 + screenX * scale,
-            H / 2 + 50 + screenY * scale, // offset down slightly for title
-        ];
-    }
+    // Isometric projection, fully hoisted: the per-cell hot path now only does
+    // a few multiplies and adds (no trig, no per-cell closure, no re-derived scale).
+    const cosPitch = Math.cos(ISO_PITCH);
+    const sinPitch = Math.sin(ISO_PITCH);
+    const baseScale = Math.min(W * 0.65 / (gridWidth + gridHeight), H * 0.55 / (gridWidth + gridHeight));
+    const scale = baseScale / zoom; // lower zoom = more zoomed in
+    const kx = cosPitch * scale; // screen X per unit of (dx - dy)
+    const ky = sinPitch * scale; // screen Y per unit of (dx + dy)
+    const kz = scale; // screen Y per unit of extrusion height
+    const offX = W / 2;
+    const offY = H / 2 + 50; // offset down slightly for title
+    // Project a grid-space point (relative to grid centre) at base height.
+    const projBase = (dx, dy) => [offX + (dx - dy) * kx, offY + (dx + dy) * ky];
     // Prepare cells with depth info
-    const cellRenderData = cells.map(cell => {
-        const cx = cell.cx;
-        const cy = cell.cy;
-        const h = cell.intensity * maxExtrusion;
-        // Depth for z-sorting (further back first)
-        const depth = (cx + cy);
-        return {
-            cx, cy,
-            intensity: cell.intensity,
-            count: cell.count,
-            date: cell.date,
-            depth,
-        };
-    });
+    const cellRenderData = cells.map(cell => ({
+        cx: cell.cx,
+        cy: cell.cy,
+        intensity: cell.intensity,
+        count: cell.count,
+        date: cell.date,
+        depth: cell.cx + cell.cy,
+    }));
     // Sort by depth (back to front for proper rendering)
     cellRenderData.sort((a, b) => a.depth - b.depth);
+    // Shade cache: one darken/lighten pass per unique colour instead of per face.
+    const colorCache = new Map();
+    const paletteFor = (color) => {
+        let p = colorCache.get(color);
+        if (!p) {
+            p = {
+                top: color,
+                sideLight: darkenColor(color, 0.78),
+                sideDark: darkenColor(color, 0.55),
+                floor: darkenColor(color, 0.4),
+                stroke: lightenColor(color, 1.15),
+            };
+            colorCache.set(color, p);
+        }
+        return p;
+    };
     // Generate 3D cell geometry
     function renderCell3D(cell) {
         const h = cell.intensity * maxExtrusion;
-        const color = intensityToColor(cell.intensity, colorScale);
-        const halfSize = cellSize / 2;
-        // Calculate positions for all corners and heights
-        const corners = [
-            { x: cell.cx - halfSize, y: cell.cy - halfSize }, // top-left
-            { x: cell.cx + halfSize, y: cell.cy - halfSize }, // top-right
-            { x: cell.cx + halfSize, y: cell.cy + halfSize }, // bottom-right
-            { x: cell.cx - halfSize, y: cell.cy + halfSize }, // bottom-left
-        ];
-        // Project all corners at base (z=0) and top (z=h)
-        const base = corners.map(c => projectIso(c.x, c.y, 0));
-        const top = corners.map(c => projectIso(c.x, c.y, h));
-        // Empty day with dayBorder set: render as border-only (no fill)
+        const pal = paletteFor(intensityToColor(cell.intensity, colorScale));
+        // Empty day with dayBorder set: flat subtle outline (translucent fill so the
+        // grid still reads as a solid surface instead of punched-out holes).
         const isEmptyDay = cell.intensity === 0 && dayBorder;
+        if (isEmptyDay) {
+            if (data.grid.type === 'square') {
+                const base = [
+                    projBase(cell.cx - gridCenterX - halfSize, cell.cy - gridCenterY - halfSize),
+                    projBase(cell.cx - gridCenterX + halfSize, cell.cy - gridCenterY - halfSize),
+                    projBase(cell.cx - gridCenterX + halfSize, cell.cy - gridCenterY + halfSize),
+                    projBase(cell.cx - gridCenterX - halfSize, cell.cy - gridCenterY + halfSize),
+                ];
+                return `<g>
+  <title>${cell.date}: ${cell.count} contributions</title>
+  <polygon
+    points="${polyPoints(base)}"
+    fill="${dayBorder}"
+    fill-opacity="0.06"
+    stroke="${dayBorder}"
+    stroke-width="0.8"
+    stroke-linejoin="round"
+  />
+</g>`;
+            }
+            const base = hexProjected(cell, 0);
+            return `<g>
+  <title>${cell.date}: ${cell.count} contributions</title>
+  <polygon
+    points="${polyPoints(base)}"
+    fill="${dayBorder}"
+    fill-opacity="0.06"
+    stroke="${dayBorder}"
+    stroke-width="0.8"
+    stroke-linejoin="round"
+  />
+</g>`;
+        }
         if (data.grid.type === 'square') {
-            // Empty day: flat border-only square
-            if (isEmptyDay) {
-                return `<g>
-  <title>${cell.date}: ${cell.count} contributions</title>
-  <polygon
-    points="${base.map(formatPolygonPoints).join(',')}"
-    fill="none"
-    stroke="${dayBorder}"
-    stroke-width="0.8"
-    stroke-linejoin="round"
-  />
-</g>`;
-            }
-            // Darken color for side faces (simulates shadow)
-            const sideColor = darkenColor(color, 0.7);
-            const topColor = color;
-            // Floor uses darkened column color (visible through transparent empty cells)
-            const floorColor = darkenColor(color, 0.5);
+            // Corner grid-space offsets (relative to grid centre), TL, TR, BR, BL.
+            const dx0 = cell.cx - gridCenterX - halfSize;
+            const dx1 = cell.cx - gridCenterX + halfSize;
+            const dy0 = cell.cy - gridCenterY - halfSize;
+            const dy1 = cell.cy - gridCenterY + halfSize;
+            const base = [projBase(dx0, dy0), projBase(dx1, dy0), projBase(dx1, dy1), projBase(dx0, dy1)];
+            const top = [
+                [base[0][0], base[0][1] - h * kz],
+                [base[1][0], base[1][1] - h * kz],
+                [base[2][0], base[2][1] - h * kz],
+                [base[3][0], base[3][1] - h * kz],
+            ];
+            // Directional shading: lit face (screen-left) vs shadow face (screen-right),
+            // plus a darker floor. Two clearly distinct side tones give a gradient feel.
             return `<g>
   <title>${cell.date}: ${cell.count} contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
   <polygon
-    points="${base.map(formatPolygonPoints).join(',')}"
-    fill="${floorColor}"
-    stroke="${floorColor}"
-    stroke-width="0.5"
+    points="${polyPoints(base)}"
+    fill="${pal.floor}"
+    stroke="${pal.floor}"
+    stroke-width="0.35"
     stroke-linejoin="round"
   />
-  <!-- Left face -->
+  <!-- Left face (lit) -->
   <polygon
-    points="${formatPolygonPoints(top[3])} ${formatPolygonPoints(base[3])} ${formatPolygonPoints(base[0])} ${formatPolygonPoints(top[0])}"
-    fill="${sideColor}"
-    stroke="${sideColor}"
-    stroke-width="0.5"
+    points="${fmt(top[3])} ${fmt(base[3])} ${fmt(base[0])} ${fmt(top[0])}"
+    fill="${pal.sideLight}"
+    stroke="${pal.sideLight}"
+    stroke-width="0.4"
     stroke-linejoin="round"
   />
-  <!-- Right face -->
+  <!-- Right face (shadow) -->
   <polygon
-    points="${formatPolygonPoints(top[0])} ${formatPolygonPoints(base[0])} ${formatPolygonPoints(base[1])} ${formatPolygonPoints(top[1])}"
-    fill="${darkenColor(color, 0.85)}"
-    stroke="${darkenColor(color, 0.85)}"
-    stroke-width="0.5"
+    points="${fmt(top[0])} ${fmt(base[0])} ${fmt(base[1])} ${fmt(top[1])}"
+    fill="${pal.sideDark}"
+    stroke="${pal.sideDark}"
+    stroke-width="0.4"
     stroke-linejoin="round"
   />
   <!-- Top face -->
   <polygon
-    points="${top.map(formatPolygonPoints).join(',')}"
-    fill="${topColor}"
-    stroke="${lightenColor(color, 1.15)}"
-    stroke-width="0.8"
+    points="${polyPoints(top)}"
+    fill="${pal.top}"
+    stroke="${pal.stroke}"
+    stroke-width="0.6"
     stroke-linejoin="round"
   />
 </g>`;
         }
-        else {
-            // Hexagonal cells
-            const hexCorners = Array.from({ length: 6 }, (_, i) => {
-                const angle = (i * 60 - 30) * Math.PI / 180;
-                return {
-                    x: cell.cx + halfSize * Math.cos(angle),
-                    y: cell.cy + halfSize * Math.sin(angle),
-                };
-            });
-            const hexBase = hexCorners.map(c => projectIso(c.x, c.y, 0));
-            const hexTop = hexCorners.map(c => projectIso(c.x, c.y, h));
-            // Empty day: flat border-only hexagon
-            if (isEmptyDay) {
-                return `<g>
-  <title>${cell.date}: ${cell.count} contributions</title>
-  <polygon
-    points="${hexBase.map(formatPolygonPoints).join(',')}"
-    fill="none"
-    stroke="${dayBorder}"
-    stroke-width="0.8"
-    stroke-linejoin="round"
-  />
-</g>`;
-            }
-            // Visible faces (top 3)
-            const sideColor = darkenColor(color, 0.7);
-            const topColor = color;
-            // Floor uses darkened column color (visible through transparent empty cells)
-            const floorColor = darkenColor(color, 0.5);
-            return `<g>
+        // Hexagonal cells
+        const hexBase = hexProjected(cell, 0);
+        const hexTop = hexProjected(cell, h);
+        // Visible faces (top 3): lit edge (4-5) vs shadow edge (5-0), darker floor.
+        return `<g>
   <title>${cell.date}: ${cell.count} contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
   <polygon
-    points="${hexBase.map(formatPolygonPoints).join(',')}"
-    fill="${floorColor}"
-    stroke="${floorColor}"
-    stroke-width="0.5"
+    points="${polyPoints(hexBase)}"
+    fill="${pal.floor}"
+    stroke="${pal.floor}"
+    stroke-width="0.35"
     stroke-linejoin="round"
   />
-  <!-- Side faces -->
+  <!-- Side face (lit) -->
   <polygon
-    points="${formatPolygonPoints(hexTop[4])} ${formatPolygonPoints(hexBase[4])} ${formatPolygonPoints(hexBase[5])} ${formatPolygonPoints(hexTop[5])}"
-    fill="${sideColor}"
-    stroke="${sideColor}"
-    stroke-width="0.5"
+    points="${fmt(hexTop[4])} ${fmt(hexBase[4])} ${fmt(hexBase[5])} ${fmt(hexTop[5])}"
+    fill="${pal.sideLight}"
+    stroke="${pal.sideLight}"
+    stroke-width="0.4"
+    stroke-linejoin="round"
   />
+  <!-- Side face (shadow) -->
   <polygon
-    points="${formatPolygonPoints(hexTop[5])} ${formatPolygonPoints(hexBase[5])} ${formatPolygonPoints(hexBase[0])} ${formatPolygonPoints(hexTop[0])}"
-    fill="${darkenColor(color, 0.85)}"
-    stroke="${darkenColor(color, 0.85)}"
-    stroke-width="0.5"
+    points="${fmt(hexTop[5])} ${fmt(hexBase[5])} ${fmt(hexBase[0])} ${fmt(hexTop[0])}"
+    fill="${pal.sideDark}"
+    stroke="${pal.sideDark}"
+    stroke-width="0.4"
+    stroke-linejoin="round"
   />
   <!-- Top face -->
   <polygon
-    points="${hexTop.map(formatPolygonPoints).join(',')}"
-    fill="${topColor}"
-    stroke="${lightenColor(color, 1.15)}"
-    stroke-width="0.8"
+    points="${polyPoints(hexTop)}"
+    fill="${pal.top}"
+    stroke="${pal.stroke}"
+    stroke-width="0.6"
     stroke-linejoin="round"
   />
 </g>`;
+    }
+    /** Project the 6 hex corners of a cell at height z (uses hoisted dir vectors). */
+    function hexProjected(cell, z) {
+        const cxd = cell.cx - gridCenterX;
+        const cyd = cell.cy - gridCenterY;
+        const pts = new Array(6);
+        for (let i = 0; i < 6; i++) {
+            const dx = cxd + HEX_CORNER_DIRS[i][0] * halfSize;
+            const dy = cyd + HEX_CORNER_DIRS[i][1] * halfSize;
+            const bx = offX + (dx - dy) * kx;
+            const by = offY + (dx + dy) * ky - z * kz;
+            pts[i] = [bx, by];
         }
+        return pts;
     }
     // Build SVG content
     const cellsSvg = cellRenderData.map(renderCell3D).join('\n    ');
+    // Legend gradient stops (shared defs, hoisted out of the legend group)
+    const legendStops = Array.from({ length: 20 }, (_, i) => {
+        const t = i / 19;
+        return `<stop offset="${(t * 100).toFixed(0)}%" stop-color="${intensityToColor(t, colorScale)}"/>`;
+    }).join('\n      ');
     // Generate professional legend
     const legend = generateLegend(colorScale, W, H);
     // Generate coordinate axes
@@ -357,6 +390,13 @@ function generateSvg(data, cfg) {
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <!-- Soft drop shadow under the whole grid for depth -->
+    <filter id="cell-shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="9" stdDeviation="11" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+    <linearGradient id="legend-grad" x1="0" y1="0" x2="1" y2="0">
+      ${legendStops}
+    </linearGradient>
   </defs>
 ${bgColor ? `
   <!-- Background -->
@@ -379,7 +419,7 @@ ${bgColor ? `
   </text>
 ${coordAxes}
   <!-- Grid Cells -->
-  <g id="cells" shape-rendering="geometricPrecision">
+  <g id="cells" shape-rendering="geometricPrecision" filter="url(#cell-shadow)">
     ${cellsSvg}
   </g>
 
@@ -394,17 +434,14 @@ ${coordAxes}
 }
 // ─── Legend generator ────────────────────────────────────────────────────────
 function generateLegend(colorScale, W, H) {
-    const legendX = 20;
-    const legendY = H - 50;
-    const legendWidth = 200;
-    const legendHeight = 30;
-    const swatchCount = 20;
-    // Generate gradient stops
-    const stops = Array.from({ length: swatchCount }, (_, i) => {
-        const t = i / (swatchCount - 1);
-        const color = intensityToColor(t, colorScale);
-        return `<stop offset="${(t * 100).toFixed(0)}%" stop-color="${color}"/>`;
-    }).join('\n      ');
+    const barX = 36;
+    const barY = H - 46;
+    const barW = 190;
+    const barH = 10;
+    const panelX = barX - 18;
+    const panelY = barY - 32;
+    const panelW = barW + 36;
+    const panelH = 62;
     // Labels
     const labels = [
         { pos: 0, text: '0' },
@@ -414,20 +451,16 @@ function generateLegend(colorScale, W, H) {
         { pos: 1.0, text: 'Max' },
     ];
     const labelElements = labels.map(label => {
-        const x = legendX + label.pos * legendWidth;
-        return `<text x="${x}" y="${legendY + legendHeight + 12}" text-anchor="middle" fill="#8b949e" font-family="'IBM Plex Mono', monospace" font-size="8">${label.text}</text>`;
+        const x = barX + label.pos * barW;
+        return `<text x="${x.toFixed(1)}" y="${barY + barH + 14}" text-anchor="middle" fill="#8b949e" font-family="'IBM Plex Mono', monospace" font-size="8" font-variant-numeric="tabular-nums">${label.text}</text>`;
     }).join('\n    ');
     return `  <!-- Legend -->
   <g id="legend">
-    <text x="${legendX}" y="${legendY - 8}" fill="#8b949e" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="500" letter-spacing="0.5">
+    <rect x="${panelX}" y="${panelY}" width="${panelW}" height="${panelH}" rx="10" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <text x="${barX}" y="${barY - 10}" fill="#8b949e" font-family="system-ui, -apple-system, sans-serif" font-size="8.5" font-weight="600" letter-spacing="1.4">
       ACTIVITY INTENSITY
     </text>
-    <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="3" fill="url(#legend-grad)"/>
-    <defs>
-      <linearGradient id="legend-grad" x1="0" y1="0" x2="1" y2="0">
-        ${stops}
-      </linearGradient>
-    </defs>
+    <rect x="${barX}" y="${barY}" width="${barW}" height="${barH}" rx="${barH / 2}" fill="url(#legend-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
     ${labelElements}
   </g>`;
 }
@@ -527,8 +560,19 @@ function generateCoordAxes(data, cfg, minX, maxX, minY, maxY, W, H, zoom, ISO_YA
     return svg;
 }
 // ─── SVG utilities ────────────────────────────────────────────────────────────
-function formatPolygonPoints(point) {
-    return point.map(p => p.toFixed(1)).join(',');
+/** "x,y x,y ..." for a closed polygon (no intermediate array allocations). */
+function polyPoints(pts) {
+    let s = '';
+    for (let i = 0; i < pts.length; i++) {
+        if (i > 0)
+            s += ',';
+        s += pts[i][0].toFixed(1) + ',' + pts[i][1].toFixed(1);
+    }
+    return s;
+}
+/** "x,y" for a single projected point. */
+function fmt(p) {
+    return p[0].toFixed(1) + ',' + p[1].toFixed(1);
 }
 // ─── Color utilities ─────────────────────────────────────────────────────────
 function darkenColor(hex, factor) {

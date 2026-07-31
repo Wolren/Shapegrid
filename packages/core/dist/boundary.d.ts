@@ -36,8 +36,24 @@ export type BoundarySource = {
 };
 export declare function loadBoundary(src: BoundarySource): Polygon;
 export declare function pointInPolygon(px: number, py: number, poly: Polygon): boolean;
+/** True if the polygon is convex (all edge turns share the same sign).
+ *  Convexity enables the cellCoverage bbox fast path (whole-cell tests). */
+export declare function isConvexPolygon(poly: Polygon): boolean;
+export interface CellCoverageOptions {
+    /**
+     * Polygon is convex: if the whole cell bounding box is inside the polygon,
+     * coverage is 1 without any per-sample point tests (large speedup on interior cells).
+     */
+    convex?: boolean;
+    /**
+     * Early-exit threshold: stop sampling once the known fraction is >= minCoverage.
+     * The returned value is then a lower bound on true coverage, which is sufficient
+     * for callers that only test `coverage >= minCoverage`. Default 0 (always full sample).
+     */
+    minCoverage?: number;
+}
 /** Return fraction of a cell's sample points that are inside the polygon */
-export declare function cellCoverage(cx: number, cy: number, halfW: number, halfH: number, poly: Polygon, samples?: number): number;
+export declare function cellCoverage(cx: number, cy: number, halfW: number, halfH: number, poly: Polygon, samples?: number, opts?: CellCoverageOptions): number;
 /** Polygon bounding box */
 export declare function boundingBox(poly: Polygon): {
     minX: number;

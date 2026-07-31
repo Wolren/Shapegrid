@@ -23,7 +23,7 @@ function renderActivity(container: HTMLElement, _id: string): void {
   const f = widgetFontScale('activity');
 
   container.style.fontSize = (10 * f) + 'px';
-  container.style.padding = '4px';
+  container.style.padding = '6px 8px';
 
   if (allDays.length === 0) {
     container.textContent = 'No activity data';
@@ -98,7 +98,7 @@ function renderActivity(container: HTMLElement, _id: string): void {
       const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       txt.setAttribute('x', `${padL}`);
       txt.setAttribute('y', `${padT + row * step + cellSize - 1}`);
-      txt.setAttribute('fill', 'rgba(255,255,255,0.5)');
+      txt.setAttribute('fill', 'rgba(255,255,255,0.45)');
       txt.setAttribute('font-size', (7 * f).toFixed(1));
       txt.setAttribute('font-family', 'ui-monospace, SFMono-Regular, monospace');
       txt.textContent = label;

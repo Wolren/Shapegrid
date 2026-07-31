@@ -43,7 +43,7 @@ function renderMinimap(container: HTMLElement, _id: string): void {
   // Intensity caption
   const cap = document.createElement('div');
   cap.textContent = 'Intensity';
-  cap.style.cssText = `font-size:${7 * f}px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;margin-bottom:2px`;
+  cap.style.cssText = `font-size:${7 * f}px;color:rgba(255,255,255,0.45);letter-spacing:0.08em;margin-bottom:2px`;
   container.appendChild(cap);
 
   // ── Geometry: boundary bbox + uniform scale, y flipped (north-up) ──────

@@ -13,7 +13,7 @@ function renderTimeline(container: HTMLElement, _id: string): void {
   const f = widgetFontScale('timeline');
 
   container.style.fontSize = (10 * f) + 'px';
-  container.style.padding = '4px 8px';
+  container.style.padding = '6px 8px';
 
   if (days.length === 0) {
     container.textContent = 'No timeline data';

@@ -61,7 +61,7 @@ function populateCellInfo(): void {
     dateSpan.style.cssText = 'color:#e6edf3;font-weight:600';
     dateSpan.textContent = date;
     const posSpan = document.createElement('span');
-    posSpan.style.cssText = `color:rgba(255,255,255,0.4);font-size:${9 * f}px`;
+    posSpan.style.cssText = `color:rgba(255,255,255,0.45);font-size:${9 * f}px`;
     posSpan.textContent = `(${cell.col},${cell.row})`;
     line1.appendChild(dateSpan);
     line1.appendChild(posSpan);
@@ -96,7 +96,7 @@ function populateCellInfo(): void {
   if (indices.length > 5) {
     const more = document.createElement('div');
     more.textContent = `+${indices.length - 5} more`;
-    more.style.cssText = `color:rgba(255,255,255,0.4);font-size:${9 * f}px;margin-top:4px`;
+    more.style.cssText = `color:rgba(255,255,255,0.45);font-size:${9 * f}px;margin-top:4px`;
     body.appendChild(more);
   }
 }

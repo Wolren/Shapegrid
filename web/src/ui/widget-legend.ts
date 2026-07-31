@@ -24,7 +24,7 @@ function renderLegend(container: HTMLElement, _id: string): void {
 
   // Color gradient bar — thicker GIS style
   const bar = document.createElement('div');
-  bar.style.cssText = 'height:20px;border-radius:3px;border:1px solid rgba(255,255,255,0.1);overflow:hidden';
+  bar.style.cssText = 'height:20px;border-radius:4px;border:1px solid rgba(255,255,255,0.12);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.3)';
   bar.style.background = `linear-gradient(to right, ${palette.colors.join(', ')})`;
   legendFrame.appendChild(bar);
 

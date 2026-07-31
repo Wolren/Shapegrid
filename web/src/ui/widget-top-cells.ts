@@ -54,7 +54,7 @@ function renderTopCells(container: HTMLElement, _id: string): void {
 
     // Date (short: "12 Jan")
     const date = document.createElement('span');
-    date.style.color = 'rgba(255,255,255,0.6)';
+    date.style.color = 'rgba(255,255,255,0.45)';
     date.style.fontSize = (9 * f) + 'px';
     date.style.fontFamily = 'var(--mono)';
     date.textContent = shortDate(item.date);

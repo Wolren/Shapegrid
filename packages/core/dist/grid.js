@@ -3,9 +3,9 @@
  * Generates square or hexagonal grids inside a polygon boundary,
  * fitting EXACTLY the requested number of cells via binary search.
  */
-import { boundingBox, polygonArea, cellCoverage, } from './boundary.js';
-// ─── Candidate generation ────────────────────────────────────────────────────
-function generateSquareCandidates(poly, cellSize, coverageThreshold = 0.4) {
+import { boundingBox, polygonArea, cellCoverage, isConvexPolygon, } from './boundary.js';
+function generateSquareCandidates(poly, cellSize, coverageThreshold = 0.4, opts = {}) {
+    const { maxCount = Infinity, convex = false, countMode = false } = opts;
     const { minX, minY, maxX, maxY } = boundingBox(poly);
     const half = cellSize / 2;
     const cells = [];
@@ -15,15 +15,21 @@ function generateSquareCandidates(poly, cellSize, coverageThreshold = 0.4) {
         for (let row = -1; row < rows; row++) {
             const cx = minX + (col + 0.5) * cellSize;
             const cy = minY + (row + 0.5) * cellSize;
-            const cov = cellCoverage(cx, cy, half, half, poly);
+            const cov = cellCoverage(cx, cy, half, half, poly, 3, {
+                convex,
+                minCoverage: countMode ? coverageThreshold : 0,
+            });
             if (cov >= coverageThreshold) {
                 cells.push({ cx, cy, col, row, coverage: cov });
+                if (cells.length >= maxCount)
+                    return cells;
             }
         }
     }
     return cells;
 }
-function generateHexCandidates(poly, cellSize, coverageThreshold = 0.4) {
+function generateHexCandidates(poly, cellSize, coverageThreshold = 0.4, opts = {}) {
+    const { maxCount = Infinity, convex = false, countMode = false } = opts;
     const { minX, minY, maxX, maxY } = boundingBox(poly);
     // Pointy-top hex (vertices at top/bottom — the SVG renderer draws corners at
     // halfSize = cellSize / 2, i.e. circumradius R = cellSize / 2). For touching
@@ -40,19 +46,25 @@ function generateHexCandidates(poly, cellSize, coverageThreshold = 0.4) {
         for (let row = -1; row < rows; row++) {
             const cx = minX + (col + (row & 1) * 0.5) * xStep;
             const cy = minY + row * yStep;
-            const cov = cellCoverage(cx, cy, halfW, halfH, poly);
+            const cov = cellCoverage(cx, cy, halfW, halfH, poly, 3, {
+                convex,
+                minCoverage: countMode ? coverageThreshold : 0,
+            });
             if (cov >= coverageThreshold) {
                 cells.push({ cx, cy, col, row, coverage: cov });
+                if (cells.length >= maxCount)
+                    return cells;
             }
         }
     }
     return cells;
 }
 // ─── Count cells at a given size ─────────────────────────────────────────────
-function countCells(poly, cellSize, type, coverageThreshold = 0.4) {
+function countCells(poly, cellSize, type, coverageThreshold = 0.4, maxCount = Infinity, convex = false) {
+    const opts = { maxCount, convex, countMode: true };
     if (type === 'square')
-        return generateSquareCandidates(poly, cellSize, coverageThreshold).length;
-    return generateHexCandidates(poly, cellSize, coverageThreshold).length;
+        return generateSquareCandidates(poly, cellSize, coverageThreshold, opts).length;
+    return generateHexCandidates(poly, cellSize, coverageThreshold, opts).length;
 }
 // ─── Binary search for cell size that yields >= N cells ──────────────────────
 function findCellSize(poly, targetN, type, coverageThreshold = 0.4) {
@@ -63,13 +75,15 @@ function findCellSize(poly, targetN, type, coverageThreshold = 0.4) {
     if (!Number.isFinite(targetN) || targetN < 1) {
         throw new Error(`Invalid cell count: ${targetN}; expected a positive number`);
     }
+    // Convex boundaries enable the whole-cell bbox fast path in cellCoverage.
+    const convex = isConvexPolygon(poly);
     // Initial guess from area
     const areaPerCell = area / targetN;
     let lo = Math.sqrt(areaPerCell) * 0.1;
     let hi = Math.sqrt(area) * 2;
-    // Ensure hi gives fewer than N cells
+    // Ensure hi gives fewer than N cells (early-exit counting caps at targetN)
     for (let i = 0; i < 20; i++) {
-        if (countCells(poly, hi, type, coverageThreshold) < targetN)
+        if (countCells(poly, hi, type, coverageThreshold, targetN, convex) < targetN)
             break;
         hi *= 2;
     }
@@ -78,7 +92,7 @@ function findCellSize(poly, targetN, type, coverageThreshold = 0.4) {
         const mid = (lo + hi) / 2;
         if (hi - lo < 1e-8)
             break;
-        const n = countCells(poly, mid, type, coverageThreshold);
+        const n = countCells(poly, mid, type, coverageThreshold, targetN, convex);
         if (n >= targetN) {
             lo = mid; // can still fit N, try larger cells
         }
@@ -116,9 +130,10 @@ function selectN(cells, n, poly) {
 export function generateGrid(poly, opts) {
     const { count, type, coverageThreshold = 0.4 } = opts;
     const cellSize = findCellSize(poly, count, type, coverageThreshold);
+    const convex = isConvexPolygon(poly);
     const candidates = type === 'square'
-        ? generateSquareCandidates(poly, cellSize, coverageThreshold)
-        : generateHexCandidates(poly, cellSize, coverageThreshold);
+        ? generateSquareCandidates(poly, cellSize, coverageThreshold, { convex })
+        : generateHexCandidates(poly, cellSize, coverageThreshold, { convex });
     // Nothing survived the coverage threshold — return an empty grid rather than
     // producing NaN centroids in selectN.
     if (candidates.length === 0) {

@@ -19,7 +19,7 @@ function renderCoords(container: HTMLElement, _id: string): void {
   _coordsBody = container;
   _coordsBody.id = 'coords-body';
   _coordsBody.style.fontSize = (10 * f) + 'px';
-  _coordsBody.style.padding = '4px 8px';
+  _coordsBody.style.padding = '6px 8px';
   _coordsBody.style.whiteSpace = 'pre';
   _coordsBody.style.fontFamily = 'ui-monospace, SFMono-Regular, SF Mono, Consolas, monospace';
   _coordsBody.style.fontVariantNumeric = 'tabular-nums';

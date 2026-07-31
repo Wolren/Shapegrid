@@ -200,15 +200,16 @@ function injectStyles(): void {
   position: absolute;
   top: 0;
   right: 0;
-  width: 220px;
+  width: 240px;
   max-height: 80%;
   z-index: 25;
-  background: rgba(13, 17, 23, 0.85);
+  background: rgba(13, 17, 23, 0.88);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-left: 1px solid var(--border);
+  border-left: 1px solid rgba(48, 54, 61, 0.7);
   border-bottom: 1px solid var(--border);
   border-radius: 0 0 0 var(--radius);
+  box-shadow: -8px 0 28px rgba(0, 0, 0, 0.4);
   font-family: var(--mono);
   color: var(--text);
   display: none;
@@ -225,10 +226,10 @@ function injectStyles(): void {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  background: rgba(13, 17, 23, 0.5);
+  background: rgba(22, 27, 34, 0.6);
 }
 
 .dm-header-title {
@@ -318,6 +319,10 @@ function injectStyles(): void {
   transition: background 0.2s, border-color 0.2s;
 }
 
+.dm-toggle-slider:hover {
+  border-color: #3d444d;
+}
+
 .dm-toggle-slider::before {
   content: '';
   position: absolute;
@@ -344,15 +349,15 @@ function injectStyles(): void {
 .dm-pos-select {
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 8px;
-  padding: 2px 4px;
-  width: 70px;
+  font-size: 9px;
+  padding: 2px 5px;
+  width: 74px;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.12s;
+  transition: border-color 0.12s, color 0.12s;
 }
 
 .dm-pos-select:hover {
@@ -386,36 +391,60 @@ function injectStyles(): void {
 }
 
 .dm-settings-label {
-  font-size: 8px;
+  font-size: 9px;
   color: var(--muted);
-  min-width: 50px;
+  min-width: 56px;
   white-space: nowrap;
 }
 
 .dm-settings-row input[type="range"] {
   -webkit-appearance: none;
+  appearance: none;
   flex: 1;
-  height: 2px;
+  height: 3px;
   background: var(--surface3);
-  border-radius: 1px;
+  border-radius: 2px;
   outline: none;
   cursor: pointer;
 }
 
 .dm-settings-row input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
+  background: var(--accent);
+  border: 2px solid #0d1117;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(57, 211, 83, 0.3);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.dm-settings-row input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px rgba(57, 211, 83, 0.22);
+}
+
+.dm-settings-row input[type="range"]::-moz-range-track {
+  height: 3px;
+  background: var(--surface3);
+  border-radius: 2px;
+}
+
+.dm-settings-row input[type="range"]::-moz-range-thumb {
+  width: 7px;
+  height: 7px;
+  border: 2px solid #0d1117;
   background: var(--accent);
   border-radius: 50%;
-  cursor: pointer;
 }
 
 .dm-settings-value {
-  font-size: 8px;
+  font-size: 9px;
   color: var(--accent);
-  min-width: 20px;
+  min-width: 24px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .dm-settings-row input[type="checkbox"] {
@@ -428,14 +457,19 @@ function injectStyles(): void {
 .dm-settings-row select {
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
   color: var(--text);
   font-family: var(--mono);
-  font-size: 8px;
-  padding: 2px 4px;
+  font-size: 9px;
+  padding: 2px 5px;
   flex: 1;
   cursor: pointer;
   outline: none;
+  transition: border-color 0.12s;
+}
+
+.dm-settings-row select:hover {
+  border-color: #3d444d;
 }
 
 /* Action buttons row */
@@ -455,7 +489,7 @@ function injectStyles(): void {
   border-radius: var(--radius);
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 9px;
   cursor: pointer;
   text-align: center;
   transition: all 0.12s;

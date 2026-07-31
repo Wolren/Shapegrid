@@ -69,7 +69,7 @@ function renderLanguages(container: HTMLElement, _id: string): void {
     // Percentage label
     const pct = document.createElement('span');
     pct.textContent = `${lang.percentage.toFixed(1)}%`;
-    pct.style.color = 'rgba(255,255,255,0.5)';
+    pct.style.color = 'rgba(255,255,255,0.45)';
     pct.style.fontSize = (9 * f) + 'px';
     pct.style.minWidth = '38px';
     pct.style.textAlign = 'right';
