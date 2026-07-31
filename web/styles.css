@@ -143,32 +143,35 @@
     /* ── Sidebar tabs ────────────────────────────────────────────────────────────── */
     .sidebar-tabs {
       display: flex;
+      flex-wrap: wrap;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
-      padding: 0 4px;
+      padding: 4px 4px 0;
+      gap: 2px;
     }
     .sidebar-tab {
-      flex: 1;
-      padding: 8px 4px;
+      flex: 1 1 23%;
+      padding: 7px 2px;
       font-size: 9px;
       font-weight: 500;
       color: var(--muted);
-      border: none;
-      border-bottom: 2px solid transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
       text-align: center;
       background: none;
       cursor: pointer;
-      transition: color 0.15s, border-color 0.15s;
-      margin-bottom: -1px;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
     .sidebar-tab.active {
       color: var(--accent);
-      border-bottom-color: var(--accent);
+      background: var(--surface3);
+      border-color: var(--border);
     }
     .sidebar-tab:hover:not(.active) {
       color: var(--text);
+      background: var(--surface2);
     }
 
     .sidebar-body {
