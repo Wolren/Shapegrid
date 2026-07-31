@@ -87,6 +87,14 @@ export function widgetFontScale(id: WidgetId): number {
 
 const HEX_RE = /^#([0-9a-f]{6})$/i;
 
+/** '#rrggbb' + alpha -> 'rgba(r, g, b, a)'. Used for widget frame tints. */
+function hexToRgba(hex: string, alpha: number): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return `rgba(255,255,255,${alpha})`;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
 /**
  * Per-widget color palette. Widget colors are fully independent from the
  * editor theme: changing editor themes never touches widgets, and changing
@@ -362,6 +370,20 @@ export function renderAllWidgets(): void {
     wrapper.dataset.widgetId = w.id;
     wrapper.dataset.zone = w.position;
     wrapper.dataset.order = String(w.order);
+
+    // Frame colors come from the widget's own palette (accent + secondary),
+    // never from the editor theme. The frame: accent border, accent-tinted
+    // header, accent title, secondary body text.
+    const wAccent = widgetAccent(w.id);
+    const wSecondary = widgetSecondary(w.id);
+    wrapper.style.setProperty('--w-accent', wAccent);
+    wrapper.style.setProperty('--w-secondary', wSecondary);
+    wrapper.style.setProperty('--w-border', hexToRgba(wAccent, 0.4));
+    wrapper.style.setProperty('--w-border-strong', hexToRgba(wAccent, 0.75));
+    wrapper.style.setProperty(
+      '--w-header-bg',
+      `linear-gradient(180deg, ${hexToRgba(wAccent, 0.10)}, ${hexToRgba(wAccent, 0.02)})`
+    );
 
     // Per-widget lock: no drag, no close button, default cursor
     const locked = !!w.settings.locked;

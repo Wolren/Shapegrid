@@ -1134,10 +1134,10 @@
       background: rgba(13, 17, 23, 0.85);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(48, 54, 61, 0.7);
+      border: 1px solid var(--w-border, rgba(48, 54, 61, 0.7));
       border-radius: 8px;
       font-family: var(--sans);
-      color: var(--text);
+      color: var(--w-secondary, var(--text));
       min-width: 120px;
       max-width: 420px;
       overflow: hidden;
@@ -1146,7 +1146,7 @@
     }
     .dashboard-widget:hover {
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-      border-color: rgba(48, 54, 61, 0.95);
+      border-color: var(--w-border-strong, rgba(48, 54, 61, 0.95));
     }
     .dashboard-widget.dragging {
       opacity: 0.9;
@@ -1163,8 +1163,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 6px 10px;
-      border-bottom: 1px solid rgba(48, 54, 61, 0.4);
-      background: rgba(22, 27, 34, 0.6);
+      border-bottom: 1px solid var(--w-border, rgba(48, 54, 61, 0.4));
+      background: var(--w-header-bg, rgba(22, 27, 34, 0.6));
       cursor: grab;
       user-select: none;
     }
@@ -1173,19 +1173,19 @@
       font-size: 8px;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--muted);
+      color: var(--w-accent, var(--muted));
       font-weight: 500;
     }
     .dw-close {
       font-size: 10px;
-      color: var(--muted);
+      color: var(--w-secondary, var(--muted));
       cursor: pointer;
       padding: 0 2px;
       line-height: 1;
       opacity: 0.5;
       transition: opacity 0.12s;
     }
-    .dw-close:hover { opacity: 1; color: var(--danger); }
+    .dw-close:hover { opacity: 1; color: var(--w-accent, var(--danger)); }
     .dw-body {
       flex: 1;
       min-height: 0;

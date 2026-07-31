@@ -20,7 +20,7 @@ function renderLegend(container: HTMLElement, _id: string): void {
 
   // Title
   const title = document.createElement('div');
-  title.style.cssText = `font-size:${9 * f}px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:2px`;
+  title.style.cssText = `font-size:${9 * f}px;color:${secondary};text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:2px`;
   title.textContent = 'Contributions';
   legendFrame.appendChild(title);
 
@@ -32,7 +32,7 @@ function renderLegend(container: HTMLElement, _id: string): void {
 
   // Labels row
   const labels = document.createElement('div');
-  labels.style.cssText = `display:flex;justify-content:space-between;font-size:${10 * f}px;font-family:var(--mono);color:var(--text)`;
+  labels.style.cssText = `display:flex;justify-content:space-between;font-size:${10 * f}px;font-family:var(--mono);color:${secondary}`;
   const minLabel = document.createElement('span');
   minLabel.style.color = secondary;
   minLabel.textContent = minVal.toLocaleString();
