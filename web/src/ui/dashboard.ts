@@ -106,22 +106,26 @@ export interface WidgetPalette {
   secondary: string;
 }
 
+// Default widget palette: green family to stay coloristically compatible with
+// the default editor theme (GitHub green), with a couple of warm accents and
+// a neutral gray for the readout widgets. Deliberately no blue - blue is an
+// explicit opt-in theme (Cool/Ocean), never the default look.
 export const DEFAULT_WIDGET_PALETTES: Record<WidgetId, WidgetPalette> = {
-  legend:       { accent: '#39d353', secondary: '#8b949e' },
-  stats:        { accent: '#58a6ff', secondary: '#8b949e' },
-  languages:    { accent: '#d29922', secondary: '#e6edf3' },
-  cellInfo:     { accent: '#f778ba', secondary: '#8b949e' },
-  scaleBar:     { accent: '#39d353', secondary: '#8b949e' },
-  coordinates:  { accent: '#7d8590', secondary: '#8b949e' },
-  distribution: { accent: '#f78166', secondary: '#8b949e' },
-  timeline:     { accent: '#58a6ff', secondary: '#8b949e' },
-  activity:     { accent: '#a371f7', secondary: '#8b949e' },
-  topCells:     { accent: '#f778ba', secondary: '#8b949e' },
-  weekday:      { accent: '#39d353', secondary: '#8b949e' },
-  streak:       { accent: '#f78166', secondary: '#8b949e' },
-  monthly:      { accent: '#58a6ff', secondary: '#8b949e' },
-  geo:          { accent: '#a371f7', secondary: '#8b949e' },
-  minimap:      { accent: '#39d353', secondary: '#8b949e' },
+  legend:       { accent: '#39d353', secondary: '#2ea043' },
+  stats:        { accent: '#56d364', secondary: '#2ea043' },
+  languages:    { accent: '#d29922', secondary: '#9e6a03' },
+  cellInfo:     { accent: '#7ee787', secondary: '#3fb950' },
+  scaleBar:     { accent: '#39d353', secondary: '#2ea043' },
+  coordinates:  { accent: '#8b949e', secondary: '#6e7681' },
+  distribution: { accent: '#f78166', secondary: '#e34d2f' },
+  timeline:     { accent: '#4ac26b', secondary: '#2ea043' },
+  activity:     { accent: '#3fb950', secondary: '#2ea043' },
+  topCells:     { accent: '#7ee787', secondary: '#3fb950' },
+  weekday:      { accent: '#39d353', secondary: '#2ea043' },
+  streak:       { accent: '#f78166', secondary: '#e34d2f' },
+  monthly:      { accent: '#4ac26b', secondary: '#2ea043' },
+  geo:          { accent: '#3fb950', secondary: '#2ea043' },
+  minimap:      { accent: '#39d353', secondary: '#2ea043' },
 };
 
 function widgetColor(id: WidgetId, key: keyof WidgetPalette): string {
