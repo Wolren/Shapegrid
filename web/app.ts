@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import * as THREE from 'three';
-import type { Point2D } from './src/types';
+import type { Point2D, ThemeColors } from './src/types';
 import { state, updateState, setPreset } from './src/ui/state';
 import { norm, normWithCoordSystem, isLikelyLonLat } from './src/geometry/projection';
 import { parseGeoJsonFile, parseSvgFile } from './src/geometry/parsers';
@@ -902,7 +902,7 @@ function exportConfig() {
         background: state.background,
         gap: state.gap,
       },
-      theme: { palette: state.palette },
+      theme: { palette: state.palette, colors: state.theme },
       overlay: {
         legendPos: state.overlay.legendPos,
         statsPos: state.overlay.statsPos,
@@ -1506,6 +1506,91 @@ async function showExportPreview(): Promise<void> {
 // Export Config button
 (document.getElementById('btn-export-config') as HTMLButtonElement).addEventListener('click', exportConfig);
 
+// ── Theme colors ─────────────────────────────────────────────────────────────
+
+const THEME_KEYS: { key: keyof ThemeColors; id: string }[] = [
+  { key: 'accent', id: 'inp-theme-accent' },
+  { key: 'accent2', id: 'inp-theme-accent2' },
+  { key: 'background', id: 'inp-theme-background' },
+  { key: 'surface', id: 'inp-theme-surface' },
+  { key: 'surface2', id: 'inp-theme-surface2' },
+  { key: 'surface3', id: 'inp-theme-surface3' },
+  { key: 'border', id: 'inp-theme-border' },
+  { key: 'text', id: 'inp-theme-text' },
+  { key: 'muted', id: 'inp-theme-muted' },
+];
+
+const THEME_VAR_MAP: Record<keyof ThemeColors, string> = {
+  accent: '--accent',
+  accent2: '--accent2',
+  background: '--bg',
+  surface: '--surface',
+  surface2: '--surface2',
+  surface3: '--surface3',
+  border: '--border',
+  text: '--text',
+  muted: '--muted',
+};
+
+const DEFAULT_THEME: ThemeColors = {
+  accent: '#39d353',
+  accent2: '#1f6feb',
+  background: '#080c10',
+  surface: '#0d1117',
+  surface2: '#161b22',
+  surface3: '#21262d',
+  border: '#30363d',
+  text: '#e6edf3',
+  muted: '#8b949e',
+};
+
+/** Apply the current theme to the CSS custom properties (live site-wide). */
+function applyTheme(): void {
+  const root = document.documentElement;
+  for (const { key } of THEME_KEYS) {
+    root.style.setProperty(THEME_VAR_MAP[key], state.theme[key]);
+  }
+}
+
+function syncThemeInputs(): void {
+  for (const { key, id } of THEME_KEYS) {
+    const picker = document.getElementById(id) as HTMLInputElement | null;
+    const hex = document.getElementById(`${id}-hex`) as HTMLInputElement | null;
+    if (picker) picker.value = state.theme[key];
+    if (hex) hex.value = state.theme[key];
+  }
+}
+
+function initThemeControls(): void {
+  for (const { key, id } of THEME_KEYS) {
+    const picker = document.getElementById(id) as HTMLInputElement | null;
+    const hex = document.getElementById(`${id}-hex`) as HTMLInputElement | null;
+    if (!picker) continue;
+    const apply = (v: string): void => {
+      if (!/^#([0-9a-f]{6})$/i.test(v)) return;
+      updateState('theme', { ...state.theme, [key]: v.toLowerCase() });
+      applyTheme();
+      renderAllWidgets(); // widgets fall back to the theme accent
+    };
+    picker.addEventListener('input', () => {
+      if (hex) hex.value = picker.value;
+      apply(picker.value);
+    });
+    hex?.addEventListener('change', () => {
+      const v = hex.value.trim();
+      if (/^#([0-9a-f]{6})$/i.test(v)) picker.value = v.toLowerCase();
+      apply(v);
+    });
+  }
+  const resetBtn = document.getElementById('btn-theme-reset');
+  resetBtn?.addEventListener('click', () => {
+    updateState('theme', { ...DEFAULT_THEME });
+    applyTheme();
+    syncThemeInputs();
+    renderAllWidgets();
+  });
+}
+
 // Load Config button - import an exported config JSON via loadFromJson()
 const configFileInput = document.createElement('input');
 configFileInput.type = 'file';
@@ -1528,6 +1613,8 @@ configFileInput.addEventListener('change', () => {
         throw new Error('Not a valid Shapegrid config: missing grid data');
       }
       loadFromJson(data);
+      applyTheme();
+      syncThemeInputs();
       scheduleRebuild();
       setStatus(`✓ Loaded config ${file.name}`, 'ok');
     } catch (e: any) {
@@ -1860,6 +1947,8 @@ async function bootstrap() {
     if (loaded) {
       dataLoaded = true;
       // Loaded from CI-generated data — update palette
+      applyTheme();
+      syncThemeInputs();
       if (state.palette) {
         setActivePalette(state.palette);
         buildLegend();
@@ -1937,6 +2026,11 @@ async function bootstrap() {
 
     // Dashboard widget manager
     initWidgetManager();
+
+    // Theme colors (applies defaults, wires the pickers)
+    initThemeControls();
+    applyTheme();
+    syncThemeInputs();
 
     // Hide overlay
     setTimeout(() => { overlay.classList.add('hidden'); }, 400);

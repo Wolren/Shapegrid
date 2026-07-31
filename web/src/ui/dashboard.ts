@@ -85,6 +85,23 @@ export function widgetFontScale(id: WidgetId): number {
   return widgetFont(id, 10) / 10;
 }
 
+const HEX_RE = /^#([0-9a-f]{6})$/i;
+
+/**
+ * Accent color for a widget: its own 'accent' setting when set, otherwise the
+ * site theme accent. Invalid values fall back to the theme accent.
+ */
+export function widgetAccent(id: WidgetId): string {
+  const custom = getWidgetSetting(id, 'accent', '') as string;
+  if (typeof custom === 'string' && HEX_RE.test(custom)) return custom.toLowerCase();
+  return state.theme.accent;
+}
+
+/** The site theme accent (used by non-widget UI like the measure overlay). */
+export function siteAccent(): string {
+  return state.theme.accent;
+}
+
 export function setWidgetPosition(id: WidgetId, pos: WidgetConfig['position']): void {
   const w = getWidgetConfig(id);
   if (w) {

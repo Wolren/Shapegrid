@@ -12,8 +12,9 @@ import { state } from './state';
 import { geoKmPerUnit } from '../geometry/projection';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const ACCENT = '#39d353';
-const ACCENT_ALPHA = 'rgba(57, 211, 83, 0.15)';
+const ACCENT = (): string => state.theme.accent;
+// 15% alpha accent fill (hex + alpha suffix)
+const ACCENT_ALPHA = (): string => `${state.theme.accent}26`;
 const VERTEX_R = 4;
 const LINE_W = 2;
 const LABEL_OFFSET = 12;
@@ -76,7 +77,7 @@ export function initMeasureOverlay(): () => void {
   marker.setAttribute('orient', 'auto');
   const arrowPath = document.createElementNS(SVG_NS, 'path');
   arrowPath.setAttribute('d', 'M0,0 L6,3 L0,6 Z');
-  arrowPath.setAttribute('fill', ACCENT);
+  arrowPath.setAttribute('fill', ACCENT());
   marker.appendChild(arrowPath);
   defsEl.appendChild(marker);
   svg.appendChild(defsEl);
@@ -165,7 +166,7 @@ function createLine(points: ScreenPoint[], closed = false): SVGGElement {
   const path = document.createElementNS(SVG_NS, 'path');
   path.setAttribute('d', pathD);
   path.setAttribute('fill', 'none');
-  path.setAttribute('stroke', ACCENT);
+  path.setAttribute('stroke', ACCENT());
   path.setAttribute('stroke-width', String(LINE_W));
   path.setAttribute('stroke-linecap', 'round');
   path.setAttribute('stroke-linejoin', 'round');
@@ -186,8 +187,8 @@ function createPolygonFill(points: ScreenPoint[]): SVGGElement {
 
   const path = document.createElementNS(SVG_NS, 'path');
   path.setAttribute('d', d);
-  path.setAttribute('fill', ACCENT_ALPHA);
-  path.setAttribute('stroke', ACCENT);
+  path.setAttribute('fill', ACCENT_ALPHA());
+  path.setAttribute('stroke', ACCENT());
   path.setAttribute('stroke-width', String(LINE_W));
   path.setAttribute('stroke-linecap', 'round');
   path.setAttribute('stroke-linejoin', 'round');
@@ -204,7 +205,7 @@ function createVertices(points: ScreenPoint[]): SVGGElement {
     circle.setAttribute('cx', p.x.toFixed(1));
     circle.setAttribute('cy', p.y.toFixed(1));
     circle.setAttribute('r', String(VERTEX_R));
-    circle.setAttribute('fill', ACCENT);
+    circle.setAttribute('fill', ACCENT());
     circle.setAttribute('opacity', '0.9');
     g.appendChild(circle);
   });
@@ -243,7 +244,7 @@ function createLabel(
   rect.setAttribute('height', String(textH));
   rect.setAttribute('rx', '3');
   rect.setAttribute('fill', 'rgba(13, 17, 23, 0.8)');
-  rect.setAttribute('stroke', ACCENT);
+  rect.setAttribute('stroke', ACCENT());
   rect.setAttribute('stroke-width', '1');
   g.appendChild(rect);
 

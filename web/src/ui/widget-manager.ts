@@ -12,7 +12,7 @@ import { renderAllWidgets, saveCurrentLayoutAs, loadDashboardLayout, deleteDashb
 interface WidgetSettingDef {
   key: string;
   label: string;
-  type: 'range' | 'checkbox' | 'select';
+  type: 'range' | 'checkbox' | 'select' | 'color';
   min?: number;
   max?: number;
   step?: number;
@@ -626,6 +626,58 @@ function buildSettingsRow(def: WidgetSettingDef, widgetId: WidgetId): HTMLElemen
     });
 
     row.appendChild(select);
+  } else if (def.type === 'color') {
+    const cfg = state.dashboard.widgets.find(w => w.id === widgetId);
+    const current = (cfg?.settings?.[def.key] as string) || '';
+
+    const picker = document.createElement('input');
+    picker.type = 'color';
+    picker.value = /^#([0-9a-f]{6})$/i.test(current) ? current : '#39d353';
+    picker.style.cssText = 'width:36px;height:24px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;cursor:pointer;padding:0';
+    picker.title = 'Accent color (empty = site theme accent)';
+
+    const hexInput = document.createElement('input');
+    hexInput.type = 'text';
+    hexInput.value = current;
+    hexInput.placeholder = 'theme';
+    hexInput.style.cssText = 'flex:1;min-width:0;font-family:var(--mono);font-size:10px';
+
+    const apply = (value: string) => {
+      const clean = value.trim();
+      if (clean === '') {
+        setWidgetSetting(widgetId, def.key, '');
+      } else if (/^#([0-9a-f]{6})$/i.test(clean)) {
+        setWidgetSetting(widgetId, def.key, clean.toLowerCase());
+      } else {
+        return; // invalid — ignore
+      }
+      renderAllWidgets();
+    };
+
+    picker.addEventListener('input', () => {
+      hexInput.value = picker.value;
+      apply(picker.value);
+    });
+    hexInput.addEventListener('change', () => {
+      const v = hexInput.value.trim();
+      if (/^#([0-9a-f]{6})$/i.test(v)) picker.value = v.toLowerCase();
+      apply(v);
+    });
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.textContent = 'reset';
+    clearBtn.style.cssText = 'font-size:9px;color:var(--muted);background:none;border:none;cursor:pointer;padding:2px 4px';
+    clearBtn.title = 'Use the site theme accent';
+    clearBtn.addEventListener('click', () => {
+      picker.value = '#39d353';
+      hexInput.value = '';
+      apply('');
+    });
+
+    row.appendChild(picker);
+    row.appendChild(hexInput);
+    row.appendChild(clearBtn);
   }
 
   return row;
@@ -643,6 +695,8 @@ function buildSettingsSection(meta: WidgetMeta): HTMLElement | null {
   for (const sDef of meta.settings) {
     section.appendChild(buildSettingsRow(sDef, meta.id));
   }
+  // Every widget gets an accent-color picker (empty = follow the site theme).
+  section.appendChild(buildSettingsRow({ key: 'accent', label: 'Accent', type: 'color' }, meta.id));
 
   return section;
 }

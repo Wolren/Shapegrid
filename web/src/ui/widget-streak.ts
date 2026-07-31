@@ -3,12 +3,13 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, widgetFontScale } from './dashboard';
+import { registerWidget, widgetFontScale, widgetAccent } from './dashboard';
 import type { WidgetId } from '../types';
 
 const WIDGET_ID: WidgetId = 'streak';
 
 function renderStreak(container: HTMLElement, _id: string): void {
+  const accent = widgetAccent(WIDGET_ID);
   const f = widgetFontScale(WIDGET_ID);
 
   container.style.fontSize = (10 * f) + 'px';
@@ -53,7 +54,7 @@ function renderStreak(container: HTMLElement, _id: string): void {
   const makeCol = (val: string, label: string) => {
     const g = document.createElement('div');
     g.innerHTML =
-      `<div style="font-size:${22 * f}px;font-weight:700;color:var(--accent);line-height:1.2;font-variant-numeric:tabular-nums">${val}</div>` +
+      `<div style="font-size:${22 * f}px;font-weight:700;color:${accent};line-height:1.2;font-variant-numeric:tabular-nums">${val}</div>` +
       `<div style="font-size:${8 * f}px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:1px">${label}</div>`;
     return g;
   };

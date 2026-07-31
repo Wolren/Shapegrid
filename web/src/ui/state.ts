@@ -71,6 +71,17 @@ export const state: AppState = {
   },
   dashboard: getDefaultDashboard(),
   languages: [],
+  theme: {
+    accent: '#39d353',
+    accent2: '#1f6feb',
+    background: '#080c10',
+    surface: '#0d1117',
+    surface2: '#161b22',
+    surface3: '#21262d',
+    border: '#30363d',
+    text: '#e6edf3',
+    muted: '#8b949e',
+  },
 };
 
 export function updateState<K extends keyof AppState>(key: K, value: AppState[K]) {

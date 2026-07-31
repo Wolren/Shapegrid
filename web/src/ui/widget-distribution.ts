@@ -5,9 +5,11 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent } from './dashboard';
+import type { WidgetId } from '../types';
 
-function renderDistribution(container: HTMLElement, _id: string): void {
+function renderDistribution(container: HTMLElement, id: string): void {
+  const accent = widgetAccent(id as WidgetId);
   const bins = getWidgetSetting('distribution', 'bins', 8) as number;
   const heightSetting = getWidgetSetting('distribution', 'height', 130) as number;
   const cellData = state.cellData;
@@ -101,7 +103,7 @@ function renderDistribution(container: HTMLElement, _id: string): void {
     rect.setAttribute('height', Math.max(barH, 0).toFixed(1));
     // Data-driven opacity: dim for sparse bins, bright for dense ones
     const opacity = maxBinCount > 0 ? 0.3 + (binned[i] / maxBinCount) * 0.7 : 0.3;
-    rect.setAttribute('fill', '#39d353');
+    rect.setAttribute('fill', accent);
     rect.setAttribute('opacity', opacity.toFixed(2));
     rect.setAttribute('rx', '0.5');
 
@@ -122,7 +124,7 @@ function renderDistribution(container: HTMLElement, _id: string): void {
     label.setAttribute('x', tallestX.toFixed(1));
     label.setAttribute('y', (tallestY - 4).toFixed(1));
     label.setAttribute('text-anchor', 'middle');
-    label.setAttribute('fill', '#39d353');
+    label.setAttribute('fill', accent);
     label.setAttribute('font-size', (8 * f).toFixed(1));
     label.setAttribute('font-weight', '600');
     label.textContent = String(maxBinCount);

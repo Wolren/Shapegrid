@@ -3,10 +3,11 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, widgetFontScale } from './dashboard';
+import { registerWidget, widgetFontScale, widgetAccent } from './dashboard';
 import { activePaletteId, PALETTES } from '../rendering/colors';
 
 function renderLegend(container: HTMLElement, _id: string): void {
+  const accent = widgetAccent('legend');
   const palette = PALETTES[activePaletteId] || PALETTES.github;
   const maxVal = state.contributions?.total ?? state.cellData.reduce((m, d) => Math.max(m, d.count), 0);
   const minVal = 0;
@@ -38,6 +39,7 @@ function renderLegend(container: HTMLElement, _id: string): void {
   midLabel.textContent = 'per day';
   const maxLabel = document.createElement('span');
   maxLabel.style.fontWeight = '600';
+  maxLabel.style.color = accent;
   maxLabel.textContent = maxVal.toLocaleString();
   labels.appendChild(minLabel);
   labels.appendChild(midLabel);

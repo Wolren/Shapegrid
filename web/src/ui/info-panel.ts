@@ -209,7 +209,7 @@ function buildPanel(): HTMLElement {
 
   const selCount = document.createElement('div');
   selCount.id = 'info-selection-count';
-  selCount.style.cssText = `color: #39d353; font-weight: 500;`;
+  selCount.style.cssText = `color: ${state.theme.accent}; font-weight: 500;`;
   selSection.appendChild(selCount);
 
   body.appendChild(selSection);

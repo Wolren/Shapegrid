@@ -4,7 +4,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent } from './dashboard';
 import type { WidgetId } from '../types';
 
 const WIDGET_ID: WidgetId = 'monthly';
@@ -19,6 +19,7 @@ interface MonthTotal {
 }
 
 function renderMonthly(container: HTMLElement, _id: string): void {
+  const accent = widgetAccent(WIDGET_ID);
   const heightSetting = getWidgetSetting(WIDGET_ID, 'height', 130) as number;
   const days = state.contributions?.days ?? [];
   const f = widgetFontScale(WIDGET_ID);
@@ -104,7 +105,7 @@ function renderMonthly(container: HTMLElement, _id: string): void {
     rect.setAttribute('width', barW.toFixed(1));
     rect.setAttribute('height', Math.max(h, 0).toFixed(1));
     const opacity = m.total > 0 ? 0.4 + (m.total / maxTotal) * 0.6 : 0.18;
-    rect.setAttribute('fill', '#39d353');
+    rect.setAttribute('fill', accent);
     rect.setAttribute('opacity', opacity.toFixed(2));
     rect.setAttribute('rx', '1');
 
@@ -141,7 +142,7 @@ function renderMonthly(container: HTMLElement, _id: string): void {
   const maxLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   maxLabel.setAttribute('x', '0');
   maxLabel.setAttribute('y', '10');
-  maxLabel.setAttribute('fill', '#39d353');
+  maxLabel.setAttribute('fill', accent);
   maxLabel.setAttribute('font-size', (7 * f).toFixed(1));
   maxLabel.setAttribute('font-weight', '600');
   maxLabel.textContent = `Max: ${maxTotal.toLocaleString()}`;

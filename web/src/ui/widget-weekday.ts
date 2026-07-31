@@ -3,11 +3,13 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent } from './dashboard';
+import type { WidgetId } from '../types';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-function renderWeekday(container: HTMLElement, _id: string): void {
+function renderWeekday(container: HTMLElement, id: string): void {
+  const accent = widgetAccent(id as WidgetId);
   const heightSetting = getWidgetSetting('weekday', 'height', 130) as number;
   const cellData = state.cellData;
   const f = widgetFontScale('weekday');
@@ -77,7 +79,7 @@ function renderWeekday(container: HTMLElement, _id: string): void {
     rect.setAttribute('width', barW.toFixed(1));
     rect.setAttribute('height', Math.max(h, 0).toFixed(1));
     const opacity = totals[i] > 0 ? 0.4 + (totals[i] / maxTotal) * 0.6 : 0.18;
-    rect.setAttribute('fill', '#39d353');
+    rect.setAttribute('fill', accent);
     rect.setAttribute('opacity', opacity.toFixed(2));
     rect.setAttribute('rx', '1');
 

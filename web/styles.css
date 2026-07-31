@@ -1,6 +1,6 @@
 /* ── Design system ─────────────────────────────────────────────────────────── */
     :root {
-      --bg:        transparent;
+      --bg:        #080c10;
       --surface:   #0d1117;
       --surface2:  #161b22;
       --surface3:  #21262d;
@@ -28,10 +28,42 @@
 
     html, body {
       width: 100%; height: 100%;
-      background: #080c10;
+      background: var(--bg);
       color: var(--text);
       font-family: var(--mono);
       overflow: hidden;
+    }
+
+    /* Theme color picker rows */
+    .theme-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 4px 0;
+    }
+    .theme-row label {
+      flex: 1;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .theme-row input[type="color"] {
+      width: 34px;
+      height: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+    .theme-row input[type="text"] {
+      width: 74px;
+      font-family: var(--mono);
+      font-size: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 2px 4px;
     }
 
     /* ── Layout ────────────────────────────────────────────────────────────────── */

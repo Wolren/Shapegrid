@@ -4,10 +4,12 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent } from './dashboard';
+import type { WidgetId } from '../types';
 import type { GitHubDay } from '../types';
 
-function renderTimeline(container: HTMLElement, _id: string): void {
+function renderTimeline(container: HTMLElement, id: string): void {
+  const accent = widgetAccent(id as WidgetId);
   const maxDays = getWidgetSetting('timeline', 'days', 90) as number;
   const days = state.contributions?.days ?? [];
   const f = widgetFontScale('timeline');
@@ -56,12 +58,12 @@ function renderTimeline(container: HTMLElement, _id: string): void {
 
   const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
   stop1.setAttribute('offset', '0%');
-  stop1.setAttribute('stop-color', '#39d353');
+  stop1.setAttribute('stop-color', accent);
   stop1.setAttribute('stop-opacity', '0.35');
 
   const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
   stop2.setAttribute('offset', '100%');
-  stop2.setAttribute('stop-color', '#39d353');
+  stop2.setAttribute('stop-color', accent);
   stop2.setAttribute('stop-opacity', '0');
 
   grad.appendChild(stop1);
@@ -96,7 +98,7 @@ function renderTimeline(container: HTMLElement, _id: string): void {
   const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
   polyline.setAttribute('points', pointStrings.join(' '));
   polyline.setAttribute('fill', 'none');
-  polyline.setAttribute('stroke', '#39d353');
+  polyline.setAttribute('stroke', accent);
   polyline.setAttribute('stroke-width', '1.5');
   polyline.setAttribute('stroke-linejoin', 'round');
   polyline.setAttribute('stroke-linecap', 'round');
@@ -111,7 +113,7 @@ function renderTimeline(container: HTMLElement, _id: string): void {
     dot.setAttribute('cx', cx.toFixed(1));
     dot.setAttribute('cy', cy.toFixed(1));
     dot.setAttribute('r', '2');
-    dot.setAttribute('fill', '#39d353');
+    dot.setAttribute('fill', accent);
     dot.setAttribute('stroke', '#0d1117');
     dot.setAttribute('stroke-width', '1');
     svg.appendChild(dot);

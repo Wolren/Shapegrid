@@ -225,6 +225,16 @@ export function loadFromJson(data: DataExport): void {
   if (data.config?.theme?.palette) {
     updateState('palette', data.config.theme.palette);
   }
+  if (data.config?.theme?.colors) {
+    const colors = data.config.theme.colors as unknown as Record<string, unknown>;
+    const theme = state.theme;
+    const next = { ...theme };
+    const valid = (v: unknown): v is string => typeof v === 'string' && /^#([0-9a-f]{6})$/i.test(v);
+    for (const key of Object.keys(theme) as (keyof typeof theme)[]) {
+      if (valid(colors[key])) next[key] = (colors[key] as string).toLowerCase();
+    }
+    updateState('theme', next);
+  }
 
   // Stats
   updateState('contributions', {

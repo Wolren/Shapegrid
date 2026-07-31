@@ -3,9 +3,11 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
+import { registerWidget, getWidgetSetting, widgetFontScale, widgetAccent } from './dashboard';
+import type { WidgetId } from '../types';
 
-function renderTopCells(container: HTMLElement, _id: string): void {
+function renderTopCells(container: HTMLElement, id: string): void {
+  const accent = widgetAccent(id as WidgetId);
   const maxItems = getWidgetSetting('topCells', 'maxItems', 5) as number;
   const cellData = state.cellData;
   const f = widgetFontScale('topCells');
@@ -70,14 +72,14 @@ function renderTopCells(container: HTMLElement, _id: string): void {
     const bar = document.createElement('div');
     bar.style.height = '100%';
     bar.style.width = Math.max((item.count / maxCount) * 100, 4) + '%';
-    bar.style.background = 'linear-gradient(90deg, #1a7f37, #39d353)';
+    bar.style.background = `linear-gradient(90deg, ${accent}66, ${accent})`;
     bar.style.borderRadius = '4px';
     barWrap.appendChild(bar);
     row.appendChild(barWrap);
 
     // Count
     const count = document.createElement('span');
-    count.style.color = '#39d353';
+    count.style.color = accent;
     count.style.fontSize = (10 * f) + 'px';
     count.style.fontWeight = '600';
     count.style.textAlign = 'right';

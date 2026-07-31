@@ -3,10 +3,12 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, widgetFontScale } from './dashboard';
+import { registerWidget, widgetFontScale, widgetAccent } from './dashboard';
+import type { WidgetId } from '../types';
 import { activePaletteId, intensityToColor } from '../rendering/colors';
 
-function renderStats(container: HTMLElement, _id: string): void {
+function renderStats(container: HTMLElement, id: string): void {
+  const accent = widgetAccent(id as WidgetId);
   const c = state.contributions;
   const grid = state.grid;
   const cellData = state.cellData;
@@ -27,7 +29,7 @@ function renderStats(container: HTMLElement, _id: string): void {
   const makeBig = (val: string, label: string) => {
     const g = document.createElement('div');
     const valDiv = document.createElement('div');
-    valDiv.style.cssText = `font-size:${18 * f}px;font-weight:700;color:var(--accent);line-height:1.2`;
+    valDiv.style.cssText = `font-size:${18 * f}px;font-weight:700;color:${accent};line-height:1.2`;
     valDiv.textContent = val;
     const labelDiv = document.createElement('div');
     labelDiv.style.cssText = `font-size:${8 * f}px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em`;

@@ -172,6 +172,18 @@ export interface EditorState {
 
 // ══════════════════════════════════════════════════════════════════════════════
 
+export interface ThemeColors {
+  accent: string;
+  accent2: string;
+  background: string;
+  surface: string;
+  surface2: string;
+  surface3: string;
+  border: string;
+  text: string;
+  muted: string;
+}
+
 export interface AppState {
   poly: Point2D[];
   preset: string;
@@ -221,6 +233,7 @@ export interface AppState {
   overlay: OverlayState;
   dashboard: DashboardState;
   languages: GitHubLanguage[];
+  theme: ThemeColors;
   rayTracingEnabled: boolean;
   rayTracingSamples: number;
   rayTracingBounces: number;
@@ -260,6 +273,7 @@ export interface DataExportRender {
 export interface DataExportTheme {
   palette?: string;
   dayBorder?: string;
+  colors?: ThemeColors;
 }
 
 export interface DataExport {

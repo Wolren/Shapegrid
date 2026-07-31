@@ -3,10 +3,12 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, widgetFontScale } from './dashboard';
+import { registerWidget, widgetFontScale, widgetAccent } from './dashboard';
+import type { WidgetId } from '../types';
 import { geoKmPerUnit } from '../geometry/projection';
 
-function renderScaleBar(container: HTMLElement, _id: string): void {
+function renderScaleBar(container: HTMLElement, id: string): void {
+  const accent = widgetAccent(id as WidgetId);
   const cellSize = state.grid?.cellSize ?? 1;
   const f = widgetFontScale('scaleBar');
 
@@ -51,7 +53,7 @@ function renderScaleBar(container: HTMLElement, _id: string): void {
   grad.setAttribute('y2', '0');
   const stopA = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
   stopA.setAttribute('offset', '0%');
-  stopA.setAttribute('stop-color', '#39d353');
+  stopA.setAttribute('stop-color', accent);
   const stopB = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
   stopB.setAttribute('offset', '100%');
   stopB.setAttribute('stop-color', '#1a7f37');
