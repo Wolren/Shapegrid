@@ -43,9 +43,13 @@ export function lerpHex(a: string, b: string, t: number): string {
 export function intensityToColor(intensity: number, paletteId: string): string {
   const p = PALETTES[paletteId] || PALETTES.github;
   const c = p.colors;
+  if (c.length < 2) return c[0] ?? '#000000';
   if (intensity <= 0) return c[0];
-  const idx = Math.min(Math.floor(intensity * (c.length - 1)), c.length - 2);
-  const t = intensity * (c.length - 1) - idx;
+  // Clamp to [0,1] so out-of-range intensities cannot extrapolate past the
+  // last palette stop.
+  const t0 = Math.min(intensity, 1);
+  const idx = Math.min(Math.floor(t0 * (c.length - 1)), c.length - 2);
+  const t = t0 * (c.length - 1) - idx;
   return lerpHex(c[idx], c[idx + 1], t);
 }
 

@@ -711,7 +711,7 @@ window.addEventListener('mousemove', e => {
   if (!drag.active) return;
   const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
   drag.lx = e.clientX; drag.ly = e.clientY;
-  updateState('yaw', parseFloat((((state.yaw + dx * .4 + 360) % 360).toFixed(1))));
+  updateState('yaw', parseFloat(((((state.yaw + dx * .4) % 360) + 540) % 360 - 180).toFixed(1)));
   updateState('pitch', parseFloat((Math.max(5, Math.min(89, state.pitch - dy * .3))).toFixed(1)));
   syncToDom('yaw'); syncToDom('pitch');
   posCamera();
@@ -748,9 +748,19 @@ canvas.addEventListener('mousemove', e => {
     if (idx !== undefined) {
       const d = state.cellData[idx];
       if (d) {
-        tooltip.innerHTML = d.date
-          ? `<strong>${d.date}</strong><br/>${d.count} contribution${d.count !== 1 ? 's' : ''}`
-          : `<span style="color:var(--muted)">No data</span>`;
+        tooltip.replaceChildren();
+        if (d.date) {
+          const strong = document.createElement('strong');
+          strong.textContent = d.date;
+          tooltip.appendChild(strong);
+          tooltip.appendChild(document.createElement('br'));
+          tooltip.appendChild(document.createTextNode(`${d.count} contribution${d.count !== 1 ? 's' : ''}`));
+        } else {
+          const span = document.createElement('span');
+          span.style.color = 'var(--muted)';
+          span.textContent = 'No data';
+          tooltip.appendChild(span);
+        }
         tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
         tooltip.style.top = (e.clientY - rect.top - 28) + 'px';
         tooltip.classList.add('visible');
@@ -821,69 +831,6 @@ window.addEventListener('keydown', e => {
       clearMeasureOverlay();
     }
   }
-});
-
-// ══════════════════════════════════════════════════════════════════════════════
-// Draggable overlays (legend, stats bar)
-// ══════════════════════════════════════════════════════════════════════════════
-
-interface DragState {
-  el: HTMLElement;
-  key: 'legend' | 'stats';
-  lx: number;
-  ly: number;
-  startX: number;
-  startY: number;
-}
-
-let overlayDrag: DragState | null = null;
-
-function initOverlayDrag() {
-  // Make the whole legend/stats elements draggable
-  const legend = document.getElementById('legend');
-  const stats = document.getElementById('stats-bar');
-
-  [legend, stats].forEach(el => {
-    if (!el) return;
-    const key = el.id === 'legend' ? 'legend' : 'stats';
-    el.addEventListener('mousedown', e => {
-      // Don't drag when clicking toggle/link/etc (only on the element background)
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'A' || target.tagName === 'BUTTON' || target.tagName === 'INPUT') return;
-      e.preventDefault();
-      overlayDrag = {
-        el,
-        key,
-        lx: e.clientX,
-        ly: e.clientY,
-        startX: state.overlay[`${key}Pos`].x,
-        startY: state.overlay[`${key}Pos`].y,
-      };
-      el.classList.add('dragging');
-    });
-  });
-}
-
-window.addEventListener('mousemove', e => {
-  if (!overlayDrag) return;
-  const wrap = document.getElementById('canvas-wrap')!;
-  const rect = wrap.getBoundingClientRect();
-  const dx = e.clientX - overlayDrag.lx;
-  const dy = e.clientY - overlayDrag.ly;
-  const pctX = (dx / rect.width) * 100;
-  const pctY = (dy / rect.height) * 100;
-  const posKey = `${overlayDrag.key}Pos` as 'legendPos' | 'statsPos';
-  const newX = Math.max(0, Math.min(95, overlayDrag.startX + pctX));
-  const newY = Math.max(0, Math.min(90, overlayDrag.startY + pctY));
-  state.overlay[posKey] = { x: newX, y: newY };
-  overlayDrag.el.style.left = newX + '%';
-  overlayDrag.el.style.top = newY + '%';
-});
-
-window.addEventListener('mouseup', () => {
-  if (!overlayDrag) return;
-  overlayDrag.el.classList.remove('dragging');
-  overlayDrag = null;
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1129,8 +1076,12 @@ if (daysNumInput) {
 });
 
 (document.getElementById('inp-bg-hex') as HTMLInputElement).addEventListener('change', e => {
-    state.background = (e.target as HTMLInputElement).value;
-  });
+  const v = (e.target as HTMLInputElement).value.trim();
+  if (!/^#[0-9a-fA-F]{6}$/.test(v)) return;
+  updateState('background', v);
+  const picker = document.getElementById('inp-bg-color') as HTMLInputElement;
+  if (picker) picker.value = v;
+});
 
   // ── Post-processing event handlers ──────────────────────────────────
   const syncPP = () => {
@@ -1611,7 +1562,14 @@ function renderCountryList() {
   for (const { code, name } of entries) {
     const btn = document.createElement('button');
     btn.className = 'country-grid-item';
-    btn.innerHTML = `<span class="country-name">${name}</span><span class="country-code">${code}</span>`;
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'country-name';
+    nameSpan.textContent = name;
+    const codeSpan = document.createElement('span');
+    codeSpan.className = 'country-code';
+    codeSpan.textContent = code;
+    btn.appendChild(nameSpan);
+    btn.appendChild(codeSpan);
     btn.addEventListener('click', () => selectCountry(code));
     countryGrid.appendChild(btn);
   }
@@ -1663,7 +1621,13 @@ countrySearch.addEventListener('input', () => {
   results.slice(0, 15).forEach(c => {
     const item = document.createElement('div');
     item.className = 'country-option';
-    item.innerHTML = `<span>${c.name}</span><span class="country-code">${c.code}</span>`;
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = c.name;
+    const codeSpan = document.createElement('span');
+    codeSpan.className = 'country-code';
+    codeSpan.textContent = c.code;
+    item.appendChild(nameSpan);
+    item.appendChild(codeSpan);
     item.addEventListener('click', () => {
       countrySearch.value = c.name;
       countryDropdown.innerHTML = '';
@@ -1879,9 +1843,6 @@ async function bootstrap() {
 
     // Set initial axes options visibility (hidden by default for presets/countries)
     updateAxesOptionsVisibility();
-
-    // Init overlay drag and visibility
-    initOverlayDrag();
 
     // Preload country boundaries
     initCountries().then(() => {

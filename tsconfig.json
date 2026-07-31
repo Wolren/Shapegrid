@@ -6,9 +6,6 @@
     },
     {
       "path": "./packages/core/cli"
-    },
-    {
-      "path": "./packages/core/renderer"
     }
   ]
 }

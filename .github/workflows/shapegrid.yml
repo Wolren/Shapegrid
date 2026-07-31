@@ -1,5 +1,5 @@
 # Regenerates the activity grid and deploys the web viewer to GitHub Pages.
-# Triggered on config changes, lockfile updates, or manual dispatch.
+# Triggered daily (schedule), on config/lockfile changes, or manual dispatch.
 #
 # Prerequisites:
 #   1. Create a GitHub PAT with read:user scope
@@ -20,6 +20,8 @@ on:
       - 'packages/**'
       - 'web/**'
       - 'scripts/**'
+  schedule:
+    - cron: '0 0 * * *'
   workflow_dispatch:
     inputs:
       username:
@@ -28,6 +30,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: shapegrid-pages
+  cancel-in-progress: true
 
 jobs:
   generate:
@@ -43,7 +49,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 9
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -80,8 +86,8 @@ jobs:
           mkdir -p /tmp/puppeteer-install
           cd /tmp/puppeteer-install
           npm init -y 2>&1 | tail -1
-          npm install puppeteer 2>&1 | tail -5
-          cd /home/runner/work/Shapegrid/Shapegrid
+          npm install puppeteer@25.4.0 2>&1 | tail -5
+          cd "$GITHUB_WORKSPACE"
           NODE_PATH=/tmp/puppeteer-install/node_modules node scripts/render-png-ci.js docs docs/assets/shapegrid.png 1200 800
 
       - name: Commit and push generated assets

@@ -31,7 +31,17 @@ function renderLegend(container: HTMLElement, _id: string): void {
   // Labels row
   const labels = document.createElement('div');
   labels.style.cssText = `display:flex;justify-content:space-between;font-size:${10 * f}px;font-family:var(--mono);color:var(--text)`;
-  labels.innerHTML = `<span>${minVal.toLocaleString()}</span><span style="color:var(--muted);font-size:${9 * f}px">per day</span><span style="font-weight:600">${maxVal.toLocaleString()}</span>`;
+  const minLabel = document.createElement('span');
+  minLabel.textContent = minVal.toLocaleString();
+  const midLabel = document.createElement('span');
+  midLabel.style.cssText = `color:var(--muted);font-size:${9 * f}px`;
+  midLabel.textContent = 'per day';
+  const maxLabel = document.createElement('span');
+  maxLabel.style.fontWeight = '600';
+  maxLabel.textContent = maxVal.toLocaleString();
+  labels.appendChild(minLabel);
+  labels.appendChild(midLabel);
+  labels.appendChild(maxLabel);
   legendFrame.appendChild(labels);
 
   container.appendChild(legendFrame);

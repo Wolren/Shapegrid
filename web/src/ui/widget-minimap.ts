@@ -9,9 +9,7 @@ import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
 import { activePaletteId, intensityToColor } from '../rendering/colors';
 import type { WidgetId, Point2D } from '../types';
 
-// The widget id is asserted because the WidgetId union in types.ts is extended
-// when this widget gets registered in the dashboard manager / app entry.
-const WIDGET_ID = 'minimap' as unknown as WidgetId;
+const WIDGET_ID: WidgetId = 'minimap';
 
 function renderMinimap(container: HTMLElement, _id: string): void {
   const heightSetting = getWidgetSetting(WIDGET_ID, 'height', 160) as number;

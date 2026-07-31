@@ -1,6 +1,6 @@
 # shapegrid.config.yml
 # Full configuration reference for the shapegrid activity grid generator.
-# Copy this file to your repository root and customise the values below.
+# Copy this file to shapegrid.config.yml and customise the values below.
 
 # ─── GitHub credentials ───────────────────────────────────────────────────────
 github:
@@ -17,7 +17,7 @@ github:
 boundary:
   # Use one of:
   #
-  # 1. Named preset: circle | shield | star | diamond | heart | rectangle
+  # 1. Named preset: circle | shield | star | diamond | heart | rectangle | hexagon | arrow | cross
   type: preset
   name: shield
 
@@ -68,7 +68,7 @@ camera:
 
 # ─── Visual style ─────────────────────────────────────────────────────────────
 render:
-  # Colour scheme: github | warm | cool | mono | neon
+  # Colour scheme: github | warm | cool | mono | neon | forest | sunset | ocean | fire | pastel | arctic | gold
   colorScale: github
 
   # Height extrusion multiplier. 0 = flat, 1 = normal, 2 = tall bars

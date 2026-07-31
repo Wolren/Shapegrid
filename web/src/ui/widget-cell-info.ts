@@ -31,7 +31,10 @@ function populateCellInfo(): void {
   const cellData = state.cellData ?? [];
 
   if (indices.length === 0 || !grid?.cells) {
-    body.innerHTML = '<div class="dw-cell-empty">Hover over a cell</div>';
+    const empty = document.createElement('div');
+    empty.className = 'dw-cell-empty';
+    empty.textContent = 'Hover over a cell';
+    body.replaceChildren(empty);
     return;
   }
 
@@ -42,7 +45,7 @@ function populateCellInfo(): void {
     const cell = grid.cells[idx];
     if (!cell) continue;
     const data = cellData[idx];
-    const date = data?.date || '\u2014';
+    const date = data?.date || 'n/a';
     const count = data?.count || 0;
     const intensity = data?.intensity || 0;
 
@@ -54,7 +57,14 @@ function populateCellInfo(): void {
     line1.style.display = 'flex';
     line1.style.justifyContent = 'space-between';
     line1.style.alignItems = 'center';
-    line1.innerHTML = `<span style="color:#e6edf3;font-weight:600">${date}</span><span style="color:rgba(255,255,255,0.4);font-size:${9 * f}px">(${cell.col},${cell.row})</span>`;
+    const dateSpan = document.createElement('span');
+    dateSpan.style.cssText = 'color:#e6edf3;font-weight:600';
+    dateSpan.textContent = date;
+    const posSpan = document.createElement('span');
+    posSpan.style.cssText = `color:rgba(255,255,255,0.4);font-size:${9 * f}px`;
+    posSpan.textContent = `(${cell.col},${cell.row})`;
+    line1.appendChild(dateSpan);
+    line1.appendChild(posSpan);
     entry.appendChild(line1);
 
     // Count + intensity bar

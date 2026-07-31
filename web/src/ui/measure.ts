@@ -304,12 +304,12 @@ function geoArea(v: number): number {
 }
 
 function formatDistanceValue(v: number | undefined): string {
-  if (v === undefined) return '—';
+  if (v === undefined) return 'n/a';
   return geoConversion() ? formatGeoDistance(geoDistance(v)) : v.toFixed(2);
 }
 
 function formatAreaValue(v: number | undefined): string {
-  if (v === undefined) return '—';
+  if (v === undefined) return 'n/a';
   return geoConversion() ? formatGeoArea(geoArea(v)) : v.toFixed(2);
 }
 
@@ -402,7 +402,7 @@ export function updateMeasureOverlay(
         if (am.distance !== undefined) {
           liveLabel = `Dist: ${formatDistanceValue(am.distance)}`;
         } else {
-          liveLabel = `Dist: —`;
+          liveLabel = 'Dist: n/a';
         }
       } else {
         if (am.area !== undefined) {
@@ -415,7 +415,7 @@ export function updateMeasureOverlay(
           const dy = last[1] - prev[1];
           liveLabel = `Edge: ${formatDistanceValue(Math.sqrt(dx * dx + dy * dy))}`;
         } else {
-          liveLabel = `Area: —`;
+          liveLabel = 'Area: n/a';
         }
       }
       const labelG = createLabel(liveLabel, screenPts, camera, canvasRect);

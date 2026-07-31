@@ -15,7 +15,7 @@ Shapegrid takes your GitHub contribution data and maps it onto a grid that confo
 
 ## Features
 
-- **Any boundary**: country polygons (ISO codes), SVG paths, GeoJSON files, 10+ preset shapes (shield, circle, star, heart, diamond, hexagon, arrow, cross)
+- **Any boundary**: country polygons (ISO codes), SVG paths, GeoJSON files, 9 preset shapes (shield, circle, star, heart, diamond, hexagon, arrow, cross)
 - **Square or hexagonal** grid packing: binary-search cell sizing for exact cell counts
 - **3D isometric SVG output**: extruded columns with depth sorting, floor and side faces, configurable camera angle
 - **12 color palettes**: GitHub, warm, cool, mono, neon, forest, sunset, ocean, fire, pastel, arctic, gold (or custom)
@@ -57,7 +57,7 @@ pnpm build
 Copy the example config and edit it:
 
 ```bash
-cp shapegrid.config.yml shapegrid.config.yml
+cp shapegrid.config.yml.example shapegrid.config.yml
 ```
 
 Key settings:
@@ -79,7 +79,7 @@ boundary:
 ### 3. Generate
 
 ```bash
-pnpm generate: --config shapegrid.config.yml
+pnpm generate --config shapegrid.config.yml
 ```
 
 Or with CLI flags:

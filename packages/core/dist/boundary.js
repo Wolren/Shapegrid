@@ -40,10 +40,19 @@ export const PRESETS = {
 // ─── Normalisation ───────────────────────────────────────────────────────────
 /** Translate + scale polygon so it fits in [0,1]×[0,1] */
 export function normalisePolygon(poly) {
-    const xs = poly.map(([x]) => x);
-    const ys = poly.map(([, y]) => y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    if (poly.length === 0)
+        return [];
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const [x, y] of poly) {
+        if (x < minX)
+            minX = x;
+        if (x > maxX)
+            maxX = x;
+        if (y < minY)
+            minY = y;
+        if (y > maxY)
+            maxY = y;
+    }
     const span = Math.max(maxX - minX, maxY - minY) || 1;
     return poly.map(([x, y]) => [(x - minX) / span, (y - minY) / span]);
 }
@@ -54,10 +63,17 @@ function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
 function isLikelyLonLat(poly) {
-    const xs = poly.map(([x]) => x);
-    const ys = poly.map(([, y]) => y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const [x, y] of poly) {
+        if (x < minX)
+            minX = x;
+        if (x > maxX)
+            maxX = x;
+        if (y < minY)
+            minY = y;
+        if (y > maxY)
+            maxY = y;
+    }
     const withinGeoBounds = minX >= -180 && maxX <= 180 && minY >= -90 && maxY <= 90;
     if (!withinGeoBounds)
         return false;
@@ -68,8 +84,14 @@ function isLikelyLonLat(poly) {
     return magnitudeSuggestsDegrees || spanX > 2 || spanY > 2;
 }
 function projectWgs84(poly) {
-    const ys = poly.map(([, y]) => y);
-    const refLat = (Math.min(...ys) + Math.max(...ys)) / 2;
+    let minY = Infinity, maxY = -Infinity;
+    for (const [, y] of poly) {
+        if (y < minY)
+            minY = y;
+        if (y > maxY)
+            maxY = y;
+    }
+    const refLat = (minY + maxY) / 2;
     const cosRef = Math.cos((refLat * Math.PI) / 180) || 1;
     return poly.map(([lon, lat]) => [lon * cosRef, lat]);
 }
@@ -129,7 +151,11 @@ export function parseSvgPath(d) {
             // skip unknown token
         }
     }
-    return normalisePolygon(points);
+    const valid = points.filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
+    if (valid.length < 3) {
+        throw new Error('SVG path has fewer than 3 valid points; expected an M/L closed path');
+    }
+    return normalisePolygon(valid);
 }
 // ─── GeoJSON polygon ─────────────────────────────────────────────────────────
 export function parseGeoJsonPolygon(coords, coordinateSystem = 'auto') {
@@ -190,12 +216,18 @@ export function cellCoverage(cx, cy, halfW, halfH, poly, samples = 3) {
 }
 /** Polygon bounding box */
 export function boundingBox(poly) {
-    const xs = poly.map(([x]) => x);
-    const ys = poly.map(([, y]) => y);
-    return {
-        minX: Math.min(...xs), minY: Math.min(...ys),
-        maxX: Math.max(...xs), maxY: Math.max(...ys),
-    };
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const [x, y] of poly) {
+        if (x < minX)
+            minX = x;
+        if (x > maxX)
+            maxX = x;
+        if (y < minY)
+            minY = y;
+        if (y > maxY)
+            maxY = y;
+    }
+    return { minX, minY, maxX, maxY };
 }
 /** Signed area of polygon */
 export function polygonArea(poly) {
@@ -207,6 +239,16 @@ export function polygonArea(poly) {
     return Math.abs(area) / 2;
 }
 // ─── File loading helpers ─────────────────────────────────────────────────────
+/** Keep only finite [lon, lat] pairs and thin the ring to at most 150 points
+ *  so grid fitting stays fast on large GeoJSON/SVG files. */
+function sanitiseRing(coords) {
+    const valid = coords.filter(c => Array.isArray(c) && c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1]));
+    if (valid.length > 150) {
+        const step = Math.ceil(valid.length / 150);
+        return valid.filter((_, i) => i % step === 0 || i === valid.length - 1);
+    }
+    return valid;
+}
 /**
  * Parse GeoJSON content and extract the first polygon
  */
@@ -254,7 +296,8 @@ export function parseGeoJsonFile(content, coordinateSystem = 'auto') {
         }
         coordinates = largestRing;
     }
-    if (!coordinates || coordinates.length < 3) {
+    coordinates = sanitiseRing(coordinates ?? []);
+    if (coordinates.length < 3) {
         throw new Error('Could not extract polygon coordinates from GeoJSON');
     }
     return normaliseWithCoordinateSystem(coordinates, coordinateSystem);
@@ -279,7 +322,11 @@ export function parseSvgFile(content) {
         for (let i = 0; i < points.length; i += 2) {
             polygon.push([points[i], points[i + 1]]);
         }
-        return normalisePolygon(polygon);
+        const valid = sanitiseRing(polygon);
+        if (valid.length < 3) {
+            throw new Error('SVG polygon has fewer than 3 valid points');
+        }
+        return normalisePolygon(valid);
     }
     throw new Error('Could not extract polygon from SVG. Expected <path> or <polygon> element.');
 }

@@ -7,9 +7,7 @@ import { state } from './state';
 import { registerWidget, getWidgetSetting, widgetFontScale } from './dashboard';
 import type { WidgetId } from '../types';
 
-// The widget id is asserted because the WidgetId union in types.ts is extended
-// when this widget gets registered in the dashboard manager / app entry.
-const WIDGET_ID = 'monthly' as unknown as WidgetId;
+const WIDGET_ID: WidgetId = 'monthly';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

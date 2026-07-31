@@ -190,7 +190,6 @@ export interface AppState {
   showCoordAxes: boolean;
   coordAxesScale: number;
   coordAxesPosition: CoordAxesPosition;
-  coordAxesOffset: number;
   coordAxesXOffset: number;
   coordAxesYOffset: number;
   coordAxesTickLength: number;
@@ -222,7 +221,6 @@ export interface AppState {
   overlay: OverlayState;
   dashboard: DashboardState;
   languages: GitHubLanguage[];
-  editor: EditorState;
   rayTracingEnabled: boolean;
   rayTracingSamples: number;
   rayTracingBounces: number;

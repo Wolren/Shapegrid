@@ -6,9 +6,7 @@ import { state } from './state';
 import { registerWidget, widgetFontScale } from './dashboard';
 import type { WidgetId, Point2D, GeoBounds } from '../types';
 
-// The widget id is asserted because the WidgetId union in types.ts is extended
-// when this widget gets registered in the dashboard manager / app entry.
-const WIDGET_ID = 'geo' as unknown as WidgetId;
+const WIDGET_ID: WidgetId = 'geo';
 
 const COORD_LABELS: Record<string, string> = {
   auto: 'Auto',

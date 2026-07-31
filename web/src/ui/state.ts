@@ -5,7 +5,6 @@
 import type { AppState } from '../types';
 import { createPresets } from '../data/presets';
 import { norm } from '../geometry/projection';
-import { defaultEditorState } from './editor-state';
 import { getDefaultDashboard } from './dashboard';
 
 // Initialize presets after norm is available
@@ -29,7 +28,6 @@ export const state: AppState = {
   showCoordAxes: true,
   coordAxesScale: 1.0,
   coordAxesPosition: 'outside',
-  coordAxesOffset: 0.04,
   coordAxesXOffset: 0.04,
   coordAxesYOffset: 0.04,
   coordAxesTickLength: 0.015,
@@ -73,7 +71,6 @@ export const state: AppState = {
   },
   dashboard: getDefaultDashboard(),
   languages: [],
-  editor: { ...defaultEditorState },
 };
 
 export function updateState<K extends keyof AppState>(key: K, value: AppState[K]) {

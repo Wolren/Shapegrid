@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Download and process world-atlas TopoJSON into a compact countries format."""
 import json, urllib.request, sys
+from pathlib import Path
+
+# Repo root (two levels up from scripts/)
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Download the 110m countries TopoJSON
 print("Downloading world-atlas countries-110m.json...")
@@ -36,7 +40,7 @@ except:
 
 # Save the raw TopoJSON structure info
 print("\nSaving structure info...")
-with open('/d/Projects/web/Shapegrid/web/src/data/topo-info.json', 'w') as f:
+with open(REPO_ROOT / 'web' / 'src' / 'data' / 'topo-info.json', 'w') as f:
     json.dump({
         'object_keys': list(topo['objects'].keys()),
         'num_geometries': len(geometries),

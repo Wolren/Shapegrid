@@ -12,7 +12,7 @@ function renderStats(container: HTMLElement, _id: string): void {
   const cellData = state.cellData;
   const total = c?.total ?? 0;
   const cellCount = grid?.cells?.length ?? 0;
-  const username = c?.username || '\u2014';
+  const username = c?.username || 'n/a';
   const maxCount = cellData.length > 0 ? Math.max(...cellData.map(d => d.count)) : 0;
   const activeDays = cellData.filter(d => d.count > 0).length;
   const consistency = cellCount > 0 ? (activeDays / cellCount * 100) : 0;
@@ -26,7 +26,14 @@ function renderStats(container: HTMLElement, _id: string): void {
   bigRow.style.cssText = 'display:flex;gap:16px;margin-bottom:6px';
   const makeBig = (val: string, label: string) => {
     const g = document.createElement('div');
-    g.innerHTML = `<div style="font-size:${18 * f}px;font-weight:700;color:var(--accent);line-height:1.2">${val}</div><div style="font-size:${8 * f}px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">${label}</div>`;
+    const valDiv = document.createElement('div');
+    valDiv.style.cssText = `font-size:${18 * f}px;font-weight:700;color:var(--accent);line-height:1.2`;
+    valDiv.textContent = val;
+    const labelDiv = document.createElement('div');
+    labelDiv.style.cssText = `font-size:${8 * f}px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em`;
+    labelDiv.textContent = label;
+    g.appendChild(valDiv);
+    g.appendChild(labelDiv);
     return g;
   };
   bigRow.appendChild(makeBig(total.toLocaleString(), 'Contributions'));
@@ -37,7 +44,15 @@ function renderStats(container: HTMLElement, _id: string): void {
   // Detail row
   const detailRow = document.createElement('div');
   detailRow.style.cssText = `display:flex;gap:12px;font-size:${9 * f}px;color:var(--muted);margin-bottom:6px`;
-  detailRow.innerHTML = `<span>User: ${username}</span><span>Max: ${maxCount.toLocaleString()}</span><span>Avg: ${cellCount > 0 ? (total/cellCount).toFixed(1) : '0'}/d</span>`;
+  const userSpan = document.createElement('span');
+  userSpan.textContent = `User: ${username}`;
+  const maxSpan = document.createElement('span');
+  maxSpan.textContent = `Max: ${maxCount.toLocaleString()}`;
+  const avgSpan = document.createElement('span');
+  avgSpan.textContent = `Avg: ${cellCount > 0 ? (total/cellCount).toFixed(1) : '0'}/d`;
+  detailRow.appendChild(userSpan);
+  detailRow.appendChild(maxSpan);
+  detailRow.appendChild(avgSpan);
   container.appendChild(detailRow);
 
   // Intensity distribution bar
@@ -60,7 +75,15 @@ function renderStats(container: HTMLElement, _id: string): void {
 
   const distLabels = document.createElement('div');
   distLabels.style.cssText = `display:flex;justify-content:space-between;font-size:${8 * f}px;color:var(--muted);margin-top:2px`;
-  distLabels.innerHTML = `<span>Low ${low}</span><span>Med ${med}</span><span>High ${high}</span>`;
+  const lowSpan = document.createElement('span');
+  lowSpan.textContent = `Low ${low}`;
+  const medSpan = document.createElement('span');
+  medSpan.textContent = `Med ${med}`;
+  const highSpan = document.createElement('span');
+  highSpan.textContent = `High ${high}`;
+  distLabels.appendChild(lowSpan);
+  distLabels.appendChild(medSpan);
+  distLabels.appendChild(highSpan);
   container.appendChild(distLabels);
 }
 

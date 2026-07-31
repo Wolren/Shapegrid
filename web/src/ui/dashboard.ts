@@ -128,12 +128,51 @@ function deepCloneWidgets(widgets: WidgetConfig[]): WidgetConfig[] {
   return widgets.map(w => ({ ...w, settings: { ...w.settings }, customPos: w.customPos ? { ...w.customPos } : null }));
 }
 
+const VALID_POSITIONS: WidgetConfig['position'][] = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight', 'left', 'right'];
+
+/** Coerce an untrusted entry from localStorage into a safe DashboardLayout (or drop it). */
+function sanitizeLayout(raw: unknown): DashboardLayout | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, any>;
+  if (typeof r.name !== 'string') return null;
+  if (!Array.isArray(r.widgets)) return null;
+
+  const widgets: WidgetConfig[] = [];
+  for (const w of r.widgets) {
+    if (!w || typeof w !== 'object') continue;
+    const id = w.id;
+    if (typeof id !== 'string') continue;
+    const position = VALID_POSITIONS.includes(w.position) ? w.position : 'bottomLeft';
+    widgets.push({
+      id: id as WidgetId,
+      title: typeof w.title === 'string' ? w.title : id,
+      visible: w.visible !== false,
+      position,
+      order: typeof w.order === 'number' ? w.order : 0,
+      settings: (w.settings && typeof w.settings === 'object') ? { ...w.settings } : {},
+      customPos: (w.customPos && typeof w.customPos.x === 'number' && typeof w.customPos.y === 'number')
+        ? { x: w.customPos.x, y: w.customPos.y }
+        : null,
+    });
+  }
+  if (widgets.length === 0) return null;
+
+  return {
+    name: r.name,
+    savedAt: typeof r.savedAt === 'number' ? r.savedAt : Date.now(),
+    widgets,
+    collapsed: r.collapsed === true,
+    layout: r.layout === 'grid' ? 'grid' : 'floating',
+  };
+}
+
 export function listDashboardLayouts(): DashboardLayout[] {
   try {
     const raw = localStorage.getItem(LAYOUTS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as DashboardLayout[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(sanitizeLayout).filter((l): l is DashboardLayout => l !== null);
   } catch {
     return [];
   }
@@ -305,6 +344,9 @@ export function renderAllWidgets(): void {
     const close = document.createElement('span');
     close.className = 'dw-close';
     close.textContent = '\u2715';
+    close.setAttribute('role', 'button');
+    close.setAttribute('aria-label', `Close ${w.title} widget`);
+    close.title = 'Close widget';
     close.addEventListener('click', () => {
       setWidgetVisible(w.id, false);
       renderAllWidgets();
@@ -318,11 +360,11 @@ export function renderAllWidgets(): void {
 
     // Apply per-widget settings — base size × scale factor
     const wScale = widgetScaleOf(w.id);
-    if (w.settings.width) {
-      wrapper.style.width = Math.round((w.settings.width as number) * wScale) + 'px';
+    if (typeof w.settings.width === 'number') {
+      wrapper.style.width = Math.round(w.settings.width * wScale) + 'px';
     }
-    if (w.settings.height) {
-      wrapper.style.height = Math.round((w.settings.height as number) * wScale) + 'px';
+    if (typeof w.settings.height === 'number') {
+      wrapper.style.height = Math.round(w.settings.height * wScale) + 'px';
     }
 
     // Body

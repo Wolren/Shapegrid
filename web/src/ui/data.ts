@@ -106,10 +106,57 @@ export function loadDemo(): void {
 }
 
 /**
+ * Lightweight shape validation for untrusted config JSON (user file or URL).
+ * Throws a descriptive Error when the payload is not a usable DataExport.
+ */
+function validateDataExport(data: any): asserts data is DataExport {
+  if (!data || typeof data !== 'object') throw new Error('Invalid config: not an object');
+  if (!data.grid || typeof data.grid !== 'object') throw new Error('Invalid config: missing grid');
+  if (!Array.isArray(data.grid.cells)) throw new Error('Invalid config: grid.cells must be an array');
+  if (typeof data.grid.cellSize !== 'number' || !isFinite(data.grid.cellSize)) {
+    throw new Error('Invalid config: grid.cellSize must be a number');
+  }
+  if (data.grid.type !== 'square' && data.grid.type !== 'hex') {
+    throw new Error('Invalid config: grid.type must be "square" or "hex"');
+  }
+  for (const c of data.grid.cells) {
+    if (!c || typeof c.cx !== 'number' || typeof c.cy !== 'number' ||
+        !isFinite(c.cx) || !isFinite(c.cy)) {
+      throw new Error('Invalid config: every cell needs finite numeric cx/cy');
+    }
+    if (c.count !== undefined && (typeof c.count !== 'number' || !isFinite(c.count))) {
+      throw new Error('Invalid config: cell count must be a finite number');
+    }
+    if (c.date !== undefined && typeof c.date !== 'string') {
+      throw new Error('Invalid config: cell date must be a string');
+    }
+  }
+  if (typeof data.grid.count !== 'number' || !isFinite(data.grid.count) || data.grid.count <= 0) {
+    throw new Error('Invalid config: grid.count must be a positive number');
+  }
+  if (!Array.isArray(data.boundary) || data.boundary.length < 3) {
+    throw new Error('Invalid config: boundary must be a polygon with 3+ points');
+  }
+  for (const p of data.boundary) {
+    if (!Array.isArray(p) || p.length < 2 || typeof p[0] !== 'number' || typeof p[1] !== 'number') {
+      throw new Error('Invalid config: boundary points must be [x, y] pairs');
+    }
+  }
+  if (data.config !== undefined && (typeof data.config !== 'object' || data.config === null)) {
+    throw new Error('Invalid config: config must be an object');
+  }
+  if (data.totalContributions !== undefined && typeof data.totalContributions !== 'number') {
+    throw new Error('Invalid config: totalContributions must be a number');
+  }
+}
+
+/**
  * Load grid data from a CI-generated DataExport JSON object.
  * Sets boundary, grid, cell data, camera, and render settings.
  */
 export function loadFromJson(data: DataExport): void {
+  validateDataExport(data);
+
   // Boundary
   updateState('poly', data.boundary);
   updateState('boundaryType', 'file');
@@ -157,7 +204,7 @@ export function loadFromJson(data: DataExport): void {
   if (gridTypeSelect) gridTypeSelect.value = data.grid.type;
 
   // Camera
-  if (data.config.camera) {
+  if (data.config?.camera) {
     updateState('yaw', data.config.camera.yaw ?? 30);
     updateState('pitch', data.config.camera.pitch ?? 45);
     const yawSlider = document.getElementById('inp-yaw') as HTMLInputElement;
@@ -167,7 +214,7 @@ export function loadFromJson(data: DataExport): void {
   }
 
   // Render settings
-  if (data.config.render) {
+  if (data.config?.render) {
     updateState('heightScale', data.config.render.heightScale ?? 1);
     updateState('showBoundary', data.config.render.showBoundary ?? false);
     updateState('background', data.config.render.background ?? '#0d1117');
@@ -175,7 +222,7 @@ export function loadFromJson(data: DataExport): void {
   }
 
   // Theme
-  if (data.config.theme?.palette) {
+  if (data.config?.theme?.palette) {
     updateState('palette', data.config.theme.palette);
   }
 
@@ -185,7 +232,7 @@ export function loadFromJson(data: DataExport): void {
     total: data.totalContributions,
     days: [],
   });
-  setText('stat-contrib', data.totalContributions.toLocaleString());
+  setText('stat-contrib', (data.totalContributions ?? 0).toLocaleString());
   setText('stat-cells', String(data.grid.cells.length));
   setText('footer-gen', `generated ${new Date(data.generated).toLocaleDateString()}`);
 }

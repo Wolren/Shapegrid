@@ -307,7 +307,7 @@
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      color: var(--fg);
+      color: var(--text);
       font-family: var(--mono);
       font-size: 11px;
       box-sizing: border-box;
@@ -337,7 +337,7 @@
       cursor: pointer;
       font-family: var(--mono);
       font-size: 11px;
-      color: var(--fg);
+      color: var(--text);
       display: flex;
       justify-content: space-between;
     }
@@ -800,7 +800,7 @@
     .legend-label {
       font-size: 9px;
       font-family: 'IBM Plex Mono', monospace;
-      color: var(--text-secondary);
+      color: var(--muted);
       min-width: 20px;
     }
     #legend-bar {

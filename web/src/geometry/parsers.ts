@@ -6,20 +6,33 @@ import type { Point2D, CoordSystem, ParsedFile, GeoBounds } from '../types';
 import { polyArea } from './engine';
 import { normWithCoordSystem, isLikelyLonLat, norm } from './projection';
 
+/** Keep only finite coordinate pairs and thin the ring to at most 150 points
+ *  so grid fitting stays fast on large uploaded GeoJSON/SVG files. */
+function sanitiseRing(coords: Point2D[]): Point2D[] {
+  const valid = coords.filter(
+    c => Array.isArray(c) && c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1])
+  ) as Point2D[];
+  if (valid.length > 150) {
+    const step = Math.ceil(valid.length / 150);
+    return valid.filter((_, i) => i % step === 0 || i === valid.length - 1);
+  }
+  return valid;
+}
+
 export function parseGeoJsonFile(content: string, coordSystem: CoordSystem = 'auto'): ParsedFile {
   const data = JSON.parse(content);
   let coordinates: Point2D[] | undefined;
 
   if (data.type === 'Polygon') {
-    coordinates = data.coordinates[0];
+    coordinates = data.coordinates?.[0];
   } else if (data.type === 'Feature' && data.geometry?.type === 'Polygon') {
-    coordinates = data.geometry.coordinates[0];
+    coordinates = data.geometry.coordinates?.[0];
   } else if (data.type === 'FeatureCollection' && data.features?.length > 0) {
     const feat = data.features.find((f: any) =>
       f.geometry?.type === 'Polygon' || f.geometry?.type === 'MultiPolygon'
     );
     if (feat?.geometry?.type === 'Polygon') {
-      coordinates = feat.geometry.coordinates[0];
+      coordinates = feat.geometry.coordinates?.[0];
     } else if (feat?.geometry?.type === 'MultiPolygon') {
       let largest = feat.geometry.coordinates[0][0];
       let maxArea = 0;
@@ -41,7 +54,8 @@ export function parseGeoJsonFile(content: string, coordSystem: CoordSystem = 'au
     coordinates = largest;
   }
 
-  if (!coordinates || coordinates.length < 3) {
+  coordinates = sanitiseRing(coordinates ?? []);
+  if (coordinates.length < 3) {
     throw new Error('Could not extract polygon from GeoJSON');
   }
 
@@ -72,7 +86,11 @@ export function parseSvgFile(content: string): Point2D[] {
     const nums = polygonMatch[1].trim().split(/[\s,]+/).map(Number);
     const pts: Point2D[] = [];
     for (let i = 0; i < nums.length; i += 2) pts.push([nums[i], nums[i + 1]]);
-    return norm(pts);
+    const valid = sanitiseRing(pts);
+    if (valid.length < 3) {
+      throw new Error('Could not extract polygon from SVG');
+    }
+    return norm(valid);
   }
   throw new Error('Could not extract polygon from SVG');
 }
@@ -92,5 +110,9 @@ export function parseSvgPath(d: string): Point2D[] {
       points.push([cx, cy]);
     }
   }
-  return norm(points);
+  const valid = sanitiseRing(points);
+  if (valid.length < 3) {
+    throw new Error('SVG path has fewer than 3 valid points');
+  }
+  return norm(valid);
 }

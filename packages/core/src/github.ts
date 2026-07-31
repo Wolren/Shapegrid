@@ -141,7 +141,7 @@ async function fetchContributionsSingle(
   const cal = json.data?.user?.contributionsCollection?.contributionCalendar;
   if (!cal) throw new Error(`User "${username}" not found or no contribution data`);
 
-  const days = cal.weeks.flatMap(w => w.contributionDays);
+  const days = (cal.weeks ?? []).flatMap(w => w?.contributionDays ?? []);
 
   return {
     username,

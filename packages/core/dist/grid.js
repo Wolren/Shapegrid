@@ -49,21 +49,27 @@ function generateHexCandidates(poly, cellSize, coverageThreshold = 0.4) {
     return cells;
 }
 // ─── Count cells at a given size ─────────────────────────────────────────────
-function countCells(poly, cellSize, type) {
+function countCells(poly, cellSize, type, coverageThreshold = 0.4) {
     if (type === 'square')
-        return generateSquareCandidates(poly, cellSize).length;
-    return generateHexCandidates(poly, cellSize).length;
+        return generateSquareCandidates(poly, cellSize, coverageThreshold).length;
+    return generateHexCandidates(poly, cellSize, coverageThreshold).length;
 }
 // ─── Binary search for cell size that yields >= N cells ──────────────────────
-function findCellSize(poly, targetN, type) {
+function findCellSize(poly, targetN, type, coverageThreshold = 0.4) {
     const area = polygonArea(poly);
+    if (!Number.isFinite(area) || area <= 0) {
+        throw new Error('Boundary polygon has zero or invalid area; cannot fit a grid');
+    }
+    if (!Number.isFinite(targetN) || targetN < 1) {
+        throw new Error(`Invalid cell count: ${targetN}; expected a positive number`);
+    }
     // Initial guess from area
     const areaPerCell = area / targetN;
     let lo = Math.sqrt(areaPerCell) * 0.1;
     let hi = Math.sqrt(area) * 2;
     // Ensure hi gives fewer than N cells
     for (let i = 0; i < 20; i++) {
-        if (countCells(poly, hi, type) < targetN)
+        if (countCells(poly, hi, type, coverageThreshold) < targetN)
             break;
         hi *= 2;
     }
@@ -72,7 +78,7 @@ function findCellSize(poly, targetN, type) {
         const mid = (lo + hi) / 2;
         if (hi - lo < 1e-8)
             break;
-        const n = countCells(poly, mid, type);
+        const n = countCells(poly, mid, type, coverageThreshold);
         if (n >= targetN) {
             lo = mid; // can still fit N, try larger cells
         }
@@ -109,10 +115,15 @@ function selectN(cells, n, poly) {
  */
 export function generateGrid(poly, opts) {
     const { count, type, coverageThreshold = 0.4 } = opts;
-    const cellSize = findCellSize(poly, count, type);
+    const cellSize = findCellSize(poly, count, type, coverageThreshold);
     const candidates = type === 'square'
         ? generateSquareCandidates(poly, cellSize, coverageThreshold)
         : generateHexCandidates(poly, cellSize, coverageThreshold);
+    // Nothing survived the coverage threshold — return an empty grid rather than
+    // producing NaN centroids in selectN.
+    if (candidates.length === 0) {
+        return { cells: [], cellSize, gridType: type };
+    }
     const cells = selectN(candidates, count, poly);
     // Sort cells in reading order (top-to-bottom, left-to-right) for
     // deterministic day assignment

@@ -294,6 +294,7 @@ function createToolBtn(def: ToolDef): HTMLButtonElement {
   btn.className = 'tool-btn';
   btn.dataset.tool = def.id;
   btn.dataset.tip = def.label;
+  btn.setAttribute('aria-label', def.label);
   btn.innerHTML = svgIcon(def.iconKey);
   return btn;
 }
@@ -304,6 +305,7 @@ function createActionBtn(id: string, label: string, iconKey: string): HTMLButton
   btn.className = 'action-btn';
   btn.dataset.action = id;
   btn.dataset.tip = label;
+  btn.setAttribute('aria-label', label);
   btn.innerHTML = svgIcon(iconKey);
   return btn;
 }

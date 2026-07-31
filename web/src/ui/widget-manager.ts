@@ -792,6 +792,7 @@ function buildPanel(): HTMLElement {
   const closeBtn = document.createElement('button');
   closeBtn.className = 'dm-close-btn';
   closeBtn.textContent = '✕';
+  closeBtn.setAttribute('aria-label', 'Close widget manager');
   closeBtn.addEventListener('click', () => {
     toggleManager();
     syncManagerState();
@@ -860,7 +861,7 @@ function addToggleButton(): void {
   if (!toolbar) return;
 
   // Find the screenshot group to insert before
-  const ssBtn = toolbar.querySelector('[data-action="screenshot"]');
+  const ssBtn = toolbar.querySelector('[data-action="export-png"]');
   const ssGroup = ssBtn?.closest('.toolbar-group');
 
   // Create button
@@ -868,7 +869,8 @@ function addToggleButton(): void {
   btn.id = 'btn-dashboard-manager';
   btn.type = 'button';
   btn.dataset.tip = 'Widget Manager';
-  btn.innerHTML = '☰';
+  btn.setAttribute('aria-label', 'Toggle widget manager');
+  btn.textContent = '☰';
   btn.addEventListener('click', () => {
     toggleManager();
     syncManagerState();

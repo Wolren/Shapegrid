@@ -2,6 +2,7 @@
   "name": "@shapegrid/web",
   "version": "0.1.0",
   "private": true,
+  "license": "GPL-3.0-only",
   "description": "Shapegrid web application - TypeScript frontend with WebGL renderer",
   "type": "module",
   "main": "dist/app.js",

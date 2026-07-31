@@ -74,12 +74,21 @@ async function runGenerate(cfg, configDir) {
     const boundary = resolveBoundary(cfg.boundary, configDir);
     ok(`Boundary: ${boundary.length} points`);
     // 5. Generate grid
+    if (!Number.isInteger(cfg.grid.count) || cfg.grid.count < 1) {
+        throw new Error(`Invalid grid.count: ${cfg.grid.count}; expected a positive integer`);
+    }
+    if (cfg.grid.type !== 'square' && cfg.grid.type !== 'hex') {
+        throw new Error(`Invalid grid.type: ${cfg.grid.type}; expected "square" or "hex"`);
+    }
     log(`Generating ${cfg.grid.type} grid (${cfg.grid.count} cells)…`);
     const grid = generateGrid(boundary, {
         count: cfg.grid.count,
         type: cfg.grid.type,
         coverageThreshold: cfg.grid.coverageThreshold,
     });
+    if (grid.cells.length === 0) {
+        throw new Error('Grid generation produced zero cells; check the boundary shape and coverageThreshold');
+    }
     ok(`Placed ${grid.cells.length} cells (cellSize ${grid.cellSize.toFixed(4)})`);
     // 6. Map data to cells
     const cellData = mapContributionsToCells(contributions, grid.cells.length, { start, end });
@@ -139,6 +148,9 @@ function generateSvg(data, cfg) {
     const ISO_PITCH = (cfg.camera.pitch ?? 45) * Math.PI / 180;
     // Calculate grid bounds to center properly
     const cells = data.grid.cells;
+    if (cells.length === 0) {
+        throw new Error('Cannot render SVG: grid has no cells');
+    }
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     cells.forEach(cell => {
         minX = Math.min(minX, cell.cx);
@@ -579,7 +591,7 @@ const argv = await yargs(hideBin(process.argv))
             cfg.github.username = args.user;
         if (args.token)
             cfg.github.token = args.token;
-        if (args.count)
+        if (args.count !== undefined && args.count !== null)
             cfg.grid.count = args.count;
         if (args.type)
             cfg.grid.type = args.type;
