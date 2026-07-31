@@ -3,13 +3,13 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, widgetFontScale, widgetAccent, widgetSecondary } from './dashboard';
+import { registerWidget, widgetFontScale, widgetAccent, widgetSecondary, accentRamp } from './dashboard';
 import type { WidgetId } from '../types';
-import { activePaletteId, intensityToColor } from '../rendering/colors';
 
 function renderStats(container: HTMLElement, id: string): void {
   const accent = widgetAccent(id as WidgetId);
   const secondary = widgetSecondary(id as WidgetId);
+  const ramp = accentRamp(accent, 5);
   const c = state.contributions;
   const grid = state.grid;
   const cellData = state.cellData;
@@ -63,9 +63,9 @@ function renderStats(container: HTMLElement, id: string): void {
   const distBar = document.createElement('div');
   distBar.style.cssText = 'display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:2px';
   const segs = [
-    { pct: low / totalBars, color: intensityToColor(0.16, activePaletteId) },
-    { pct: med / totalBars, color: intensityToColor(0.5, activePaletteId) },
-    { pct: high / totalBars, color: intensityToColor(0.83, activePaletteId) },
+    { pct: low / totalBars, color: ramp[1] },
+    { pct: med / totalBars, color: ramp[3] },
+    { pct: high / totalBars, color: ramp[4] },
   ];
   segs.forEach(s => {
     if (s.pct > 0) {

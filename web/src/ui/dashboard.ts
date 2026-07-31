@@ -95,6 +95,56 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+/** #rrggbb -> [h, s, l] with h in [0, 360), s/l in [0, 1]. */
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  const rn = r / 255, gn = g / 255, bn = b / 255;
+  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = 0;
+  if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+  else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+  else h = ((rn - gn) / d + 4) / 6;
+  return [h * 360, s, l];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  const to = (v: number): string =>
+    Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+
+/**
+ * Contribution ramp built from a widget accent: a dark tinted base stepping
+ * up through the accent to a light top (GitHub-style lightness curve).
+ * Lets legend gradients, activity cells and stat bars follow the widget's
+ * own color instead of the scene palette.
+ */
+export function accentRamp(accent: string, steps = 5): string[] {
+  const m = /^#([0-9a-f]{6})$/i.exec(accent);
+  if (!m) return ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'];
+  const n = parseInt(m[1], 16);
+  const [h, s] = rgbToHsl((n >> 16) & 255, (n >> 8) & 255, n & 255);
+  const levels = [0.16, 0.26, 0.38, 0.49, 0.60];
+  const out: string[] = [];
+  for (let i = 0; i < steps; i++) {
+    out.push(hslToHex(h, Math.min(s, 0.85), levels[Math.min(i, levels.length - 1)]));
+  }
+  return out;
+}
+
 /**
  * Per-widget color palette. Widget colors are fully independent from the
  * editor theme: changing editor themes never touches widgets, and changing

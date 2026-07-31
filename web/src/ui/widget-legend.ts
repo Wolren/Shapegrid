@@ -3,16 +3,18 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, widgetFontScale, widgetAccent, widgetSecondary } from './dashboard';
-import { activePaletteId, PALETTES } from '../rendering/colors';
+import { registerWidget, widgetFontScale, widgetAccent, widgetSecondary, accentRamp } from './dashboard';
+import type { WidgetId } from '../types';
+
+const WIDGET_ID: WidgetId = 'legend';
 
 function renderLegend(container: HTMLElement, _id: string): void {
-  const accent = widgetAccent('legend');
-  const secondary = widgetSecondary('legend');
-  const palette = PALETTES[activePaletteId] || PALETTES.github;
+  const accent = widgetAccent(WIDGET_ID);
+  const secondary = widgetSecondary(WIDGET_ID);
+  const ramp = accentRamp(accent, 5);
   const maxVal = state.contributions?.total ?? state.cellData.reduce((m, d) => Math.max(m, d.count), 0);
   const minVal = 0;
-  const f = widgetFontScale('legend');
+  const f = widgetFontScale(WIDGET_ID);
 
   // Frame wrapper for the whole legend
   const legendFrame = document.createElement('div');
@@ -27,7 +29,7 @@ function renderLegend(container: HTMLElement, _id: string): void {
   // Color gradient bar — thicker GIS style
   const bar = document.createElement('div');
   bar.style.cssText = 'height:20px;border-radius:4px;border:1px solid rgba(255,255,255,0.12);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.3)';
-  bar.style.background = `linear-gradient(to right, ${palette.colors.join(', ')})`;
+  bar.style.background = `linear-gradient(to right, ${ramp.join(', ')})`;
   legendFrame.appendChild(bar);
 
   // Labels row

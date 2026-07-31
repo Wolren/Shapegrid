@@ -3,8 +3,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
-import { registerWidget, getWidgetSetting, renderAllWidgets, widgetFontScale, widgetSecondary } from './dashboard';
-import { PALETTES, activePaletteId } from '../rendering/colors';
+import { registerWidget, getWidgetSetting, renderAllWidgets, widgetFontScale, widgetSecondary, widgetAccent, accentRamp } from './dashboard';
 
 // Column mapping: GitHub weekday (0=Sun, 1=Mon … 6=Sat) → grid col (Mon=0..Sun=6)
 const WDAY_TO_COL: Record<number, number> = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
@@ -19,7 +18,7 @@ function renderActivity(container: HTMLElement, _id: string): void {
   const numDays = getWidgetSetting('activity', 'days', 49) as number;
   const contribs = state.contributions;
   const allDays = contribs?.days ?? [];
-  const palette = PALETTES[activePaletteId]?.colors ?? PALETTES.github.colors;
+  const ramp = accentRamp(widgetAccent('activity'), 5);
   const f = widgetFontScale('activity');
   const secondary = widgetSecondary('activity');
 
@@ -77,7 +76,7 @@ function renderActivity(container: HTMLElement, _id: string): void {
     const y = padT + row * step;
 
     const intensity = maxCount > 0 ? day.contributionCount / maxCount : 0;
-    const color = countToPaletteColor(intensity, palette);
+    const color = countToPaletteColor(intensity, ramp);
 
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     rect.setAttribute('x', `${x}`);
@@ -111,7 +110,7 @@ function renderActivity(container: HTMLElement, _id: string): void {
   container.appendChild(svg);
 }
 
-/** Map a [0,1] intensity to one of the palette colours (discrete stepped). */
+/** Map a [0,1] intensity to one of the accent ramp colours (discrete stepped). */
 function countToPaletteColor(intensity: number, palette: string[]): string {
   if (intensity <= 0 || palette.length === 0) return palette[0] ?? '#161b22';
   const idx = Math.min(Math.floor(intensity * (palette.length - 1)), palette.length - 2);
