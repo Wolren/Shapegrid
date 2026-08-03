@@ -1,4 +1,4 @@
-name: 'shapegrid — Activity Grid Generator'
+name: 'shapegrid - Activity Grid Generator'
 description: 'Generate a 3D-rendered activity grid from GitHub contributions and commit it to your repository'
 author: 'shapegrid'
 

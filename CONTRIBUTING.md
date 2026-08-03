@@ -14,9 +14,9 @@ pnpm generate    # generate via CLI
 ## Project structure
 
 ```
-packages/core/     — @shapegrid/core: boundary parsing, grid generation, GitHub API
-packages/core/cli/ — @shapegrid/cli: CLI tool + SVG renderer
-web/               — @shapegrid/web: Three.js interactive viewer
+packages/core/     - @shapegrid/core: boundary parsing, grid generation, GitHub API
+packages/core/cli/ - @shapegrid/cli: CLI tool + SVG renderer
+web/               - @shapegrid/web: Three.js interactive viewer
 ```
 
 ## Pull requests
@@ -28,4 +28,4 @@ web/               — @shapegrid/web: Three.js interactive viewer
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE)
+GPL-3.0 - see [LICENSE](LICENSE)

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "GPL-3.0-only",
-  "description": "GitHub activity visualizer — fit exact-count square/hex grids inside any boundary, rendered in 3D WebGL",
+  "description": "GitHub activity visualizer - fit exact-count square/hex grids inside any boundary, rendered in 3D WebGL",
   "scripts": {
     "build": "pnpm -r build",
     "build:web": "pnpm --filter @shapegrid/web build",
