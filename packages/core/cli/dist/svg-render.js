@@ -35,9 +35,35 @@ export function generateSvg(data, cfg) {
             return clamped <= 0 ? 0 : Math.log(1 + clamped * 9) / Math.log(10);
         return clamped;
     };
-    // Isometric projection parameters
+    // Camera parameters mirror the web viewer (scene.ts): orthographic
+    // camera with frustum size fs = state.zoom, aspect W/H, positioned at
+    // dist = 2.5 along the yaw/pitch direction, looking at the origin.
+    const CAM_DIST = 2.5;
     const ISO_YAW = (cfg.camera.yaw ?? 30) * Math.PI / 180;
     const ISO_PITCH = (cfg.camera.pitch ?? 45) * Math.PI / 180;
+    const fs = zoom; // frustum height in world units
+    const asp = W / H;
+    // Camera eye position (matches scene.ts posCamera)
+    const eyeX = CAM_DIST * Math.sin(ISO_YAW) * Math.cos(ISO_PITCH);
+    const eyeY = CAM_DIST * Math.sin(ISO_PITCH);
+    const eyeZ = CAM_DIST * Math.cos(ISO_YAW) * Math.cos(ISO_PITCH);
+    // View basis: forward f = normalize(center - eye), side s = normalize(cross(f, up)),
+    // up u = cross(s, f). Replicates THREE.lookAt with up = (0,1,0).
+    const fLen = Math.sqrt(eyeX * eyeX + eyeY * eyeY + eyeZ * eyeZ);
+    const fX = -eyeX / fLen, fY = -eyeY / fLen, fZ = -eyeZ / fLen;
+    const sX = -fZ, sY = 0, sZ = fX; // cross(f, (0,1,0)) = (-f.z, 0, f.x)
+    const sLen = Math.sqrt(sX * sX + sZ * sZ);
+    const sNX = sX / sLen, sNZ = sZ / sLen; // normalized side
+    // u = cross(s, f): u.x = s.y*f.z - s.z*f.y, u.y = s.z*f.x - s.x*f.z, u.z = s.x*f.y - s.y*f.x
+    const uX = -sNZ * fY, uY = sNZ * fX - sNX * fZ, uZ = sNX * fY;
+    // Ortho frustum: left=-fs*asp/2, right=fs*asp/2, top=fs/2, bottom=-fs/2.
+    // Screen: sx = (vx/(fs*asp/2)+1)/2*W, sy = (1 - vy/(fs/2))/2*H.
+    const toScreen = (wx, wy, wz) => {
+        const dx = wx - eyeX, dy = wy - eyeY, dz = wz - eyeZ;
+        const vx = dx * sNX + dz * sNZ;
+        const vy = dx * uX + dy * uY + dz * uZ;
+        return [((vx / (fs * asp / 2)) + 1) / 2 * W, (1 - vy / (fs / 2)) / 2 * H];
+    };
     // Calculate grid bounds to center properly
     const cells = data.grid.cells;
     if (cells.length === 0) {
@@ -54,37 +80,27 @@ export function generateSvg(data, cfg) {
         if (cell.cy > maxY)
             maxY = cell.cy;
     }
-    const gridCenterX = (minX + maxX) / 2;
-    const gridCenterY = (minY + maxY) / 2;
     const gridWidth = maxX - minX;
     const gridHeight = maxY - minY;
     // Cell sizing
     const cellSize = data.grid.cellSize * (1 - gap);
     const halfSize = cellSize / 2;
-    const maxExtrusion = 0.15 * heightScale; // max height for cells
-    // Isometric projection, fully hoisted: the per-cell hot path now only does
-    // a few multiplies and adds (no trig, no per-cell closure, no re-derived scale).
-    const cosPitch = Math.cos(ISO_PITCH);
-    const sinPitch = Math.sin(ISO_PITCH);
-    const baseScale = Math.min(W * 0.65 / (gridWidth + gridHeight), H * 0.55 / (gridWidth + gridHeight));
-    const scale = baseScale / zoom; // lower zoom = more zoomed in
-    const kx = cosPitch * scale; // screen X per unit of (dx - dy)
-    const ky = sinPitch * scale; // screen Y per unit of (dx + dy)
-    const kz = scale; // screen Y per unit of extrusion height
-    const offX = W / 2;
-    const offY = H / 2 + 50; // offset down slightly for title
-    // Project a grid-space point (relative to grid centre) at base height.
-    const projBase = (dx, dy) => [offX + (dx - dy) * kx, offY + (dx + dy) * ky];
-    // Prepare cells with depth info
+    // Cell extrusion height mirrors the web viewer (scene.ts buildMesh):
+    // h = max(0.008, scaled * heightScale * 0.12 + 0.008)
+    const cellHeight = (scaled) => Math.max(0.008, scaled * heightScale * 0.12 + 0.008);
+    // Project a world-space point (cells live at cx-0.5, cy-0.5 like the
+    // webview, grid centred on the origin) through the ortho camera above.
+    const projBase = (wx, wy, wz) => toScreen(wx, wy, wz);
+    // Prepare cells with depth info (eye-weighted: draw farthest first)
     const cellRenderData = cells.map(cell => ({
         cx: cell.cx,
         cy: cell.cy,
         intensity: cell.intensity,
         count: cell.count,
         date: cell.date,
-        depth: cell.cx + cell.cy,
+        depth: (cell.cx - 0.5) * eyeX + (cell.cy - 0.5) * eyeZ,
     }));
-    // Sort by depth (back to front for proper rendering)
+    // Sort by depth ascending (farthest from camera first)
     cellRenderData.sort((a, b) => a.depth - b.depth);
     // Shade cache: one darken/lighten pass per unique colour instead of per face.
     const colorCache = new Map();
@@ -103,21 +119,27 @@ export function generateSvg(data, cfg) {
         return p;
     };
     // Generate 3D cell geometry
+    function squareCorners(cell, wy) {
+        // World coords match the webview: cells centred at (cx - 0.5, cy - 0.5).
+        const wx = cell.cx - 0.5;
+        const wz = cell.cy - 0.5;
+        return [
+            projBase(wx - halfSize, wy, wz - halfSize), // 0 TL
+            projBase(wx + halfSize, wy, wz - halfSize), // 1 TR
+            projBase(wx + halfSize, wy, wz + halfSize), // 2 BR
+            projBase(wx - halfSize, wy, wz + halfSize), // 3 BL
+        ];
+    }
     function renderCell3D(cell) {
         const scaled = scaleIntensity(cell.intensity);
-        const h = scaled * maxExtrusion;
+        const h = cellHeight(scaled);
         const pal = paletteFor(intensityToColor(scaled, colorScale));
         // Empty day with dayBorder set: flat subtle outline (translucent fill so the
         // grid still reads as a solid surface instead of punched-out holes).
         const isEmptyDay = cell.intensity === 0 && dayBorder;
         if (isEmptyDay) {
             if (data.grid.type === 'square') {
-                const base = [
-                    projBase(cell.cx - gridCenterX - halfSize, cell.cy - gridCenterY - halfSize),
-                    projBase(cell.cx - gridCenterX + halfSize, cell.cy - gridCenterY - halfSize),
-                    projBase(cell.cx - gridCenterX + halfSize, cell.cy - gridCenterY + halfSize),
-                    projBase(cell.cx - gridCenterX - halfSize, cell.cy - gridCenterY + halfSize),
-                ];
+                const base = squareCorners(cell, 0);
                 return `<g>
   <title>${cell.date}: ${cell.count} contributions</title>
   <polygon
@@ -144,20 +166,11 @@ export function generateSvg(data, cfg) {
 </g>`;
         }
         if (data.grid.type === 'square') {
-            // Corner grid-space offsets (relative to grid centre), TL, TR, BR, BL.
-            const dx0 = cell.cx - gridCenterX - halfSize;
-            const dx1 = cell.cx - gridCenterX + halfSize;
-            const dy0 = cell.cy - gridCenterY - halfSize;
-            const dy1 = cell.cy - gridCenterY + halfSize;
-            const base = [projBase(dx0, dy0), projBase(dx1, dy0), projBase(dx1, dy1), projBase(dx0, dy1)];
-            const top = [
-                [base[0][0], base[0][1] - h * kz],
-                [base[1][0], base[1][1] - h * kz],
-                [base[2][0], base[2][1] - h * kz],
-                [base[3][0], base[3][1] - h * kz],
-            ];
-            // Directional shading: lit face (screen-left) vs shadow face (screen-right),
-            // plus a darker floor. Two clearly distinct side tones give a gradient feel.
+            const base = squareCorners(cell, 0);
+            const top = squareCorners(cell, h);
+            // Camera sits at +x/+y/+z: the visible side faces are +x (corners 1-2,
+            // shadow) and +z (corners 2-3, lit by the (2,4,3) directional light).
+            // Winding is ordered so the polygons render without self-intersection.
             return `<g>
   <title>${cell.date}: ${cell.count} contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
@@ -168,19 +181,19 @@ export function generateSvg(data, cfg) {
     stroke-width="0.35"
     stroke-linejoin="round"
   />
-  <!-- Left face (lit) -->
+  <!-- +x face (shadow) -->
   <polygon
-    points="${fmt(top[3])} ${fmt(base[3])} ${fmt(base[0])} ${fmt(top[0])}"
-    fill="${pal.sideLight}"
-    stroke="${pal.sideLight}"
+    points="${fmt(top[1])} ${fmt(base[1])} ${fmt(base[2])} ${fmt(top[2])}"
+    fill="${pal.sideDark}"
+    stroke="${pal.sideDark}"
     stroke-width="0.4"
     stroke-linejoin="round"
   />
-  <!-- Right face (shadow) -->
+  <!-- +z face (lit) -->
   <polygon
-    points="${fmt(top[0])} ${fmt(base[0])} ${fmt(base[1])} ${fmt(top[1])}"
-    fill="${pal.sideDark}"
-    stroke="${pal.sideDark}"
+    points="${fmt(top[2])} ${fmt(base[2])} ${fmt(base[3])} ${fmt(top[3])}"
+    fill="${pal.sideLight}"
+    stroke="${pal.sideLight}"
     stroke-width="0.4"
     stroke-linejoin="round"
   />
@@ -194,10 +207,10 @@ export function generateSvg(data, cfg) {
   />
 </g>`;
         }
-        // Hexagonal cells
+        // Hexagonal cells: visible side faces are 0-1 (shadow), 1-2 (lit), 2-3 (shadow)
+        // for a camera in the +x/+z quadrant.
         const hexBase = hexProjected(cell, 0);
         const hexTop = hexProjected(cell, h);
-        // Visible faces (top 3): lit edge (4-5) vs shadow edge (5-0), darker floor.
         return `<g>
   <title>${cell.date}: ${cell.count} contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
@@ -208,17 +221,25 @@ export function generateSvg(data, cfg) {
     stroke-width="0.35"
     stroke-linejoin="round"
   />
-  <!-- Side face (lit) -->
+  <!-- Side face 0-1 (shadow) -->
   <polygon
-    points="${fmt(hexTop[4])} ${fmt(hexBase[4])} ${fmt(hexBase[5])} ${fmt(hexTop[5])}"
+    points="${fmt(hexTop[0])} ${fmt(hexBase[0])} ${fmt(hexBase[1])} ${fmt(hexTop[1])}"
+    fill="${pal.sideDark}"
+    stroke="${pal.sideDark}"
+    stroke-width="0.4"
+    stroke-linejoin="round"
+  />
+  <!-- Side face 1-2 (lit) -->
+  <polygon
+    points="${fmt(hexTop[1])} ${fmt(hexBase[1])} ${fmt(hexBase[2])} ${fmt(hexTop[2])}"
     fill="${pal.sideLight}"
     stroke="${pal.sideLight}"
     stroke-width="0.4"
     stroke-linejoin="round"
   />
-  <!-- Side face (shadow) -->
+  <!-- Side face 2-3 (shadow) -->
   <polygon
-    points="${fmt(hexTop[5])} ${fmt(hexBase[5])} ${fmt(hexBase[0])} ${fmt(hexTop[0])}"
+    points="${fmt(hexTop[2])} ${fmt(hexBase[2])} ${fmt(hexBase[3])} ${fmt(hexTop[3])}"
     fill="${pal.sideDark}"
     stroke="${pal.sideDark}"
     stroke-width="0.4"
@@ -234,17 +255,13 @@ export function generateSvg(data, cfg) {
   />
 </g>`;
     }
-    /** Project the 6 hex corners of a cell at height z (uses hoisted dir vectors). */
-    function hexProjected(cell, z) {
-        const cxd = cell.cx - gridCenterX;
-        const cyd = cell.cy - gridCenterY;
+    /** Project the 6 hex corners of a cell at height wy (camera-based). */
+    function hexProjected(cell, wy) {
+        const wx = cell.cx - 0.5;
+        const wz = cell.cy - 0.5;
         const pts = new Array(6);
         for (let i = 0; i < 6; i++) {
-            const dx = cxd + HEX_CORNER_DIRS[i][0] * halfSize;
-            const dy = cyd + HEX_CORNER_DIRS[i][1] * halfSize;
-            const bx = offX + (dx - dy) * kx;
-            const by = offY + (dx + dy) * ky - z * kz;
-            pts[i] = [bx, by];
+            pts[i] = projBase(wx + HEX_CORNER_DIRS[i][0] * halfSize, wy, wz + HEX_CORNER_DIRS[i][1] * halfSize);
         }
         return pts;
     }

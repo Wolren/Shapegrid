@@ -36,7 +36,7 @@ export interface DataExport {
         maxLat: number;
     };
     coordSystem?: 'planar' | 'wgs84' | 'mercator';
-    config: Pick<ShapegridConfig, 'camera' | 'render' | 'theme' | 'dashboard'>;
+    config: Pick<ShapegridConfig, 'camera' | 'render' | 'theme' | 'effects' | 'dashboard'>;
 }
 export declare function generateSvg(data: DataExport, cfg: ShapegridConfig): string;
 export declare function generateLegend(colorScale: ColorScale, W: number, H: number): string;

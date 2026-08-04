@@ -125,6 +125,7 @@ async function runGenerate(cfg, configDir) {
             camera: cfg.camera,
             render: cfg.render,
             theme: cfg.theme,
+            effects: cfg.effects ?? undefined,
             dashboard: cfg.dashboard ?? undefined,
         },
     };

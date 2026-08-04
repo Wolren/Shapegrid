@@ -98,10 +98,20 @@ function escAttr(s) {
  * of viewport, like the web) or a zone anchor (percent of viewport). Returns
  * null when the widget should be skipped (unpositioned).
  */
+// The webview's #dashboard-widgets container sits inside #canvas-wrap with a
+// 32px top inset (CSS: inset: 32px 0 0 0). Widget customPos percentages are
+// relative to THAT container, so the SVG must replicate: x = pct/100 * W,
+// y = 32 + pct/100 * (H - 32). Mirroring the webview keeps widget positions
+// aligned with the grid exactly as configured.
+const WIDGET_CONTAINER_TOP_INSET = 32;
 function widgetOrigin(ctx, wPx, hPx) {
     const cp = ctx.w.customPos;
     if (cp && typeof cp.x === 'number' && typeof cp.y === 'number') {
-        return { x: (cp.x / 100) * ctx.W, y: (cp.y / 100) * ctx.H };
+        const contH = ctx.H - WIDGET_CONTAINER_TOP_INSET;
+        return {
+            x: (cp.x / 100) * ctx.W,
+            y: WIDGET_CONTAINER_TOP_INSET + (cp.y / 100) * contH,
+        };
     }
     const anchor = ZONE_ANCHORS[ctx.w.position ?? 'bottomLeft'];
     if (!anchor)
@@ -113,13 +123,14 @@ function widgetOrigin(ctx, wPx, hPx) {
         x = (anchor.x / 100) * ctx.W - wPx / 2;
     else
         x = (anchor.x / 100) * ctx.W;
+    const contH = ctx.H - WIDGET_CONTAINER_TOP_INSET;
     let y;
     if (ctx.w.position === 'left' || ctx.w.position === 'right')
-        y = (anchor.y / 100) * ctx.H - hPx / 2;
+        y = WIDGET_CONTAINER_TOP_INSET + (anchor.y / 100) * contH - hPx / 2;
     else if (ctx.w.position === 'bottomLeft' || ctx.w.position === 'bottomRight')
-        y = (anchor.y / 100) * ctx.H - hPx;
+        y = WIDGET_CONTAINER_TOP_INSET + (anchor.y / 100) * contH - hPx;
     else
-        y = (anchor.y / 100) * ctx.H;
+        y = WIDGET_CONTAINER_TOP_INSET + (anchor.y / 100) * contH;
     return { x, y };
 }
 /** SVG group wrapper: panel frame (accent border/header), title, body. */
@@ -130,12 +141,11 @@ function widgetFrame(ctx, bodySvg, wPx, hPx, bodyYOffset) {
     const origin = widgetOrigin(ctx, wPx, hPx + bodyYOffset);
     if (!origin)
         return '';
-    // Clamp into canvas: keep the configured position when the widget fits,
-    // nudge inside when it would clip (tall widgets at small canvas heights).
+    // Exact webview positioning: the webview's #dashboard-widgets container has
+    // overflow:hidden and does NOT clamp widget origins, so neither do we.
     const headerH = 22 * scale;
-    const totalH = headerH + hPx;
-    let x = Math.min(Math.max(origin.x, 4), Math.max(ctx.W - wPx - 4, 4));
-    let y = Math.min(Math.max(origin.y, 4), Math.max(ctx.H - totalH - 4, 4));
+    const x = origin.x;
+    const y = origin.y;
     const titleY = y + 10 * scale;
     const bodyX = x;
     const bodyY = y + headerH;

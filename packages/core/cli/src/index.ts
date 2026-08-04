@@ -78,6 +78,21 @@ export interface ShapegridConfig {
     /** Intensity scale mode: linear | sqrt | cbrt | log (default linear) */
     scaleMode?: 'linear' | 'sqrt' | 'cbrt' | 'log';
   };
+  /** Post-processing effects, mirrored into the data export so the web
+   * viewer applies them when rendering the profile PNG (bloom etc.). */
+  effects?: {
+    bloomEnabled?: boolean;
+    bloomStrength?: number;
+    bloomRadius?: number;
+    bloomThreshold?: number;
+    fogEnabled?: boolean;
+    fogDensity?: number;
+    toneMapping?: number;
+    envMapEnabled?: boolean;
+    rayTracingEnabled?: boolean;
+    rayTracingSamples?: number;
+    rayTracingBounces?: number;
+  };
   output: {
     dir: string;
     svgFilename?: string;
@@ -234,6 +249,7 @@ async function runGenerate(cfg: ShapegridConfig, configDir: string) {
       camera: cfg.camera,
       render: cfg.render,
       theme: cfg.theme,
+      effects: cfg.effects ?? undefined,
       dashboard: cfg.dashboard ?? undefined,
     },
   };

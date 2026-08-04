@@ -169,6 +169,20 @@ output:
   # Export dimensions for PNG/SVG (200 to 4096)
   width: 1200
   height: 600
+# ─── Post-processing effects (applied by the web viewer PNG render) ──────
+effects:
+  bloomEnabled: true
+  bloomStrength: 0.5
+  bloomRadius: 0.5
+  bloomThreshold: 0.3
+  fogEnabled: false
+  fogDensity: 0.12
+  toneMapping: 0
+  envMapEnabled: false
+  rayTracingEnabled: false
+  rayTracingSamples: 64
+  rayTracingBounces: 4
+
 # ─── Dashboard overlay widgets ─────────────────────────────────────
 # Mirrors the web viewer export (config.dashboard.widgets). The CLI
 # renders the visible supported widgets: legend, stats, timeline,
