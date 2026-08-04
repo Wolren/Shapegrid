@@ -146,10 +146,30 @@ The viewer is a single-page app with eight settings tabs:
 | Camera | Yaw, pitch, zoom for the 3D view |
 | Style | Scene palette, height scale, background, boundary outline |
 | Effects | Bloom, fog, tone mapping, ray-traced export settings |
-| Theme | 12 editor themes and per-widget accent colors |
+| Theme | 12 editor themes, 10 widget themes, per-widget accent colors |
 | Export | Output size, format, auto-crop, orientation, config export/load |
 
 The viewport toolbar provides select, pan, measure distance, measure area, zoom to fit, reset camera, top-down view, export PNG, and layer toggles for boundary, grid, and axes. The header offers config export and load for full round-trip of settings and dashboard layout.
+
+## Controls
+
+| Input | Action |
+|-------|--------|
+| Drag | Rotate camera (yaw and pitch) |
+| Scroll wheel | Zoom in and out |
+| Select tool + cell | Show date and contribution count tooltip, select cell for the cell info widget |
+| Measure tool + click | Place measurement points |
+| `Esc` | Cancel active measurement, close color picker or export dialog |
+| `Enter` | Save an edited widget setting |
+
+## Browser support
+
+| Feature | Requirement |
+|---------|-------------|
+| Base 3D viewer | WebGL 1 (all evergreen browsers) |
+| Ray-traced export | WebGL 2, with automatic fallback to the base renderer when unavailable |
+
+The viewer targets current versions of Chrome, Firefox, Edge, and Safari. Software renderers fall back to the base WebGL path with reduced performance.
 
 ## Tech stack
 
@@ -165,6 +185,14 @@ The viewport toolbar provides select, pan, measure distance, measure area, zoom 
 | GIS data | TopoJSON (topojson-client) | 3.1 |
 | Widget capture | html2canvas | 1.4.1 |
 | Color pickers | vanilla-colorful | 0.7.2 |
+
+## Technical details
+
+- **Exact-count packing**: cell size is found by binary search. Each candidate size runs a coverage test over the boundary; counting early-exits once the target cell count is reached, and convex boundaries take a fast path that skips per-corner sampling when all bbox corners are inside.
+- **Hex geometry**: pointy-top hexes with circumradius `R = cellSize / 2`. Tiling uses `xStep = sqrt(3) * R` and `yStep = 1.5 * R`, with odd rows offset by `sqrt(3) * R / 2` for proper touching placement.
+- **Coverage threshold**: a cell is included when the fraction of its samples inside the boundary meets `coverageThreshold` (default 0.4). Lower values admit more border cells.
+- **API chunking**: the GitHub GraphQL API caps contribution queries at 365 days. Shapegrid splits longer ranges into 360-day chunks fetched in parallel.
+- **Ray tracing**: the export path uses three-gpu-pathtracer with tiled rendering (3x3), dynamic low-resolution preview, and configurable bounce count and render scale.
 
 ## GitHub Actions CI
 
@@ -191,10 +219,12 @@ Full reference at [`shapegrid.config.yml`](./shapegrid.config.yml) in the repo r
 Key sections:
 
 - **github**: username and token
-- **boundary**: shape definition
+- **boundary**: shape definition (preset, country, polygon, svgPath, geojson, file)
 - **grid**: type (square/hex), count, coverage threshold
-- **camera**: yaw, pitch for isometric SVG rendering
-- **render**: color scale, height scale, gap, background, boundary outline, dimensions
+- **camera**: yaw, pitch, zoom for isometric SVG rendering
+- **theme**: palette, day border color, custom palettes
+- **axes**: coordinate axes for geographic maps (position, distance, colors, label font)
+- **render**: height scale, gap, background, boundary outline, dimensions
 - **dateRange**: last N days or explicit start/end
 - **output**: filenames and output directory
 
@@ -204,6 +234,7 @@ Key sections:
 - **API query window**: the GitHub GraphQL API caps contribution queries at 365 days. Shapegrid splits longer ranges into 360-day chunks, so very long ranges (5+ years) require multiple API calls.
 - **SVG rendering is single-threaded**: large grids (2000+ cells) may take several seconds to generate server-side.
 - **WebGL viewer requires a GPU**: the Three.js preview needs WebGL support. Falls back gracefully on software renderers but performance degrades.
+- **Ray-traced export needs WebGL 2**: browsers or GPUs limited to WebGL 1 fall back to the base renderer for export.
 - **Country polygon data is approximate**: built-in country boundaries are simplified for rendering speed and may not match official borders.
 
 ## Contributing

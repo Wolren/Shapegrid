@@ -31,7 +31,7 @@ function generateSquareCandidates(poly, cellSize, coverageThreshold = 0.4, opts 
 function generateHexCandidates(poly, cellSize, coverageThreshold = 0.4, opts = {}) {
     const { maxCount = Infinity, convex = false, countMode = false } = opts;
     const { minX, minY, maxX, maxY } = boundingBox(poly);
-    // Pointy-top hex (vertices at top/bottom — the SVG renderer draws corners at
+    // Pointy-top hex (vertices at top/bottom - the SVG renderer draws corners at
     // halfSize = cellSize / 2, i.e. circumradius R = cellSize / 2). For touching
     // neighbors: east-west step = √3R, row step = 1.5R, odd rows offset by √3R/2.
     const R = cellSize / 2;
@@ -134,7 +134,7 @@ export function generateGrid(poly, opts) {
     const candidates = type === 'square'
         ? generateSquareCandidates(poly, cellSize, coverageThreshold, { convex })
         : generateHexCandidates(poly, cellSize, coverageThreshold, { convex });
-    // Nothing survived the coverage threshold — return an empty grid rather than
+    // Nothing survived the coverage threshold - return an empty grid rather than
     // producing NaN centroids in selectN.
     if (candidates.length === 0) {
         return { cells: [], cellSize, gridType: type };

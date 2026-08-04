@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Color picker — swatch button + popover (vanilla-colorful hex picker)
+// Color picker - swatch button + popover (vanilla-colorful hex picker)
 // Used by the Theme tab: Editor Colors and Widget Colors sections.
 // The popover uses fixed positioning anchored to the row so it always stays
 // inside the sidebar panel; events are delegated on the wrapper so they work

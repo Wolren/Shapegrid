@@ -9,7 +9,7 @@ import { scheduleRebuild } from './rebuild';
 import { renderAllWidgets, setDashboardLayouts } from './dashboard';
 import type { DataExport, GridResult, Cell, CellData, GitHubDay, GridType, CoordAxesPosition, DaysMode, BoundaryType } from '../types';
 
-// Safe textContent setter — guard against removed DOM elements
+// Safe textContent setter - guard against removed DOM elements
 function setText(id: string, text: string): void {
   const el = document.getElementById(id);
   if (el) el.textContent = text;
@@ -86,7 +86,7 @@ export function setStatus(msg: string, cls: string): void {
 }
 
 export function loadDemo(): void {
-  // Preserve real contributions when they exist — don't overwrite with noise
+  // Preserve real contributions when they exist - don't overwrite with noise
   if (state.contributions && state.contributions.username !== 'demo' && state.contributions.days.length > 0) {
     return;
   }
@@ -202,7 +202,7 @@ export function loadFromJson(data: DataExport): void {
   }));
   updateState('cellData', cellData);
 
-  // Count — sync both state and UI inputs
+  // Count - sync both state and UI inputs
   updateState('count', data.grid.count);
   const daysSlider = document.getElementById('inp-days') as HTMLInputElement;
   const daysNum = document.getElementById('inp-days-num') as HTMLInputElement;

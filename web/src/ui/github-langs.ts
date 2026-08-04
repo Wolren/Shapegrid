@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// GitHub Language Fetcher — aggregate languages across all user repos
+// GitHub Language Fetcher - aggregate languages across all user repos
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { GitHubLanguage } from '../types';

@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Contribution Trend Timeline — Compact SVG sparkline
+// Widget: Contribution Trend Timeline - Compact SVG sparkline
 // Renders a polyline of daily contribution counts with gradient fill and peaks
 // ══════════════════════════════════════════════════════════════════════════════
 

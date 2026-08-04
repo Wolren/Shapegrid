@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Geo — boundary / geographic info card (area, cell density, coverage)
+// Widget: Geo - boundary / geographic info card (area, cell density, coverage)
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';

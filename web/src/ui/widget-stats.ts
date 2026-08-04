@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Statistics — visual metrics with distribution bar
+// Widget: Statistics - visual metrics with distribution bar
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';

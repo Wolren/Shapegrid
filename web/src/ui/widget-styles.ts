@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget manager styles — injected CSS for the manager panel
+// Widget manager styles - injected CSS for the manager panel
 // Extracted from widget-manager.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 

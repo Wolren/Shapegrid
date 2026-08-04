@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Export Config JSON — full app state round-trip (v3)
+// Export Config JSON - full app state round-trip (v3)
 // Extracted from app.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 

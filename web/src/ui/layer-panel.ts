@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Layer Panel — floating layer visibility toggle panel
+// Layer Panel - floating layer visibility toggle panel
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { getEditor, setLayerVisible, clearMeasurements } from './editor-state';

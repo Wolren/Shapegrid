@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Legend — proper GIS color gradient bar
+// Widget: Legend - proper GIS color gradient bar
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
@@ -26,7 +26,7 @@ function renderLegend(container: HTMLElement, _id: string): void {
   title.textContent = 'Contributions';
   legendFrame.appendChild(title);
 
-  // Color gradient bar — thicker GIS style
+  // Color gradient bar - thicker GIS style
   const bar = document.createElement('div');
   bar.style.cssText = 'height:20px;border-radius:4px;border:1px solid rgba(255,255,255,0.12);overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.3)';
   bar.style.background = `linear-gradient(to right, ${ramp.join(', ')})`;

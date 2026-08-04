@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Cell Info — Hover/selection details panel
+// Widget: Cell Info - Hover/selection details panel
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
@@ -10,7 +10,7 @@ import { activePaletteId, intensityToColor } from '../rendering/colors';
 let _bodyEl: HTMLElement | null = null;
 
 function renderCellInfo(container: HTMLElement, _id: string): void {
-  // Always update body element reference — container is rebuilt on each renderAllWidgets
+  // Always update body element reference - container is rebuilt on each renderAllWidgets
   _bodyEl = container;
   container.id = 'cell-info-body';
   container.style.padding = '6px 8px';

@@ -382,7 +382,7 @@ export function updateMeasureOverlay(
     const screenPts = pointsToScreen(am.points, camera, canvasRect);
     if (screenPts.length >= 1) {
       // Hover-cursor at the last point (dashed line from last vertex to cursor is
-      // handled externally — we just draw the committed points)
+      // handled externally - we just draw the committed points)
 
       if (screenPts.length >= 2) {
         if (am.type === 'area') {
@@ -447,7 +447,7 @@ export function handleMeasureClick(
   const worldPt = intersectGround(mouseX, mouseY, canvasRect, camera);
   if (!worldPt) return false;
 
-  // Convert to grid coordinates (cx, cy) — note cells sit on y=0, centered at cx-0.5, cy-0.5
+  // Convert to grid coordinates (cx, cy) - note cells sit on y=0, centered at cx-0.5, cy-0.5
   const gx = worldPt.x + 0.5;
   const gz = worldPt.z + 0.5;
 

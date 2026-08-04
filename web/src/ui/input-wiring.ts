@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Input wiring — settings sliders, toggles, selects wired to state + rebuild
+// Input wiring - settings sliders, toggles, selects wired to state + rebuild
 // Extracted from app.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -88,14 +88,14 @@ export function updateLabels() {
   el('val-rt-bounces')!.textContent = String(state.rayTracingBounces);
 }
 
-// Sliders — map input IDs to state keys where they differ
+// Sliders - map input IDs to state keys where they differ
 ['yaw', 'pitch', 'gap', 'coverage'].forEach(key => {
   const el = document.getElementById(`inp-${key}`) as HTMLInputElement;
   if (el) {
     el.addEventListener('input', () => {
       sync(key);
       if (key === 'coverage') {
-        // Coverage threshold changes which cells survive generation — regen.
+        // Coverage threshold changes which cells survive generation - regen.
         computeGrid();
         loadDemo();
       }
@@ -106,7 +106,7 @@ export function updateLabels() {
     });
   }
 });
-// Height scale factor slider — state key differs from input ID
+// Height scale factor slider - state key differs from input ID
 const heightEl = document.getElementById('inp-height') as HTMLInputElement;
 if (heightEl) {
   heightEl.addEventListener('input', () => {
@@ -392,7 +392,7 @@ if (daysNumInput) {
   await fetchAndUpdateLanguages();
 });
 
-// Export PNG — capture the FINAL render: 3D view + dashboard widgets, with
+// Export PNG - capture the FINAL render: 3D view + dashboard widgets, with
 // all editor chrome stripped, matching the CI-rendered output.
 
 

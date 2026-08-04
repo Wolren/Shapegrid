@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Contribution Distribution Histogram — proper bin chart
+// Widget: Contribution Distribution Histogram - proper bin chart
 // Pixel-based SVG (no preserveAspectRatio stretching) with baseline,
 // count axis labels and value labels. Text is never distorted.
 // ══════════════════════════════════════════════════════════════════════════════

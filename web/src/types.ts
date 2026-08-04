@@ -107,7 +107,7 @@ export interface OverlayState {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Dashboard widget system — GIS display widgets
+// Dashboard widget system - GIS display widgets
 // ══════════════════════════════════════════════════════════════════════════════
 
 export type WidgetId = 'legend' | 'stats' | 'languages' | 'cellInfo' | 'scaleBar' | 'coordinates' | 'distribution' | 'timeline' | 'activity' | 'topCells' | 'weekday' | 'streak' | 'monthly' | 'geo' | 'minimap';

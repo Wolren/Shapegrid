@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Coordinate Readout — Mouse position in planar or geo coordinates
+// Widget: Coordinate Readout - Mouse position in planar or geo coordinates
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
@@ -39,7 +39,7 @@ function updateCoordDisplay(
   const geo: GeoBounds | null = state.geoBounds;
 
   if (cs === 'wgs84' || cs === 'mercator') {
-    // Geo coordinates — interpolate from normalized [0,1] to lon/lat
+    // Geo coordinates - interpolate from normalized [0,1] to lon/lat
     const lon = geo ? lerp(geo.minLon, geo.maxLon, x) : x;
     const lat = geo ? lerp(geo.minLat, geo.maxLat, y) : y;
     el.textContent =
@@ -57,7 +57,7 @@ function lerp(a: number, b: number, t: number): number {
 
 registerWidget('coordinates', renderCoords);
 
-/** Update coordinate display — call from canvas mousemove */
+/** Update coordinate display - call from canvas mousemove */
 export function updateCoordWidget(x: number, y: number): void {
   _coordX = x;
   _coordY = y;

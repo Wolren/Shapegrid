@@ -145,7 +145,7 @@ export function parseSvgPath(d) {
             points.push([cx, cy]);
         }
         else if (cmd === 'Z' || cmd === 'z') {
-            // close path — no new point needed
+            // close path - no new point needed
         }
         else {
             // skip unknown token

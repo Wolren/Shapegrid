@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: GitHub Language Breakdown — Horizontal bars with colour circles
+// Widget: GitHub Language Breakdown - Horizontal bars with colour circles
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';

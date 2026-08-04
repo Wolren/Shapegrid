@@ -12,7 +12,7 @@ export interface Cell {
     /** Column and row indices in the underlying lattice */
     col: number;
     row: number;
-    /** Coverage fraction [0,1] — 1 means fully inside polygon */
+    /** Coverage fraction [0,1] - 1 means fully inside polygon */
     coverage: number;
 }
 export interface GridResult {

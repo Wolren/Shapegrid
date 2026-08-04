@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Dashboard widget manager — overlay panel for toggling / configuring widgets
+// Dashboard widget manager - overlay panel for toggling / configuring widgets
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { WidgetId, WidgetConfig } from '../types';
@@ -384,7 +384,7 @@ function addToggleButton(): void {
     syncManagerState();
   });
 
-  // Insert into toolbar — place after the last group (before spacer or after)
+  // Insert into toolbar - place after the last group (before spacer or after)
   // Actually, let's put it in the screenshot group with a separator
   if (ssGroup) {
     // Add separator then button

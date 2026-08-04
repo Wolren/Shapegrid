@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Scene module — Three.js setup, mesh/coord-axes building, camera, lighting
+// Scene module - Three.js setup, mesh/coord-axes building, camera, lighting
 // Extracted from app.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -19,7 +19,7 @@ let dirLight: THREE.DirectionalLight, mesh: THREE.InstancedMesh | null, boundary
 let groundMesh: THREE.Mesh;
 let coordAxesGroup: THREE.Group | null;
 let composer: EffectComposer | null = null;
-// Color-managed background — required for the composer path: the EffectComposer
+// Color-managed background - required for the composer path: the EffectComposer
 // renders into a linear HDR target, and a raw clear color (sRGB) would be
 // re-encoded by OutputPass, brightening dark backgrounds to grey.
 let bgColor: THREE.Color | null = null;
@@ -101,7 +101,7 @@ function scaleIntensity(raw: number): number {
 
 // Fast '#rrggbb' → [0..1] rgb, replacing colToHex() in the per-cell hot loops.
 // colToHex allocates a 1×1 canvas + 2D context + getImageData per call
-// (~0.05–0.3ms each) — pure waste at thousands of cells, and intensityToColor
+// (~0.05–0.3ms each) - pure waste at thousands of cells, and intensityToColor
 // always returns a hex string. Falls back to colToHex for any non-hex color.
 const HEX6_RE = /^#([0-9a-f]{6})$/i;
 function cssToRgb01(css: string): [number, number, number] {
@@ -215,7 +215,7 @@ function formatCoord(value: number, isLat: boolean): string {
   return `${absVal.toFixed(1)}°${dir}`;
 }
 
-// Cache key of the last-built axes — buildMesh calls buildCoordAxes() on every
+// Cache key of the last-built axes - buildMesh calls buildCoordAxes() on every
 // rebuild, but the axes only depend on a handful of state fields (not gap,
 // height, palette, cellData). Skipping unchanged rebuilds avoids re-creating
 // all the tick-line geometries and canvas label textures on every mesh change.
@@ -286,14 +286,14 @@ function buildCoordAxes() {
 
   const lineMat = new THREE.LineBasicMaterial({ color: axisColor });
 
-  // Bottom axis line (longitude) — from corner to right
+  // Bottom axis line (longitude) - from corner to right
   const bottomLine = new THREE.BufferGeometry().setFromPoints([
     new THREE.Vector3(cornerX, y, cornerZ),
     new THREE.Vector3(right, y, cornerZ)
   ]);
   coordAxesGroup.add(new THREE.Line(bottomLine, lineMat));
 
-  // Left axis line (latitude) — from top to corner
+  // Left axis line (latitude) - from top to corner
   const leftLine = new THREE.BufferGeometry().setFromPoints([
     new THREE.Vector3(cornerX, y, top),
     new THREE.Vector3(cornerX, y, cornerZ)
@@ -312,7 +312,7 @@ function buildCoordAxes() {
     return nice * Math.pow(10, exp);
   }
 
-  // Longitude ticks (bottom) — at original grid positions, Z = cornerZ
+  // Longitude ticks (bottom) - at original grid positions, Z = cornerZ
   const lonInterval = niceInterval(lonSpan);
   const lonStart = Math.ceil(minLon / lonInterval) * lonInterval;
   for (let lon = lonStart, i = 0; lon <= maxLon + lonInterval * 0.01; lon = lonStart + i * lonInterval, i++) {
@@ -332,7 +332,7 @@ function buildCoordAxes() {
     coordAxesGroup.add(label);
   }
 
-  // Latitude ticks (left side) — at original grid positions, X = cornerX
+  // Latitude ticks (left side) - at original grid positions, X = cornerX
   const latInterval = niceInterval(latSpan);
   const latStart = Math.ceil(minLat / latInterval) * latInterval;
   for (let lat = latStart, i = 0; lat <= maxLat + latInterval * 0.01; lat = latStart + i * latInterval, i++) {
@@ -360,7 +360,7 @@ let bloomNode: any = null;
 
 function applyPostProcessing() {
   if (!renderer || !scene) return;
-  // Ray tracing replaces the whole post chain — skip bloom/fog/env management
+  // Ray tracing replaces the whole post chain - skip bloom/fog/env management
   if (state.rayTracingEnabled) return;
   // Bloom
   if (bloomNode) {
@@ -393,7 +393,7 @@ function applyPostProcessing() {
 }
 
 
-// RT and capture assign the scene background — expose a setter (imported
+// RT and capture assign the scene background - expose a setter (imported
 // bindings cannot be reassigned).
 export function setSceneBackground(color: THREE.Color | null): void {
   bgColor = color;

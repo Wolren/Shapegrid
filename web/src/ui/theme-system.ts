@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Theme system — editor theme presets, widget color themes, pickers, CSS vars
+// Theme system - editor theme presets, widget color themes, pickers, CSS vars
 // Extracted from app.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 

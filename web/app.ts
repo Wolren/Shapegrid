@@ -45,7 +45,7 @@ import './src/ui/widget-minimap';
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Ray tracing — GPU path tracing via three-gpu-pathtracer
+// Ray tracing - GPU path tracing via three-gpu-pathtracer
 // The instanced grid is converted into a merged, vertex-colored geometry
 // (the path tracer does not support InstancedMesh).
 // ══════════════════════════════════════════════════════════════════════════════
@@ -126,7 +126,7 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Measurement tool — click handling on canvas
+// Measurement tool - click handling on canvas
 // ══════════════════════════════════════════════════════════════════════════════
 
 let measureDragActive = false;
@@ -332,7 +332,7 @@ async function bootstrap() {
     const loaded = await loadFromUrl('./assets/shapegrid-data.json');
     if (loaded) {
       dataLoaded = true;
-      // Loaded from CI-generated data — update palette
+      // Loaded from CI-generated data - update palette
       applyTheme();
       syncThemeInputs();
       if (state.palette) {
@@ -356,7 +356,7 @@ async function bootstrap() {
     setDaysMode(state.daysMode);
     buildYearChips();
 
-    // Initial sync days to count (skip when CI data loaded — would overwrite the grid)
+    // Initial sync days to count (skip when CI data loaded - would overwrite the grid)
     if (!dataLoaded) {
       syncDaysToCount();
     }
@@ -375,7 +375,7 @@ async function bootstrap() {
 
     // ── Editor panel initialisation ────────────────────────────────────────
 
-    // Toolbar — with action callbacks
+    // Toolbar - with action callbacks
     initToolbar({
       zoomToFit: () => {
         if (!state.grid || state.grid.cells.length === 0) return;

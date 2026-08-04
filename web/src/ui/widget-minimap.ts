@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Mini Map — 2D top-down intensity map of the grid
+// Widget: Mini Map - 2D top-down intensity map of the grid
 // Cells are colored by their actual intensity (palette-driven). The boundary
 // outline keeps the shape readable; zero-intensity cells stay barely visible.
 // ══════════════════════════════════════════════════════════════════════════════

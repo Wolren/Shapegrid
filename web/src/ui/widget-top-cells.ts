@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Top Cells — highest-contribution cells with date + count bars
+// Widget: Top Cells - highest-contribution cells with date + count bars
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';

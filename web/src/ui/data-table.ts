@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Data Table Panel — collapsible cell data table at the bottom of the canvas
+// Data Table Panel - collapsible cell data table at the bottom of the canvas
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
@@ -235,7 +235,7 @@ export function rebuildDataTable(): void {
     const td = document.createElement('td');
     td.className = 'dt-empty';
     td.colSpan = 5;
-    td.textContent = 'No grid data — load contributions or generate a grid';
+    td.textContent = 'No grid data - load contributions or generate a grid';
     row.appendChild(td);
     tbody.appendChild(row);
     countEl.textContent = '0 cells';
@@ -261,7 +261,7 @@ export function rebuildDataTable(): void {
 
     // Date
     const tdDate = document.createElement('td');
-    tdDate.textContent = data.date || '—';
+    tdDate.textContent = data.date || '-';
     row.appendChild(tdDate);
 
     // Count
@@ -279,7 +279,7 @@ export function rebuildDataTable(): void {
     tdPos.textContent = `${cell.cx.toFixed(2)}, ${cell.cy.toFixed(2)}`;
     row.appendChild(tdPos);
 
-    // Click handler — select / deselect
+    // Click handler - select / deselect
     row.addEventListener('click', () => {
       const currentSelected = getEditor().selectedCellIndices;
       const already = currentSelected.includes(i);

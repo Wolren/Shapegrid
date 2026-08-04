@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Ray tracing module — WebGLPathTracer integration, RT scene building, loop
+// Ray tracing module - WebGLPathTracer integration, RT scene building, loop
 // Extracted from app.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -201,7 +201,7 @@ function rebuildRTScene(): void {
   });
   group.add(new THREE.Mesh(gridGeo, gridMat));
 
-  // Ground plane — path tracer needs a real surface material (no ShadowMaterial)
+  // Ground plane - path tracer needs a real surface material (no ShadowMaterial)
   const gGeo = new THREE.PlaneGeometry(6, 6);
   const gMat = new THREE.MeshStandardMaterial({ color: 0x1b2129, roughness: 1.0, metalness: 0.0 });
   const ground = new THREE.Mesh(gGeo, gMat);
@@ -270,7 +270,7 @@ function loop() {
   }
   applyPostProcessing();
   // Color-managed scene background (works identically in the direct and
-  // composer paths — three.js converts it to the render target's color space)
+  // composer paths - three.js converts it to the render target's color space)
   let bg = bgColor;
   if (!bg) {
     setSceneBackground(new THREE.Color());
@@ -281,7 +281,7 @@ function loop() {
   // Keep the clear color in sync too (used for the underlying RT clear)
   renderer.setClearColor(state.background, 1);
 
-  // Ray tracing path — accumulate samples to the quality target
+  // Ray tracing path - accumulate samples to the quality target
   if (isRTAvailable() && state.rayTracingEnabled && pathTracer) {
     if (rtPendingReset) {
       pathTracer.reset();
@@ -301,7 +301,7 @@ function loop() {
     return;
   }
 
-  // Skip composer when all effects are off — matches original direct render path
+  // Skip composer when all effects are off - matches original direct render path
   const effectsActive = (composer !== null) && (state.bloomEnabled || state.toneMapping !== 0 || state.fogEnabled || state.envMapEnabled);
   if (effectsActive) {
     composer!.render();

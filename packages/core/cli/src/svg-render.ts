@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// SVG renderer — server-side SVG generation, legend, coordinate axes, colors
+// SVG renderer - server-side SVG generation, legend, coordinate axes, colors
 // Extracted from index.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 

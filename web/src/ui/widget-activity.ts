@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Activity — GitHub-style contribution mini-grid heatmap
+// Widget: Activity - GitHub-style contribution mini-grid heatmap
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';

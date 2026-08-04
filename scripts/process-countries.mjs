@@ -80,7 +80,7 @@ async function main() {
 
     let name = COUNTRY_NAMES[alpha2] || feat.properties?.name || alpha2;
 
-    // Extract coordinates — handle Polygon and MultiPolygon
+    // Extract coordinates - handle Polygon and MultiPolygon
     let coords = null;
     if (feat.geometry.type === 'Polygon') {
       coords = feat.geometry.coordinates[0];

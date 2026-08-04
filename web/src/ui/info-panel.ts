@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Floating info panel — cell details, grid summary, selection count
+// Floating info panel - cell details, grid summary, selection count
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
@@ -297,7 +297,7 @@ export function updateInfoPanel(idx: number | null): void {
     const color = intensityToColor(d.intensity, activePaletteId);
 
     const dateEl = document.getElementById('info-cell-date');
-    if (dateEl) dateEl.innerHTML = `<span style="color:#8b949e">Date</span>  ${d.date || '<span style="color:#8b949e">—</span>'}`;
+    if (dateEl) dateEl.innerHTML = `<span style="color:#8b949e">Date</span>  ${d.date || '<span style="color:#8b949e">-</span>'}`;
 
     const countEl = document.getElementById('info-cell-count');
     if (countEl) countEl.innerHTML = `<span style="color:#8b949e">Count</span>  <strong>${d.count}</strong>`;

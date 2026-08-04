@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Scale Bar — clean GIS scale with gradient bar and tick labels
+// Widget: Scale Bar - clean GIS scale with gradient bar and tick labels
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';
@@ -33,7 +33,7 @@ function renderScaleBar(container: HTMLElement, id: string): void {
 
   const bodyW = Math.max((container.clientWidth || 160) - 20, 100);
 
-  // 2 segments — each segment = round number of cells (km in geo mode)
+  // 2 segments - each segment = round number of cells (km in geo mode)
   const rawSegment = geo ? kmPerCell * 2 : cellSize * 2;
   const segmentValue = roundToNice(rawSegment);
   const segments = 2;

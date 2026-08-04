@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Dashboard — GIS display widget container and state
+// Dashboard - GIS display widget container and state
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { WidgetId, WidgetConfig, DashboardState } from '../types';
@@ -498,7 +498,7 @@ export function renderAllWidgets(): void {
     header.appendChild(close);
     wrapper.appendChild(header);
 
-    // Apply per-widget settings — base size × scale factor
+    // Apply per-widget settings - base size × scale factor
     const wScale = widgetScaleOf(w.id);
     if (typeof w.settings.width === 'number') {
       wrapper.style.width = Math.round(w.settings.width * wScale) + 'px';
@@ -523,7 +523,7 @@ export function renderAllWidgets(): void {
     }
   }
 
-  // Second pass: zone-based vertical stacking — ALWAYS reposition zone
+  // Second pass: zone-based vertical stacking - ALWAYS reposition zone
   // widgets (including single-widget zones) so the first widget in a zone
   // sits exactly at its anchor, and shift entire stacks that would overflow
   // the wrap bounds so every widget stays visible.
@@ -538,7 +538,7 @@ export function renderAllWidgets(): void {
   const wrapHeight = container.clientHeight || window.innerHeight;
 
   for (const [zone, els] of zones) {
-    // Left/right zones are vertically centered anchors, not stacks — pass 1
+    // Left/right zones are vertically centered anchors, not stacks - pass 1
     // already placed them exactly (no order offset).
     if (zone === 'left' || zone === 'right') continue;
 
@@ -546,7 +546,7 @@ export function renderAllWidgets(): void {
     // Sort by order within zone
     els.sort((a, b) => parseInt(a.dataset.order || '0') - parseInt(b.dataset.order || '0'));
 
-    // Widgets dragged to a custom position keep it — never re-stack them
+    // Widgets dragged to a custom position keep it - never re-stack them
     const stackEls = els.filter(el => el.dataset.custom !== '1');
     if (stackEls.length === 0) continue;
 

@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget metadata — settings definitions for all 15 widgets
+// Widget metadata - settings definitions for all 15 widgets
 // Extracted from widget-manager.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 

@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Country boundary data — loaded from Natural Earth via world-atlas
+// Country boundary data - loaded from Natural Earth via world-atlas
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { CountryData } from '../types';
@@ -53,7 +53,7 @@ export function searchCountries(query: string): Array<{ code: string; name: stri
   );
 }
 
-/** Legacy constant for backward compat — prefer getCountries() */
+/** Legacy constant for backward compat - prefer getCountries() */
 export const COUNTRIES: Record<string, CountryData> = new Proxy({} as Record<string, CountryData>, {
   get(_target, prop: string) {
     return getLoadedCountries()?.[prop] ?? null;

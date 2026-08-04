@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Streak — current and longest consecutive-day contribution streaks
+// Widget: Streak - current and longest consecutive-day contribution streaks
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';

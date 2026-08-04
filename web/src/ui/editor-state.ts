@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Editor state management — tool selection, measurements, selections
+// Editor state management - tool selection, measurements, selections
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { EditorState, ToolType, LayerVisibility } from '../types';

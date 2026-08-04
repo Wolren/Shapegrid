@@ -114,7 +114,7 @@ async function main() {
     // Extra settle time for Three.js
     await new Promise(r => setTimeout(r, 3000));
 
-    // Inject card layout CSS — just hide chrome, let viewer layout handle the rest
+    // Inject card layout CSS - just hide chrome, let viewer layout handle the rest
     await page.addStyleTag({
       content: `
         #panel, #header, #footer { display: none !important; }

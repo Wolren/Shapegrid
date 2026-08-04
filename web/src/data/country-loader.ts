@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Country boundary loader — fetches real boundaries from Natural Earth via
+// Country boundary loader - fetches real boundaries from Natural Earth via
 // world-atlas TopoJSON and converts to normalized coordinate arrays.
 // ══════════════════════════════════════════════════════════════════════════════
 

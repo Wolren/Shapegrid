@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Export preview modal — shows the final render before downloading
+// Export preview modal - shows the final render before downloading
 // ══════════════════════════════════════════════════════════════════════════════
 
 export interface ExportPreviewHandles {

@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Monthly — contribution totals bar chart over the last 12 months
+// Widget: Monthly - contribution totals bar chart over the last 12 months
 // Pixel-based SVG (no preserveAspectRatio stretching) like widget-weekday.ts.
 // ══════════════════════════════════════════════════════════════════════════════
 

@@ -66,7 +66,7 @@
       padding: 2px 4px;
     }
 
-    /* Theme presets — editor theme cards */
+    /* Theme presets - editor theme cards */
     .theme-presets {
       display: grid;
       grid-template-columns: 1fr 1fr;

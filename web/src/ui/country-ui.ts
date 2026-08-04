@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Boundary UI — country/region picker, file upload, boundary source controls
+// Boundary UI - country/region picker, file upload, boundary source controls
 // Extracted from app.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 

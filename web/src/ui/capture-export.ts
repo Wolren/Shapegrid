@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Export capture — final-render composite (3D canvas + widget overlays)
+// Export capture - final-render composite (3D canvas + widget overlays)
 // Extracted from app.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -149,7 +149,7 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
       }
     }
 
-    // Optional title text — drawn on top of the composite, scaled with the render
+    // Optional title text - drawn on top of the composite, scaled with the render
     if (exportTitle) {
       const titleText = exportTitle.length > 60 ? exportTitle.slice(0, 60) + '…' : exportTitle;
       ctx.font = `600 ${Math.round(44 * w / 1200)}px "IBM Plex Mono", monospace`;

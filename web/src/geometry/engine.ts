@@ -130,7 +130,7 @@ export function genSquare(poly: Point2D[], cs: number, thr = 0.3, maxCount?: num
       if (cov >= thr) {
         cells.push({ cx, cy, col, row, coverage: cov });
         // Early exit: callers that only need to know "does this grid reach N
-        // cells?" (findSize binary search) can stop the moment we hit N —
+        // cells?" (findSize binary search) can stop the moment we hit N -
         // no need to scan the rest of the candidate grid.
         if (maxCount !== undefined && cells.length >= maxCount) return cells;
       }
@@ -202,7 +202,7 @@ export function generateGrid(poly: Point2D[], opts: GridOptions): GridResult {
   const { count, type, thr = 0.3 } = opts;
   const cs = findSize(poly, count, type, thr);
   const cands = (type === 'square' ? genSquare : genHex)(poly, cs, thr);
-  // Nothing survived the coverage threshold — return an empty grid rather than
+  // Nothing survived the coverage threshold - return an empty grid rather than
   // producing NaN centroids below.
   if (cands.length === 0) {
     return { cells: [], cellSize: cs, gridType: type };

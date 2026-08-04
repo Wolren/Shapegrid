@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Widget: Weekday — contribution distribution across days of the week
+// Widget: Weekday - contribution distribution across days of the week
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { state } from './state';

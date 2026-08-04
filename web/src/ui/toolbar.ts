@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// Viewport toolbar — floats at the top of the 3D canvas
+// Viewport toolbar - floats at the top of the 3D canvas
 // ══════════════════════════════════════════════════════════════════════════════
 
 import type { ToolType, LayerVisibility } from '../types';
