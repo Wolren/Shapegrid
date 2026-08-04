@@ -6,9 +6,9 @@
   <title>shapegrid - Activity Grid Viewer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap"/>
-
-  <script type="module" crossorigin src="./assets/main-BxTafUMj.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/main-A_qetb1g.css">
+
+  <script type="module" crossorigin src="./assets/main-BqK8FXyL.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/main-TmbQsBmY.css">
 </head>
 
 <body>
@@ -30,19 +30,19 @@
       shapegrid
     </div>
     <span id="header-meta">boundary-fit activity grid · WebGL renderer</span>
-    <button id="btn-export">
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/>
-        <path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.97a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.779a.749.749 0 1 1 1.06-1.06l1.97 1.97Z"/>
-      </svg>
-      Export PNG
-    </button>
     <button id="btn-export-config">
       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 1.5a.75.75 0 0 1 .75.75V4.5h2.25a.75.75 0 0 1 0 1.5h-2.25v2.25a.75.75 0 0 1-1.5 0V6H4.75a.75.75 0 0 1 0-1.5H7V2.25A.75.75 0 0 1 7.75 1.5z"/>
         <path d="M2.75 10a.75.75 0 0 1 .75.75v2.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-2.5a.75.75 0 0 1 .75-.75z"/>
       </svg>
       Export Config
+    </button>
+    <button id="btn-load-config">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M8 1.5a.75.75 0 0 1 .75.75V8h3.5a.75.75 0 0 1 0 1.5h-3.5v3.5a.75.75 0 0 1-1.5 0V9.5h-3.5A.75.75 0 0 1 3 8h3.5V2.25A.75.75 0 0 1 7.25 1.5z"/>
+        <path d="M2.75 10a.75.75 0 0 1 .75.75v2.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-2.5a.75.75 0 0 1 .75-.75z"/>
+      </svg>
+      Load Config
     </button>
   </header>
 
@@ -54,7 +54,11 @@
       <button class="sidebar-tab active" data-tab="data">Data</button>
       <button class="sidebar-tab" data-tab="boundary">Boundary</button>
       <button class="sidebar-tab" data-tab="grid">Grid</button>
-      <button class="sidebar-tab" data-tab="render">Render</button>
+      <button class="sidebar-tab" data-tab="camera">Camera</button>
+      <button class="sidebar-tab" data-tab="style">Style</button>
+      <button class="sidebar-tab" data-tab="effects">Effects</button>
+      <button class="sidebar-tab" data-tab="theme">Theme</button>
+      <button class="sidebar-tab" data-tab="export">Export</button>
     </div>
 
     <div class="sidebar-body">
@@ -87,7 +91,7 @@
           <div id="dm-last-panel">
             <div class="row">
               <label>Days <span id="val-days">365</span></label>
-              <input type="range" id="inp-days" min="7" max="1825" value="365" step="1"/>
+              <input type="range" id="inp-days" min="7" max="7000" value="365" step="1"/>
             </div>
             <div class="row">
               <input type="number" id="inp-days-num" min="1" max="9999" value="365" placeholder="Type any number of days"/>
@@ -147,12 +151,14 @@
       </div>
 
       <!-- BOUNDARY TAB -->
-      <div class="tab-panel" data-panel="boundary">
+      
+
+<div class="tab-panel" data-panel="boundary">
         <div class="section">
           <div class="section-title">Boundary Shape</div>
           <div class="boundary-tabs">
             <button class="boundary-tab active" data-tab="presets">Presets</button>
-            <button class="boundary-tab" data-tab="countries">Countries</button>
+            <button class="boundary-tab" data-tab="countries">Region</button>
             <button class="boundary-tab" data-tab="file">File</button>
           </div>
           <div id="panel-presets" class="boundary-panel active">
@@ -214,6 +220,12 @@
             </div>
           </div>
           <div id="panel-countries" class="boundary-panel">
+            <div class="row" style="margin-bottom:6px">
+              <label style="font-size:10px">Continent</label>
+              <select id="inp-continent">
+                <option value="all">All continents</option>
+              </select>
+            </div>
             <div id="country-search-container">
               <input type="text" id="country-search" placeholder="Search countries..." autocomplete="off"/>
               <div id="country-dropdown"></div>
@@ -302,7 +314,9 @@
       </div>
 
       <!-- GRID TAB -->
-      <div class="tab-panel" data-panel="grid">
+      
+
+<div class="tab-panel" data-panel="grid">
         <div class="section">
           <div class="section-title">Grid Layout</div>
           <div class="row">
@@ -327,7 +341,10 @@
         </div>
 
         <!-- Camera -->
-        <div class="section">
+        
+      </div>
+<div class="tab-panel" data-panel="camera">
+<div class="section">
           <div class="section-title">Camera</div>
           <div class="row">
             <label>Yaw <span id="val-yaw">30°</span></label>
@@ -341,8 +358,9 @@
       </div>
 
       <!-- RENDER TAB -->
-      <div class="tab-panel" data-panel="render">
-        <div class="section">
+
+<div class="tab-panel" data-panel="style">
+<div class="section">
           <div class="section-title">Color Palette</div>
           <div id="palette-list" class="palette-list"></div>
           
@@ -376,8 +394,6 @@
               <option value="sqrt">Square root</option>
               <option value="cbrt">Cube root</option>
               <option value="log">Logarithmic</option>
-              <option value="quad">Quadratic</option>
-              <option value="inverse">Inverse</option>
             </select>
           </div>
         </div>
@@ -393,7 +409,10 @@
           </div>
         </div>
 
-        <div class="section">
+        
+      </div>
+<div class="tab-panel" data-panel="effects">
+<div class="section">
           <div class="section-title">Post-Processing</div>
           <div class="row-inline">
             <label style="font-size:10px;color:var(--muted);flex:1">Bloom</label>
@@ -403,15 +422,15 @@
             </label>
           </div>
           <div class="row">
-            <label>Bloom strength</label>
+            <label>Bloom strength <span id="val-bloom-strength">0.15</span></label>
             <input type="range" id="inp-bloom-strength" min="0" max="1" step="0.01" value="0.15"/>
           </div>
           <div class="row">
-            <label>Bloom radius</label>
+            <label>Bloom radius <span id="val-bloom-radius">0.50</span></label>
             <input type="range" id="inp-bloom-radius" min="0" max="1" step="0.01" value="0.5"/>
           </div>
           <div class="row">
-            <label>Bloom threshold</label>
+            <label>Bloom threshold <span id="val-bloom-threshold">0.30</span></label>
             <input type="range" id="inp-bloom-threshold" min="0" max="1" step="0.01" value="0.3"/>
           </div>
           <div class="row-inline">
@@ -422,7 +441,7 @@
             </label>
           </div>
           <div class="row">
-            <label>Fog density</label>
+            <label>Fog density <span id="val-fog-density">0.12</span></label>
             <input type="range" id="inp-fog-density" min="0" max="0.5" step="0.01" value="0.12"/>
           </div>
           <div class="row-inline">
@@ -445,6 +464,118 @@
         </div>
 
         <div class="section">
+          <div class="section-title">Ray Tracing</div>
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Ray traced rendering <span id="rt-status" style="color:var(--muted)"></span></label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-ray-tracing"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="row">
+            <label>Samples (quality)</label>
+            <select id="inp-rt-samples">
+              <option value="32">Low · 32</option>
+              <option value="64" selected>Medium · 64</option>
+              <option value="128">High · 128</option>
+              <option value="256">Ultra · 256</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Bounces <span id="val-rt-bounces">4</span></label>
+            <input type="range" id="inp-rt-bounces" min="1" max="8" step="1" value="4"/>
+          </div>
+          <div class="row-inline">
+            <label style="font-size:10px;color:var(--muted);flex:1">Denoise (final pass)</label>
+            <label class="toggle">
+              <input type="checkbox" id="inp-rt-denoise"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="row">
+            <label>Render scale</label>
+            <select id="inp-rt-scale">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+            </select>
+          </div>
+          <div class="rt-note" style="font-size:9px;color:var(--muted);line-height:1.5;margin-top:4px">
+            Ray tracing replaces the WebGL renderer with GPU path tracing (soft shadows, reflections, global illumination). Bloom and fog are bypassed while active. Requires WebGL2.
+          </div>
+        </div>
+
+        
+      </div>
+<div class="tab-panel" data-panel="theme">
+<div class="section">
+  <div class="section-title">Editor Colors</div>
+          <div class="theme-row">
+            <label>Accent</label>
+            <input type="color" id="inp-theme-accent" value="#39d353"/>
+            <input type="text" id="inp-theme-accent-hex" value="#39d353"/>
+          </div>
+          <div class="theme-row">
+            <label>Accent 2</label>
+            <input type="color" id="inp-theme-accent2" value="#1f6feb"/>
+            <input type="text" id="inp-theme-accent2-hex" value="#1f6feb"/>
+          </div>
+          <div class="theme-row">
+            <label>Background</label>
+            <input type="color" id="inp-theme-background" value="#080c10"/>
+            <input type="text" id="inp-theme-background-hex" value="#080c10"/>
+          </div>
+          <div class="theme-row">
+            <label>Surface</label>
+            <input type="color" id="inp-theme-surface" value="#0d1117"/>
+            <input type="text" id="inp-theme-surface-hex" value="#0d1117"/>
+          </div>
+          <div class="theme-row">
+            <label>Surface 2</label>
+            <input type="color" id="inp-theme-surface2" value="#161b22"/>
+            <input type="text" id="inp-theme-surface2-hex" value="#161b22"/>
+          </div>
+          <div class="theme-row">
+            <label>Surface 3</label>
+            <input type="color" id="inp-theme-surface3" value="#21262d"/>
+            <input type="text" id="inp-theme-surface3-hex" value="#21262d"/>
+          </div>
+          <div class="theme-row">
+            <label>Border</label>
+            <input type="color" id="inp-theme-border" value="#30363d"/>
+            <input type="text" id="inp-theme-border-hex" value="#30363d"/>
+          </div>
+          <div class="theme-row">
+            <label>Text</label>
+            <input type="color" id="inp-theme-text" value="#e6edf3"/>
+            <input type="text" id="inp-theme-text-hex" value="#e6edf3"/>
+          </div>
+          <div class="theme-row">
+            <label>Muted</label>
+            <input type="color" id="inp-theme-muted" value="#8b949e"/>
+            <input type="text" id="inp-theme-muted-hex" value="#8b949e"/>
+          </div>
+          <div class="theme-presets" id="theme-presets"></div>
+          <div style="margin-top:6px">
+            <button id="btn-theme-reset" style="font-size:10px;padding:3px 10px;background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer">Reset theme</button>
+          </div>
+          <div class="rt-note" style="font-size:9px;color:var(--muted);line-height:1.5;margin-top:6px">
+            Editor colors: panels, buttons, text. The 3D scene background is set in the Style tab's Background section.
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Widget Colors</div>
+          <div id="theme-widget-colors"></div>
+          <div class="rt-note" style="font-size:9px;color:var(--muted);line-height:1.5;margin-top:6px">
+            Each widget has an accent (primary) and a secondary (labels/captions) color. Leave on 'theme' to use the widget's default palette. Editor themes never touch widget colors.
+          </div>
+        </div>
+
+        
+      </div>
+<div class="tab-panel" data-panel="export">
+<div class="section">
           <div class="section-title">Export Settings</div>
           <div class="row">
             <label>Width (px)</label>
@@ -471,6 +602,26 @@
           <div class="row-inline">
             <label style="font-size:10px;color:var(--muted);flex:1">Crop padding (px)</label>
             <input type="number" id="inp-export-pad" value="40" min="0" max="200" style="width:60px;font-size:10px"/>
+          </div>
+          <div class="row">
+            <label>Title text</label>
+            <input type="text" id="inp-export-title" placeholder="Optional title for the render"/>
+          </div>
+          <div class="row">
+            <label>Format</label>
+            <select id="inp-export-format">
+              <option value="png" selected>PNG</option>
+              <option value="jpg">JPG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Scale</label>
+            <select id="inp-export-scale">
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+              <option value="3">3x</option>
+            </select>
           </div>
         </div>
       </div>
@@ -508,6 +659,6 @@
 </div>
 
 <!-- Three.js - loaded via npm package -->
-
+
 </body>
 </html>
