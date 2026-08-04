@@ -382,11 +382,25 @@ export function loadFromJson(data: DataExport): void {
   }
 
   // Stats
+  const exportDays: { date: string; contributionCount: number }[] = Array.isArray(data.days) ? data.days : [];
   updateState('contributions', {
     username: data.username,
     total: data.totalContributions,
-    days: [],
+    days: exportDays.map(d => ({
+      date: d.date,
+      contributionCount: d.contributionCount,
+      color: '',
+      weekday: new Date(d.date + 'T00:00:00Z').getUTCDay(),
+    })),
   });
+  if (Array.isArray(data.languages)) {
+    updateState('languages', data.languages.map(l => ({
+      name: l.name,
+      color: l.color,
+      size: 0,
+      percentage: l.percentage,
+    })));
+  }
   setText('stat-contrib', (data.totalContributions ?? 0).toLocaleString());
   setText('stat-cells', String(data.grid.cells.length));
   setText('footer-gen', `generated ${new Date(data.generated).toLocaleDateString()}`);

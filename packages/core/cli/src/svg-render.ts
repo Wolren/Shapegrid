@@ -34,7 +34,7 @@ export interface DataExport {
     minLat: number; maxLat: number;
   };
   coordSystem?: 'planar' | 'wgs84' | 'mercator';
-  config: Pick<ShapegridConfig, 'camera' | 'render' | 'theme'>;
+  config: Pick<ShapegridConfig, 'camera' | 'render' | 'theme' | 'dashboard'>;
 }
 
 // ─── SVG generator (server-side, no WebGL needed) ────────────────────────────

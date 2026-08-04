@@ -72,7 +72,7 @@ async function main() {
     ],
   };
 
-  if (!puppeteer.executablePath) {
+  if (typeof puppeteer.executablePath !== 'string') {
     const chromePaths = [
       process.env.CHROME_PATH, process.env.CHROMIUM_PATH,
       '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',

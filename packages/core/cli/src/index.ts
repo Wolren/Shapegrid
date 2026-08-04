@@ -234,6 +234,7 @@ async function runGenerate(cfg: ShapegridConfig, configDir: string) {
       camera: cfg.camera,
       render: cfg.render,
       theme: cfg.theme,
+      dashboard: cfg.dashboard ?? undefined,
     },
   };
 

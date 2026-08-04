@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "generated": "2026-08-04T11:27:37.964Z",
+  "generated": "2026-08-04T19:27:55.703Z",
   "username": "Wolren",
-  "totalContributions": 3717,
+  "totalContributions": 3731,
   "grid": {
     "type": "square",
     "count": 1095,
@@ -7670,8 +7670,8 @@
         "cx": 0.8674965734887112,
         "cy": 0.9429310581399035,
         "date": "2026-08-04",
-        "count": 8,
-        "intensity": 0.03319502074688797
+        "count": 22,
+        "intensity": 0.0912863070539419
       }
     ]
   },
@@ -12640,129 +12640,129 @@
     },
     {
       "date": "2026-08-04",
-      "contributionCount": 8
+      "contributionCount": 22
     }
   ],
   "languages": [
     {
       "name": "Python",
       "color": "#3572A5",
-      "percentage": 31.026073494613676
+      "percentage": 30.92938708511101
     },
     {
       "name": "Rust",
       "color": "#dea584",
-      "percentage": 16.918081596600373
+      "percentage": 16.962031678133872
     },
     {
       "name": "TypeScript",
       "color": "#3178c6",
-      "percentage": 13.118146580888332
+      "percentage": 13.282475061131219
     },
     {
       "name": "Kotlin",
       "color": "#A97BFF",
-      "percentage": 12.684964193241546
+      "percentage": 12.645434097925834
     },
     {
       "name": "HTML",
       "color": "#e34c26",
-      "percentage": 11.942660331319386
+      "percentage": 11.905443474099421
     },
     {
       "name": "Java",
       "color": "#b07219",
-      "percentage": 7.27127579264243
+      "percentage": 7.248616349480335
     },
     {
       "name": "JavaScript",
       "color": "#f1e05a",
-      "percentage": 1.4079207202081645
+      "percentage": 1.4132824405200608
     },
     {
       "name": "Shell",
       "color": "#89e051",
-      "percentage": 1.0923718476838282
+      "percentage": 1.0889676943412314
     },
     {
       "name": "CSS",
       "color": "#663399",
-      "percentage": 1.0693388935814285
+      "percentage": 1.0660065177272977
     },
     {
       "name": "C#",
       "color": "#178600",
-      "percentage": 0.6881733879898954
+      "percentage": 0.6860288364400005
     },
     {
       "name": "PHP",
       "color": "#4F5D95",
-      "percentage": 0.6247829562029981
+      "percentage": 0.6228359479628411
     },
     {
       "name": "QML",
       "color": "#44a51c",
-      "percentage": 0.6053275162203018
+      "percentage": 0.6034411368778861
     },
     {
       "name": "WGSL",
       "color": "#1a5e9a",
-      "percentage": 0.5445011139235549
+      "percentage": 0.542804287617622
     },
     {
       "name": "C++",
       "color": "#f34b7d",
-      "percentage": 0.3347964182240475
+      "percentage": 0.3337530936925674
     },
     {
       "name": "PowerShell",
       "color": "#012456",
-      "percentage": 0.20794625655592455
+      "percentage": 0.20729823459725155
     },
     {
       "name": "Scheme",
       "color": "#1e4aec",
-      "percentage": 0.1921289665254689
+      "percentage": 0.19153023591464796
     },
     {
       "name": "TeX",
       "color": "#3D6117",
-      "percentage": 0.0826812887955636
+      "percentage": 0.08242362947724594
     },
     {
       "name": "R",
       "color": "#198CE7",
-      "percentage": 0.05581961498152036
+      "percentage": 0.055645664573218734
     },
     {
       "name": "SCSS",
       "color": "#c6538c",
-      "percentage": 0.045823364874649705
+      "percentage": 0.04568056573437727
     },
     {
       "name": "ShaderLab",
       "color": "#222c37",
-      "percentage": 0.030378552101209176
+      "percentage": 0.030283883559633473
     },
     {
       "name": "C",
       "color": "#555555",
-      "percentage": 0.025007949790758734
+      "percentage": 0.02493001763235296
     },
     {
       "name": "FreeMarker",
       "color": "#0050b2",
-      "percentage": 0.022729774939712823
+      "percentage": 0.022658942247071066
     },
     {
       "name": "Swift",
       "color": "#F05138",
-      "percentage": 0.005318628739704144
+      "percentage": 0.005302054321532635
     },
     {
       "name": "CMake",
       "color": "#DA3434",
-      "percentage": 0.003750759355524258
+      "percentage": 0.0037390708814717117
     }
   ],
   "config": {
@@ -12780,6 +12780,284 @@
     },
     "theme": {
       "palette": "pastel"
+    },
+    "dashboard": {
+      "collapsed": false,
+      "layout": "floating",
+      "widgets": [
+        {
+          "id": "legend",
+          "title": "Legend",
+          "visible": true,
+          "position": "bottomLeft",
+          "order": 0,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "width": 180,
+            "scale": 1.15,
+            "accent": "#2dd4bf",
+            "secondary": "#0f766e"
+          },
+          "customPos": {
+            "x": 22.98780487804878,
+            "y": 75.01537494593425
+          }
+        },
+        {
+          "id": "stats",
+          "title": "Statistics",
+          "visible": true,
+          "position": "topRight",
+          "order": 1,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "width": 220,
+            "scale": 1.2,
+            "accent": "#22d3ee",
+            "secondary": "#0891b2"
+          },
+          "customPos": {
+            "x": 61.951219512195124,
+            "y": 11.030372698826774
+          }
+        },
+        {
+          "id": "distribution",
+          "title": "Distribution",
+          "visible": false,
+          "position": "bottomLeft",
+          "order": 2,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "bins": 8,
+            "width": 200,
+            "height": 130,
+            "scale": 1,
+            "accent": "#22d3ee",
+            "secondary": "#0891b2"
+          },
+          "customPos": null
+        },
+        {
+          "id": "timeline",
+          "title": "Timeline",
+          "visible": true,
+          "position": "left",
+          "order": 3,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "days": 90,
+            "width": 180,
+            "height": 110,
+            "scale": 1.15,
+            "accent": "#2dd4bf",
+            "secondary": "#0f766e"
+          },
+          "customPos": {
+            "x": 66.89024390243902,
+            "y": 78.68320064698673
+          }
+        },
+        {
+          "id": "activity",
+          "title": "Activity",
+          "visible": false,
+          "position": "bottomRight",
+          "order": 4,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "days": 49,
+            "width": 180,
+            "height": 110,
+            "scale": 1,
+            "accent": "#67e8f9",
+            "secondary": "#0e7490"
+          },
+          "customPos": null
+        },
+        {
+          "id": "topCells",
+          "title": "Top Cells",
+          "visible": false,
+          "position": "topLeft",
+          "order": 5,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "maxItems": 5,
+            "width": 200,
+            "height": 150,
+            "scale": 1,
+            "accent": "#22d3ee",
+            "secondary": "#0891b2"
+          },
+          "customPos": null
+        },
+        {
+          "id": "languages",
+          "title": "Languages",
+          "visible": true,
+          "position": "bottomRight",
+          "order": 6,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "maxItems": 10,
+            "width": 200,
+            "scale": 1.3,
+            "accent": "#2dd4bf",
+            "secondary": "#0f766e"
+          },
+          "customPos": {
+            "x": 75.67073170731707,
+            "y": 37.2895026289468
+          }
+        },
+        {
+          "id": "cellInfo",
+          "title": "Cell Info",
+          "visible": false,
+          "position": "bottomLeft",
+          "order": 7,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "width": 200,
+            "scale": 1,
+            "accent": "#67e8f9",
+            "secondary": "#0e7490"
+          },
+          "customPos": {
+            "x": 0.24390243902439024,
+            "y": 79.58477508650519
+          }
+        },
+        {
+          "id": "scaleBar",
+          "title": "Scale",
+          "visible": false,
+          "position": "bottomLeft",
+          "order": 8,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "width": 180,
+            "scale": 1,
+            "accent": "#2dd4bf",
+            "secondary": "#0f766e"
+          },
+          "customPos": null
+        },
+        {
+          "id": "coordinates",
+          "title": "Coordinates",
+          "visible": false,
+          "position": "bottomRight",
+          "order": 9,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "decimals": 2,
+            "width": 160,
+            "scale": 1,
+            "accent": "#94a3b8",
+            "secondary": "#64748b"
+          },
+          "customPos": null
+        },
+        {
+          "id": "weekday",
+          "title": "Weekday",
+          "visible": false,
+          "position": "bottomRight",
+          "order": 10,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "width": 180,
+            "height": 130,
+            "scale": 1,
+            "accent": "#2dd4bf",
+            "secondary": "#0f766e"
+          },
+          "customPos": {
+            "x": 80.60975609756098,
+            "y": 72.67012546631703
+          }
+        },
+        {
+          "id": "streak",
+          "title": "Streak",
+          "visible": true,
+          "position": "topRight",
+          "order": 11,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "fontSize": 10,
+            "scale": 1.2,
+            "accent": "#22d3ee",
+            "secondary": "#0891b2"
+          },
+          "customPos": {
+            "x": 23.075204244474083,
+            "y": 61.528259770130475
+          }
+        },
+        {
+          "id": "monthly",
+          "title": "Monthly",
+          "visible": false,
+          "position": "bottomLeft",
+          "order": 12,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "height": 130,
+            "scale": 1,
+            "accent": "#2dd4bf",
+            "secondary": "#0f766e"
+          },
+          "customPos": null
+        },
+        {
+          "id": "geo",
+          "title": "Geo Info",
+          "visible": false,
+          "position": "topLeft",
+          "order": 13,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "fontSize": 10,
+            "scale": 1,
+            "accent": "#67e8f9",
+            "secondary": "#0e7490"
+          },
+          "customPos": null
+        },
+        {
+          "id": "minimap",
+          "title": "Mini Map",
+          "visible": false,
+          "position": "topLeft",
+          "order": 14,
+          "settings": {
+            "locked": false,
+            "opacity": 1,
+            "height": 160,
+            "scale": 1,
+            "accent": "#2dd4bf",
+            "secondary": "#0f766e"
+          },
+          "customPos": null
+        }
+      ]
     }
   }
 }

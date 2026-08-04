@@ -326,11 +326,24 @@ export interface DataExportTheme {
   colors?: ThemeColors;
 }
 
+export interface DataExportDay {
+  date: string;
+  contributionCount: number;
+}
+
+export interface DataExportLanguage {
+  name: string;
+  color: string;
+  percentage: number;
+}
+
 export interface DataExport {
   version: number;
   generated: string;
   username: string;
   totalContributions: number;
+  days?: DataExportDay[];
+  languages?: DataExportLanguage[];
   grid: DataExportGrid;
   boundary: Point2D[];
   geoBounds?: GeoBounds;
