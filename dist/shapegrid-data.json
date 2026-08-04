@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "generated": "2026-08-04T19:35:47.153Z",
+  "generated": "2026-08-04T19:47:29.959Z",
   "username": "Wolren",
-  "totalContributions": 3732,
+  "totalContributions": 3731,
   "grid": {
     "type": "square",
     "count": 1095,
@@ -7670,8 +7670,8 @@
         "cx": 0.8674965734887112,
         "cy": 0.9429310581399035,
         "date": "2026-08-04",
-        "count": 23,
-        "intensity": 0.0954356846473029
+        "count": 22,
+        "intensity": 0.0912863070539419
       }
     ]
   },
@@ -12640,136 +12640,136 @@
     },
     {
       "date": "2026-08-04",
-      "contributionCount": 23
+      "contributionCount": 22
     }
   ],
   "languages": [
     {
       "name": "Python",
       "color": "#3572A5",
-      "percentage": 30.92938708511101
+      "percentage": 30.92725857582806
     },
     {
       "name": "Rust",
       "color": "#dea584",
-      "percentage": 16.962031678133872
+      "percentage": 16.960864379157485
     },
     {
       "name": "TypeScript",
       "color": "#3178c6",
-      "percentage": 13.282475061131219
+      "percentage": 13.287890198730462
     },
     {
       "name": "Kotlin",
       "color": "#A97BFF",
-      "percentage": 12.645434097925834
+      "percentage": 12.644563860058195
     },
     {
       "name": "HTML",
       "color": "#e34c26",
-      "percentage": 11.905443474099421
+      "percentage": 11.90462416116307
     },
     {
       "name": "Java",
       "color": "#b07219",
-      "percentage": 7.248616349480335
+      "percentage": 7.248117511687462
     },
     {
       "name": "JavaScript",
       "color": "#f1e05a",
-      "percentage": 1.4132824405200608
+      "percentage": 1.4137377998541432
     },
     {
       "name": "Shell",
       "color": "#89e051",
-      "percentage": 1.0889676943412314
+      "percentage": 1.0888927533849215
     },
     {
       "name": "CSS",
       "color": "#663399",
-      "percentage": 1.0660065177272977
+      "percentage": 1.0659331569212
     },
     {
       "name": "C#",
       "color": "#178600",
-      "percentage": 0.6860288364400005
+      "percentage": 0.6859816250697034
     },
     {
       "name": "PHP",
       "color": "#4F5D95",
-      "percentage": 0.6228359479628411
+      "percentage": 0.6227930854226509
     },
     {
       "name": "QML",
       "color": "#44a51c",
-      "percentage": 0.6034411368778861
+      "percentage": 0.6033996090565289
     },
     {
       "name": "WGSL",
       "color": "#1a5e9a",
-      "percentage": 0.542804287617622
+      "percentage": 0.5427669327239787
     },
     {
       "name": "C++",
       "color": "#f34b7d",
-      "percentage": 0.3337530936925674
+      "percentage": 0.3337301253564609
     },
     {
       "name": "PowerShell",
       "color": "#012456",
-      "percentage": 0.20729823459725155
+      "percentage": 0.20728396867547735
     },
     {
       "name": "Scheme",
       "color": "#1e4aec",
-      "percentage": 0.19153023591464796
+      "percentage": 0.19151705512047357
     },
     {
       "name": "TeX",
       "color": "#3D6117",
-      "percentage": 0.08242362947724594
+      "percentage": 0.08241795721933814
     },
     {
       "name": "R",
       "color": "#198CE7",
-      "percentage": 0.055645664573218734
+      "percentage": 0.05564183513058303
     },
     {
       "name": "SCSS",
       "color": "#c6538c",
-      "percentage": 0.04568056573437727
+      "percentage": 0.045677422073368126
     },
     {
       "name": "ShaderLab",
       "color": "#222c37",
-      "percentage": 0.030283883559633473
+      "percentage": 0.030281799472835925
     },
     {
       "name": "C",
       "color": "#555555",
-      "percentage": 0.02493001763235296
+      "percentage": 0.02492830198975686
     },
     {
       "name": "FreeMarker",
       "color": "#0050b2",
-      "percentage": 0.022658942247071066
+      "percentage": 0.02265738289612816
     },
     {
       "name": "Swift",
       "color": "#F05138",
-      "percentage": 0.005302054321532635
+      "percentage": 0.005301689442920233
     },
     {
       "name": "CMake",
       "color": "#DA3434",
-      "percentage": 0.0037390708814717117
+      "percentage": 0.0037388135647955386
     }
   ],
   "config": {
     "camera": {
-      "yaw": 30,
-      "pitch": 50,
-      "zoom": 1.1658
+      "yaw": 31.2,
+      "pitch": 40.1,
+      "zoom": 0.8290339464282099
     },
     "render": {
       "heightScale": 1,
@@ -12788,16 +12788,16 @@
         {
           "id": "legend",
           "title": "Legend",
-          "visible": true,
+          "visible": false,
           "position": "bottomLeft",
           "order": 0,
           "settings": {
             "locked": false,
             "opacity": 1,
             "width": 180,
-            "scale": 1.15,
-            "accent": "#2dd4bf",
-            "secondary": "#0f766e"
+            "scale": 1.3,
+            "accent": "#c9d1d9",
+            "secondary": "#8b949e"
           },
           "customPos": {
             "x": 22.98780487804878,
@@ -12814,13 +12814,13 @@
             "locked": false,
             "opacity": 1,
             "width": 220,
-            "scale": 1.2,
-            "accent": "#22d3ee",
-            "secondary": "#0891b2"
+            "scale": 1.35,
+            "accent": "#e6edf3",
+            "secondary": "#8b949e"
           },
           "customPos": {
-            "x": 61.951219512195124,
-            "y": 11.030372698826774
+            "x": 68.7794755144817,
+            "y": 6.897347526154303
           }
         },
         {
@@ -12836,15 +12836,15 @@
             "width": 200,
             "height": 130,
             "scale": 1,
-            "accent": "#22d3ee",
-            "secondary": "#0891b2"
+            "accent": "#b6c2cf",
+            "secondary": "#6e7681"
           },
           "customPos": null
         },
         {
           "id": "timeline",
           "title": "Timeline",
-          "visible": true,
+          "visible": false,
           "position": "left",
           "order": 3,
           "settings": {
@@ -12854,12 +12854,12 @@
             "width": 180,
             "height": 110,
             "scale": 1.15,
-            "accent": "#2dd4bf",
-            "secondary": "#0f766e"
+            "accent": "#e6edf3",
+            "secondary": "#8b949e"
           },
           "customPos": {
-            "x": 66.89024390243902,
-            "y": 78.68320064698673
+            "x": 23.47560975609756,
+            "y": 76.23606399131344
           }
         },
         {
@@ -12875,8 +12875,8 @@
             "width": 180,
             "height": 110,
             "scale": 1,
-            "accent": "#67e8f9",
-            "secondary": "#0e7490"
+            "accent": "#c9d1d9",
+            "secondary": "#6e7681"
           },
           "customPos": null
         },
@@ -12893,8 +12893,8 @@
             "width": 200,
             "height": 150,
             "scale": 1,
-            "accent": "#22d3ee",
-            "secondary": "#0891b2"
+            "accent": "#d0d7de",
+            "secondary": "#6e7681"
           },
           "customPos": null
         },
@@ -12909,13 +12909,13 @@
             "opacity": 1,
             "maxItems": 10,
             "width": 200,
-            "scale": 1.3,
-            "accent": "#2dd4bf",
-            "secondary": "#0f766e"
+            "scale": 1.5,
+            "accent": "#d0d7de",
+            "secondary": "#6e7681"
           },
           "customPos": {
-            "x": 75.67073170731707,
-            "y": 37.2895026289468
+            "x": 13.292682926829269,
+            "y": 61.34564004829873
           }
         },
         {
@@ -12929,8 +12929,8 @@
             "opacity": 1,
             "width": 200,
             "scale": 1,
-            "accent": "#67e8f9",
-            "secondary": "#0e7490"
+            "accent": "#c9d1d9",
+            "secondary": "#6e7681"
           },
           "customPos": {
             "x": 0.24390243902439024,
@@ -12948,8 +12948,8 @@
             "opacity": 1,
             "width": 180,
             "scale": 1,
-            "accent": "#2dd4bf",
-            "secondary": "#0f766e"
+            "accent": "#c9d1d9",
+            "secondary": "#8b949e"
           },
           "customPos": null
         },
@@ -12965,8 +12965,8 @@
             "decimals": 2,
             "width": 160,
             "scale": 1,
-            "accent": "#94a3b8",
-            "secondary": "#64748b"
+            "accent": "#9da7b3",
+            "secondary": "#6e7681"
           },
           "customPos": null
         },
@@ -12982,8 +12982,8 @@
             "width": 180,
             "height": 130,
             "scale": 1,
-            "accent": "#2dd4bf",
-            "secondary": "#0f766e"
+            "accent": "#c9d1d9",
+            "secondary": "#8b949e"
           },
           "customPos": {
             "x": 80.60975609756098,
@@ -12993,7 +12993,7 @@
         {
           "id": "streak",
           "title": "Streak",
-          "visible": true,
+          "visible": false,
           "position": "topRight",
           "order": 11,
           "settings": {
@@ -13001,12 +13001,12 @@
             "opacity": 1,
             "fontSize": 10,
             "scale": 1.2,
-            "accent": "#22d3ee",
-            "secondary": "#0891b2"
+            "accent": "#e6edf3",
+            "secondary": "#8b949e"
           },
           "customPos": {
-            "x": 23.075204244474083,
-            "y": 61.528259770130475
+            "x": 23.19715546398628,
+            "y": 59.26566470453071
           }
         },
         {
@@ -13020,8 +13020,8 @@
             "opacity": 1,
             "height": 130,
             "scale": 1,
-            "accent": "#2dd4bf",
-            "secondary": "#0f766e"
+            "accent": "#d0d7de",
+            "secondary": "#6e7681"
           },
           "customPos": null
         },
@@ -13036,8 +13036,8 @@
             "opacity": 1,
             "fontSize": 10,
             "scale": 1,
-            "accent": "#67e8f9",
-            "secondary": "#0e7490"
+            "accent": "#c9d1d9",
+            "secondary": "#6e7681"
           },
           "customPos": null
         },
@@ -13052,8 +13052,8 @@
             "opacity": 1,
             "height": 160,
             "scale": 1,
-            "accent": "#2dd4bf",
-            "secondary": "#0f766e"
+            "accent": "#c9d1d9",
+            "secondary": "#8b949e"
           },
           "customPos": null
         }
