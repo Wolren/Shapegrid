@@ -48,6 +48,8 @@ export interface ShapegridConfig {
         showBoundary: boolean;
         background: string;
         gap: number;
+        /** Intensity scale mode: linear | sqrt | cbrt | log (default linear) */
+        scaleMode?: 'linear' | 'sqrt' | 'cbrt' | 'log';
     };
     output: {
         dir: string;

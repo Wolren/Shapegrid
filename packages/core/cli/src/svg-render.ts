@@ -72,6 +72,17 @@ export function generateSvg(data: DataExport, cfg: ShapegridConfig): string {
   const zoom = cfg.camera.zoom ?? 1.0; // 1.0 = normal, <1 = zoomed in, >1 = zoomed out
   // If dayBorder is set, empty days render as a subtle outline (translucent fill)
   const dayBorder = cfg.theme?.dayBorder ?? '';
+  // Intensity scale mode mirrors the web viewer (scene.ts scaleIntensity): the
+  // transform is applied to BOTH extrusion height and colour ramp so tall
+  // outliers don't dominate the visual field (e.g. cbrt tames a 241-day spike).
+  const scaleMode = cfg.render.scaleMode ?? 'linear';
+  const scaleIntensity = (raw: number): number => {
+    const clamped = Math.max(0, Math.min(1, raw));
+    if (scaleMode === 'sqrt') return Math.sqrt(clamped);
+    if (scaleMode === 'cbrt') return Math.cbrt(clamped);
+    if (scaleMode === 'log') return clamped <= 0 ? 0 : Math.log(1 + clamped * 9) / Math.log(10);
+    return clamped;
+  };
 
   // Isometric projection parameters
   const ISO_YAW = (cfg.camera.yaw ?? 30) * Math.PI / 180;
@@ -148,8 +159,9 @@ export function generateSvg(data: DataExport, cfg: ShapegridConfig): string {
 
   // Generate 3D cell geometry
   function renderCell3D(cell: CellRenderData): string {
-    const h = cell.intensity * maxExtrusion;
-    const pal = paletteFor(intensityToColor(cell.intensity, colorScale));
+    const scaled = scaleIntensity(cell.intensity);
+    const h = scaled * maxExtrusion;
+    const pal = paletteFor(intensityToColor(scaled, colorScale));
 
     // Empty day with dayBorder set: flat subtle outline (translucent fill so the
     // grid still reads as a solid surface instead of punched-out holes).

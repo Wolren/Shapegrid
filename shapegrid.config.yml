@@ -49,9 +49,9 @@ boundary:
 
   # 6. External file (GeoJSON or SVG)
   type: file
-  path: ./poland.json
+  path: ./boundary-export.json
   format: geojson   # or "svg" (auto-detected from extension if omitted)
-  coordinateSystem: wgs84  # only used for GeoJSON files
+  coordinateSystem: planar  # only used for GeoJSON files
 
 # ─── Grid layout ──────────────────────────────────────────────────────────────
 grid:
@@ -64,7 +64,7 @@ grid:
 
   # How much of a cell must be inside the boundary to be included (0–1).
   # Lower values allow more border cells; higher values are stricter.
-  coverageThreshold: 0.4
+  coverageThreshold: 0.3
 
 # ─── Camera / projection ──────────────────────────────────────────────────────
 camera:
@@ -76,7 +76,7 @@ camera:
 
   # Zoom level for SVG/PNG export (lower = more zoomed in)
   # 0.3 = tight crop, 0.5 = moderate, 1.0 = full view
-  zoom: 0.3
+  zoom: 1.1658
 
 # ─── Visual style / Theme ─────────────────────────────────────────────────────
 theme:
@@ -86,8 +86,10 @@ theme:
   
   # Border color for empty days (no contributions). When set, empty days render
   # as border-only instead of filled. Useful on light backgrounds.
+  # Left empty on purpose: the dark theme fills empty days with the flat floor
+  # colour, which reads as a solid surface instead of a white mesh.
   # Example: "#cccccc" for light gray on white, "#ffffff" for white on dark
-  dayBorder: "#ffffff"
+  # dayBorder: "#ffffff"
   
   # Custom palette example (uncomment to use instead of built-in palette):
   # customPalette:
@@ -140,6 +142,11 @@ render:
   # Gap between cells (fraction of cell size, 0.0–0.4)
   gap: 0.05
 
+  # Intensity scale mode: linear | sqrt | cbrt | log
+  # cbrt compresses extreme outliers (e.g. a single 241-contribution day)
+  # so the tallest bar doesn't dominate the whole grid.
+  scaleMode: cbrt
+
 # ─── Date range ───────────────────────────────────────────────────────────────
 dateRange:
   # Last N days ending today (most common)
@@ -161,4 +168,4 @@ output:
 
   # Export dimensions for PNG/SVG (200 to 4096)
   width: 1200
-  height: 630
+  height: 600
