@@ -88,7 +88,7 @@ jobs:
           npm init -y 2>&1 | tail -1
           npm install puppeteer@25.4.0 2>&1 | tail -5
           cd "$GITHUB_WORKSPACE"
-          NODE_PATH=/tmp/puppeteer-install/node_modules node scripts/render-png-ci.js docs docs/assets/shapegrid.png 1200 600
+          NODE_PATH=/tmp/puppeteer-install/node_modules node scripts/render-png-ci.js docs docs/assets/shapegrid.png
 
       - name: Commit and push generated assets
         run: |

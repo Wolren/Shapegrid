@@ -134,6 +134,10 @@ function widgetOrigin(ctx, wPx, hPx) {
     return { x, y };
 }
 /** SVG group wrapper: panel frame (accent border/header), title, body. */
+/** Bounding boxes of every rendered widget frame, in output coords. Filled by
+ * widgetFrame during renderDashboardWidgets; used by svg-render to trim the
+ * SVG viewBox to the union of grid + widgets (bounding box from all sides). */
+const widgetBBoxes = [];
 function widgetFrame(ctx, bodySvg, wPx, hPx, bodyYOffset) {
     const accent = ctx.accent;
     const secondary = ctx.secondary;
@@ -146,6 +150,7 @@ function widgetFrame(ctx, bodySvg, wPx, hPx, bodyYOffset) {
     const headerH = 22 * scale;
     const x = origin.x;
     const y = origin.y;
+    widgetBBoxes.push({ x0: x, y0: y, x1: x + wPx, y1: y + headerH + hPx + bodyYOffset });
     const titleY = y + 10 * scale;
     const bodyX = x;
     const bodyY = y + headerH;
@@ -363,13 +368,14 @@ const RENDERERS = {
  * the dashboard section is absent or no widget is visible/supported.
  */
 export function renderDashboardWidgets(data, widgets, W, H) {
+    widgetBBoxes.length = 0;
     if (!widgets || widgets.length === 0)
-        return '';
+        return { svg: '', bbox: null };
     const visible = widgets
         .filter(w => w.visible !== false && RENDERERS[w.id])
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     if (visible.length === 0)
-        return '';
+        return { svg: '', bbox: null };
     const out = [];
     for (const w of visible) {
         const settings = w.settings ?? {};
@@ -389,6 +395,14 @@ export function renderDashboardWidgets(data, widgets, W, H) {
             console.warn(`[shapegrid] widget "${w.id}" render failed:`, e);
         }
     }
-    return out.join('\n');
+    const bbox = widgetBBoxes.length === 0
+        ? null
+        : {
+            x0: Math.min(...widgetBBoxes.map(b => b.x0)),
+            y0: Math.min(...widgetBBoxes.map(b => b.y0)),
+            x1: Math.max(...widgetBBoxes.map(b => b.x1)),
+            y1: Math.max(...widgetBBoxes.map(b => b.y1)),
+        };
+    return { svg: out.join('\n'), bbox };
 }
 //# sourceMappingURL=svg-widgets.js.map

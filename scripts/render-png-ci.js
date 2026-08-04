@@ -13,7 +13,7 @@ const { join } = require('path');
 const { createServer } = require('http');
 
 async function main() {
-  const [, , viewerDir, outputPath, width = '1200', height = '800'] = process.argv;
+  const [, , viewerDir, outputPath, width = '1350', height = '833'] = process.argv;
   if (!viewerDir || !outputPath) {
     console.error('Usage: node scripts/render-png-ci.js <viewerDir> <outputPath> [width] [height]');
     process.exit(1);
@@ -147,13 +147,30 @@ async function main() {
     // Settle after CSS injection
     await new Promise(r => setTimeout(r, 500));
 
-    // Capture the full app container
-    const app = await page.$('#app');
-    if (!app) throw new Error('#app not found');
+    // Use the app's own export pipeline: captureFinalRender() produces exactly
+    // what the webview Export button produces - default resolution = the
+    // webview canvas size (1350x833), output trimmed to the union bounding box
+    // of grid + widgets from all sides.
+    const result = await page.evaluate(async () => {
+      const fn = window.captureFinalRender;
+      if (typeof fn !== 'function') return { ok: false, reason: 'captureFinalRender not exposed' };
+      const r = await fn();
+      if (!r) return { ok: false, reason: 'capture returned null' };
+      return { ok: true, w: r.w, h: r.h, dataUrl: r.canvas.toDataURL('image/png') };
+    });
 
-    const buffer = await app.screenshot({ type: 'png', omitBackground: false });
-    writeFileSync(outputPath, buffer);
-    console.log(`PNG saved to ${outputPath} (${(buffer.length / 1024).toFixed(0)} KB)`);
+    if (result && result.ok && result.dataUrl) {
+      const b64 = result.dataUrl.split(',')[1];
+      writeFileSync(outputPath, Buffer.from(b64, 'base64'));
+      console.log(`PNG saved to ${outputPath} (${result.w}x${result.h}, ${(b64.length * 0.75 / 1024).toFixed(0)} KB)`);
+    } else {
+      console.error(`captureFinalRender unavailable (${result?.reason ?? 'unknown'}), falling back to raw screenshot`);
+      const app = await page.$('#app');
+      if (!app) throw new Error('#app not found');
+      const buffer = await app.screenshot({ type: 'png', omitBackground: false });
+      writeFileSync(outputPath, buffer);
+      console.log(`PNG saved to ${outputPath} (raw screenshot, ${(buffer.length / 1024).toFixed(0)} KB)`);
+    }
   } finally {
     await browser.close();
     server.close();

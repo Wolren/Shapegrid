@@ -11,8 +11,15 @@ import { notifyRTViewChanged, ensureRTSamples, isRTAvailable } from './rt';
 import { showExportModal } from './export-modal';
 
 export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement; w: number; h: number; format: string; scale: number } | null> {
-  let w = +(document.getElementById('inp-export-w') as HTMLInputElement).value;
-  let h = +(document.getElementById('inp-export-h') as HTMLInputElement).value;
+  const wrap = document.getElementById('canvas-wrap')!;
+  const wrapRect = wrap.getBoundingClientRect();
+  if (wrapRect.width < 10 || wrapRect.height < 10) return null;
+  // Default export resolution = the webview's own canvas size, so the
+  // export matches what the user sees (blank inputs fall back to it).
+  const wIn = (document.getElementById('inp-export-w') as HTMLInputElement).value;
+  const hIn = (document.getElementById('inp-export-h') as HTMLInputElement).value;
+  let w = wIn ? Math.round(+wIn) : Math.round(wrapRect.width);
+  let h = hIn ? Math.round(+hIn) : Math.round(wrapRect.height);
   const autocrop = (document.getElementById('inp-export-autocrop') as HTMLInputElement).checked;
   const vertical = (document.getElementById('inp-export-vertical') as HTMLInputElement).checked;
   const padding = +(document.getElementById('inp-export-pad') as HTMLInputElement).value || 40;
@@ -26,10 +33,6 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
 
   // Swap for vertical/portrait
   if (vertical) { const t = w; w = h; h = t; }
-
-  const wrap = document.getElementById('canvas-wrap')!;
-  const wrapRect = wrap.getBoundingClientRect();
-  if (wrapRect.width < 10 || wrapRect.height < 10) return null;
 
   const origW = renderer.domElement.width, origH = renderer.domElement.height;
   const origLeft = camera.left, origRight = camera.right;
@@ -125,6 +128,16 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
     // Widgets: capture each widget DOM subtree and draw it at its position
     const widgets = wrap.querySelectorAll<HTMLElement>('.dashboard-widget');
     const widgetScale = Math.min(Math.max(w / wrapRect.width, 0.5), 3);
+    // Union bounding box of grid + widgets, used to trim the export from all
+    // sides so the output tightly fits the content (grid AABB is the camera
+    // view; widgets extend it to their own rects).
+    let bbox: { x0: number; y0: number; x1: number; y1: number } = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    let hasWidgets = false;
+    const union = (x0: number, y0: number, x1: number, y1: number) => {
+      hasWidgets = true;
+      bbox.x0 = Math.min(bbox.x0, x0); bbox.y0 = Math.min(bbox.y0, y0);
+      bbox.x1 = Math.max(bbox.x1, x1); bbox.y1 = Math.max(bbox.y1, y1);
+    };
     for (const el of widgets) {
       const r = el.getBoundingClientRect();
       // Skip widgets outside the visible wrap area
@@ -135,6 +148,7 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
       const dy = ((r.top - wrapRect.top) / wrapRect.height) * h;
       const dw = (r.width / wrapRect.width) * w;
       const dh = (r.height / wrapRect.height) * h;
+      union(dx, dy, dx + dw, dy + dh);
 
       try {
         const widgetCanvas = await html2canvas(el, {
@@ -158,6 +172,21 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
       ctx.fillText(titleText, w / 2 + 3, 56 * w / 1200 + 3);
       ctx.fillStyle = '#e6edf3';
       ctx.fillText(titleText, w / 2, 56 * w / 1200);
+    }
+
+    // ── Trim: crop the output to the widget bounding box (all sides) ─────
+    if (hasWidgets) {
+      const x0 = Math.max(0, Math.floor(bbox.x0));
+      const y0 = Math.max(0, Math.floor(bbox.y0));
+      const x1 = Math.min(w, Math.ceil(bbox.x1));
+      const y1 = Math.min(h, Math.ceil(bbox.y1));
+      const tw = x1 - x0, th = y1 - y0;
+      if (tw > 0 && th > 0 && (tw !== w || th !== h)) {
+        const trimmed = document.createElement('canvas');
+        trimmed.width = tw; trimmed.height = th;
+        trimmed.getContext('2d')!.drawImage(out, x0, y0, tw, th, 0, 0, tw, th);
+        return { canvas: trimmed, w: tw, h: th, format: exportFormat, scale: exportScale };
+      }
     }
 
     return { canvas: out, w, h, format: exportFormat, scale: exportScale };

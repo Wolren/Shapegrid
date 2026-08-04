@@ -5,7 +5,7 @@
 
 import * as THREE from 'three';
 import { exportConfig } from './src/ui/export-config';
-import { showExportPreview } from './src/ui/capture-export';
+import { showExportPreview, captureFinalRender } from './src/ui/capture-export';
 import { applyTheme, syncThemeInputs, initThemeControls, initThemePresets, initThemeWidgetColors } from './src/ui/theme-system';
 import { loop, notifyRTViewChanged, rtDenoise, getRtRenderScale } from './src/ui/rt';
 import { initThree, posCamera, applyPostProcessing, camera, mesh, canvas, bloomNode } from './src/ui/scene';
@@ -181,6 +181,11 @@ window.addEventListener('keydown', e => {
     }
   }
 });
+
+// Exposed for headless export (render-png-ci.js): produces the same output as
+// the Export button - default resolution = canvas size (1350x833), trimmed to
+// the union bounding box of grid + widgets from all sides.
+(window as unknown as Record<string, unknown>).captureFinalRender = captureFinalRender;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Export Config JSON

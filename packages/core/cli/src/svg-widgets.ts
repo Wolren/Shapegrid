@@ -140,6 +140,11 @@ function widgetOrigin(ctx: WidgetRenderCtx, wPx: number, hPx: number): { x: numb
 }
 
 /** SVG group wrapper: panel frame (accent border/header), title, body. */
+/** Bounding boxes of every rendered widget frame, in output coords. Filled by
+ * widgetFrame during renderDashboardWidgets; used by svg-render to trim the
+ * SVG viewBox to the union of grid + widgets (bounding box from all sides). */
+const widgetBBoxes: { x0: number; y0: number; x1: number; y1: number }[] = [];
+
 function widgetFrame(ctx: WidgetRenderCtx, bodySvg: string, wPx: number, hPx: number, bodyYOffset: number): string {
   const accent = ctx.accent;
   const secondary = ctx.secondary;
@@ -151,6 +156,7 @@ function widgetFrame(ctx: WidgetRenderCtx, bodySvg: string, wPx: number, hPx: nu
   const headerH = 22 * scale;
   const x = origin.x;
   const y = origin.y;
+  widgetBBoxes.push({ x0: x, y0: y, x1: x + wPx, y1: y + headerH + hPx + bodyYOffset });
 
   const titleY = y + 10 * scale;
   const bodyX = x;
@@ -402,12 +408,13 @@ const RENDERERS: Record<string, (ctx: WidgetRenderCtx, data: DataExport) => stri
  * unsupported ids (not ported to SVG) are skipped silently. Empty string when
  * the dashboard section is absent or no widget is visible/supported.
  */
-export function renderDashboardWidgets(data: DataExport, widgets: DashboardWidgetConfig[] | undefined, W: number, H: number): string {
-  if (!widgets || widgets.length === 0) return '';
+export function renderDashboardWidgets(data: DataExport, widgets: DashboardWidgetConfig[] | undefined, W: number, H: number): { svg: string; bbox: { x0: number; y0: number; x1: number; y1: number } | null } {
+  widgetBBoxes.length = 0;
+  if (!widgets || widgets.length === 0) return { svg: '', bbox: null };
   const visible = widgets
     .filter(w => w.visible !== false && RENDERERS[w.id])
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  if (visible.length === 0) return '';
+  if (visible.length === 0) return { svg: '', bbox: null };
 
   const out: string[] = [];
   for (const w of visible) {
@@ -427,5 +434,13 @@ export function renderDashboardWidgets(data: DataExport, widgets: DashboardWidge
       console.warn(`[shapegrid] widget "${w.id}" render failed:`, e);
     }
   }
-  return out.join('\n');
+  const bbox = widgetBBoxes.length === 0
+    ? null
+    : {
+        x0: Math.min(...widgetBBoxes.map(b => b.x0)),
+        y0: Math.min(...widgetBBoxes.map(b => b.y0)),
+        x1: Math.max(...widgetBBoxes.map(b => b.x1)),
+        y1: Math.max(...widgetBBoxes.map(b => b.y1)),
+      };
+  return { svg: out.join('\n'), bbox };
 }

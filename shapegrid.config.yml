@@ -166,9 +166,9 @@ output:
   pngFilename: shapegrid.png
   jsonFilename: shapegrid-data.json
 
-  # Export dimensions for PNG/SVG (200 to 4096)
-  width: 1200
-  height: 600
+  # Export dimensions for PNG/SVG (200 to 4096) - matches the webview canvas
+  width: 1350
+  height: 833
 # ─── Post-processing effects (applied by the web viewer PNG render) ──────
 effects:
   bloomEnabled: true

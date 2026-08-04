@@ -350,7 +350,7 @@ export function generateSvg(data: DataExport, cfg: ShapegridConfig): string {
   // legend when a dashboard section is present; falls back to the classic
   // legend so legacy configs keep rendering.
   const dashboardWidgets = renderDashboardWidgets(data, cfg.dashboard?.widgets, W, H);
-  const legend = dashboardWidgets ? '' : generateLegend(colorScale, W, H);
+  const legend = dashboardWidgets.svg ? '' : generateLegend(colorScale, W, H);
 
   // Generate coordinate axes
   const coordAxes = generateCoordAxes(data, cfg, minX, maxX, minY, maxY, W, H, zoom, ISO_YAW, ISO_PITCH);
@@ -364,8 +364,25 @@ export function generateSvg(data: DataExport, cfg: ShapegridConfig): string {
   const cellCount = data.grid.cells.length;
   const dateRange = getDateRange(data);
 
+  // ── Trim: bounding box from all sides ────────────────────────────────
+  // Trim the SVG viewBox to the dashboard widget frames (the webview export
+  // trims to the widget bounding box from all sides; the grid stays behind
+  // them, cropped to the same box). Falls back to the full canvas when no
+  // widgets are rendered.
+  const trim = dashboardWidgets.bbox ?? { x0: 0, y0: 0, x1: W, y1: H };
+  const tX0 = Math.max(0, Math.floor(trim.x0));
+  const tY0 = Math.max(0, Math.floor(trim.y0));
+  const tX1 = Math.min(W, Math.ceil(trim.x1));
+  const tY1 = Math.min(H, Math.ceil(trim.y1));
+  const tW = tX1 - tX0, tH = tY1 - tY0;
+  const viewBox = (tW > 0 && tH > 0 && (tW !== W || tH !== H))
+    ? `${tX0} ${tY0} ${tW} ${tH}`
+    : `0 0 ${W} ${H}`;
+  const outW = tW > 0 && tH > 0 ? tW : W;
+  const outH = tW > 0 && tH > 0 ? tH : H;
+
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="${outW}" height="${outH}">
   <defs>
     <!-- Glow filter for title -->
     <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -412,7 +429,7 @@ ${coordAxes}
   ${legend}
 
   <!-- Dashboard widgets -->
-  ${dashboardWidgets}
+  ${dashboardWidgets.svg}
 
   <!-- Footer -->
   <text x="${W / 2}" y="${footerY}" text-anchor="middle" fill="#8b949e" font-family="'IBM Plex Mono', monospace" font-size="9" letter-spacing="0.5">
