@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-04T21:34:26.171Z",
+  "generated": "2026-08-04T21:39:24.449Z",
   "username": "Wolren",
   "totalContributions": 3735,
   "grid": {
@@ -12647,122 +12647,122 @@
     {
       "name": "Python",
       "color": "#3572A5",
-      "percentage": 30.90834454507179
+      "percentage": 30.902080556310473
     },
     {
       "name": "Rust",
       "color": "#dea584",
-      "percentage": 16.950491707110473
+      "percentage": 16.947056463615066
     },
     {
       "name": "TypeScript",
       "color": "#3178c6",
-      "percentage": 13.327234078576316
+      "percentage": 13.344799471988198
     },
     {
       "name": "Kotlin",
       "color": "#A97BFF",
-      "percentage": 12.636830886598476
+      "percentage": 12.63426986407147
     },
     {
       "name": "HTML",
       "color": "#e34c26",
-      "percentage": 11.897343708969935
+      "percentage": 11.89493255339433
     },
     {
       "name": "Java",
       "color": "#b07219",
-      "percentage": 7.243684816264265
+      "percentage": 7.242216786806607
     },
     {
       "name": "JavaScript",
       "color": "#f1e05a",
-      "percentage": 1.426559424026007
+      "percentage": 1.4262703127089507
     },
     {
       "name": "Shell",
       "color": "#89e051",
-      "percentage": 1.0882268246225224
+      "percentage": 1.0880062809247109
     },
     {
       "name": "CSS",
       "color": "#663399",
-      "percentage": 1.0652812694457972
+      "percentage": 1.065065375971149
     },
     {
       "name": "C#",
       "color": "#178600",
-      "percentage": 0.6855621026757934
+      "percentage": 0.6854231643609289
     },
     {
       "name": "PHP",
       "color": "#4F5D95",
-      "percentage": 0.6224122069318013
+      "percentage": 0.6222860667865909
     },
     {
       "name": "QML",
       "color": "#44a51c",
-      "percentage": 0.603030590938223
+      "percentage": 0.602908378736309
     },
     {
       "name": "WGSL",
       "color": "#1a5e9a",
-      "percentage": 0.542434995432031
+      "percentage": 0.5423250637367187
     },
     {
       "name": "C++",
       "color": "#f34b7d",
-      "percentage": 0.33352602767221873
+      "percentage": 0.3334584341689206
     },
     {
       "name": "PowerShell",
       "color": "#012456",
-      "percentage": 0.20715720104267227
+      "percentage": 0.20711521786957593
     },
     {
       "name": "Scheme",
       "color": "#1e4aec",
-      "percentage": 0.1913999299811077
+      "percentage": 0.19136114022940906
     },
     {
       "name": "TeX",
       "color": "#3D6117",
-      "percentage": 0.08236755327636036
+      "percentage": 0.0823508603917813
     },
     {
       "name": "R",
       "color": "#198CE7",
-      "percentage": 0.055607806528325414
+      "percentage": 0.05559653686376519
     },
     {
       "name": "SCSS",
       "color": "#c6538c",
-      "percentage": 0.04564948735798285
+      "percentage": 0.04564023587978241
     },
     {
       "name": "ShaderLab",
       "color": "#222c37",
-      "percentage": 0.030263280182314906
+      "percentage": 0.030257146924460663
     },
     {
       "name": "C",
       "color": "#555555",
-      "percentage": 0.024913056711246974
+      "percentage": 0.02490800774762416
     },
     {
       "name": "FreeMarker",
       "color": "#0050b2",
-      "percentage": 0.022643526432390735
+      "percentage": 0.02263893741938545
     },
     {
       "name": "Swift",
       "color": "#F05138",
-      "percentage": 0.005298447114896308
+      "percentage": 0.0052973733138348585
     },
     {
       "name": "CMake",
       "color": "#DA3434",
-      "percentage": 0.003736527037052282
+      "percentage": 0.003735769779951944
     }
   ],
   "config": {

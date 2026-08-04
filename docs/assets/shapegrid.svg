@@ -38405,7 +38405,7 @@
     <text x="16" y="37.8" fill="#6e7681" font-family="system-ui, sans-serif" font-size="16.0">Rust</text>
     <rect x="82" y="31.3" width="230.0" height="12.8" rx="4" fill="rgba(255,255,255,0.08)"/>
     <rect x="82" y="31.3" width="39.0" height="12.8" rx="4" fill="#dea584"/>
-    <text x="316.0" y="37.8" text-anchor="end" fill="#6e768173" font-family="'IBM Plex Mono', monospace" font-size="14.4">17.0%</text>
+    <text x="316.0" y="37.8" text-anchor="end" fill="#6e768173" font-family="'IBM Plex Mono', monospace" font-size="14.4">16.9%</text>
     <circle cx="6" cy="63.6" r="4" fill="#3178c6" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
     <text x="16" y="66.6" fill="#6e7681" font-family="system-ui, sans-serif" font-size="16.0">TypeScript</text>
     <rect x="82" y="60.1" width="230.0" height="12.8" rx="4" fill="rgba(255,255,255,0.08)"/>
