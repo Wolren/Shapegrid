@@ -23,6 +23,7 @@ import {
   loadBoundaryFromContent,
   generateGrid,
   fetchContributions,
+  fetchLanguages,
   mapContributionsToCells,
   lastNDays,
   intensityToColor,
@@ -92,6 +93,23 @@ export interface ShapegridConfig {
     start?: string;         // ISO date
     end?: string;           // ISO date
   };
+  /** Dashboard overlay widgets, mirroring the web viewer's export format. */
+  dashboard?: {
+    widgets?: DashboardWidgetConfig[];
+    collapsed?: boolean;
+    layout?: 'floating' | 'grid';
+  };
+}
+
+/** Widget config as exported by the web viewer (config.dashboard.widgets). */
+export interface DashboardWidgetConfig {
+  id: string;
+  title?: string;
+  visible?: boolean;
+  position?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'left' | 'right';
+  order?: number;
+  settings?: Record<string, any>;
+  customPos?: { x: number; y: number } | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -157,6 +175,15 @@ async function runGenerate(cfg: ShapegridConfig, configDir: string) {
   const contributions = await fetchContributions(username, start, end, token);
   ok(`${contributions.totalContributions} total contributions`);
 
+  // 3b. Fetch language breakdown when the languages widget is enabled
+  let languages: { name: string; color: string; percentage: number }[] = [];
+  const wantsLanguages = cfg.dashboard?.widgets?.some(w => w.id === 'languages' && w.visible !== false);
+  if (wantsLanguages) {
+    log(`Fetching language breakdown for @${username}…`);
+    languages = await fetchLanguages(username, token);
+    ok(`${languages.length} languages`);
+  }
+
   // 4. Load boundary
   log('Loading boundary…');
   const boundary = resolveBoundary(cfg.boundary, configDir);
@@ -201,6 +228,8 @@ async function runGenerate(cfg: ShapegridConfig, configDir: string) {
       })),
     },
     boundary: boundary,
+    days: contributions.days.map(d => ({ date: d.date, contributionCount: d.contributionCount })),
+    languages,
     config: {
       camera: cfg.camera,
       render: cfg.render,

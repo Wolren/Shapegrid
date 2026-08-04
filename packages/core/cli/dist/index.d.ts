@@ -66,5 +66,24 @@ export interface ShapegridConfig {
         start?: string;
         end?: string;
     };
+    /** Dashboard overlay widgets, mirroring the web viewer's export format. */
+    dashboard?: {
+        widgets?: DashboardWidgetConfig[];
+        collapsed?: boolean;
+        layout?: 'floating' | 'grid';
+    };
+}
+/** Widget config as exported by the web viewer (config.dashboard.widgets). */
+export interface DashboardWidgetConfig {
+    id: string;
+    title?: string;
+    visible?: boolean;
+    position?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'left' | 'right';
+    order?: number;
+    settings?: Record<string, any>;
+    customPos?: {
+        x: number;
+        y: number;
+    } | null;
 }
 //# sourceMappingURL=index.d.ts.map

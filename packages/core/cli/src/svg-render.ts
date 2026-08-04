@@ -6,6 +6,7 @@
 import type { ColorScale, GridType } from '@shapegrid/core';
 import { intensityToColor } from '@shapegrid/core';
 import type { ShapegridConfig } from './index.js';
+import { renderDashboardWidgets } from './svg-widgets.js';
 
 // ─── JSON data export (for web viewer) ───────────────────────────────────────
 
@@ -24,6 +25,10 @@ export interface DataExport {
     }[];
   };
   boundary: [number, number][];
+  /** Chronological daily contribution series (for timeline/streak widgets). */
+  days?: { date: string; contributionCount: number }[];
+  /** Aggregated language percentages (for the languages widget). */
+  languages?: { name: string; color: string; percentage: number }[];
   geoBounds?: {
     minLon: number; maxLon: number;
     minLat: number; maxLat: number;
@@ -319,8 +324,11 @@ export function generateSvg(data: DataExport, cfg: ShapegridConfig): string {
     return `<stop offset="${(t * 100).toFixed(0)}%" stop-color="${intensityToColor(t, colorScale)}"/>`;
   }).join('\n      ');
 
-  // Generate professional legend
-  const legend = generateLegend(colorScale, W, H);
+  // Dashboard overlay widgets (config-driven) - replaces the old hardcoded
+  // legend when a dashboard section is present; falls back to the classic
+  // legend so legacy configs keep rendering.
+  const dashboardWidgets = renderDashboardWidgets(data, cfg.dashboard?.widgets, W, H);
+  const legend = dashboardWidgets ? '' : generateLegend(colorScale, W, H);
 
   // Generate coordinate axes
   const coordAxes = generateCoordAxes(data, cfg, minX, maxX, minY, maxY, W, H, zoom, ISO_YAW, ISO_PITCH);
@@ -380,6 +388,9 @@ ${coordAxes}
 
   <!-- Legend -->
   ${legend}
+
+  <!-- Dashboard widgets -->
+  ${dashboardWidgets}
 
   <!-- Footer -->
   <text x="${W / 2}" y="${footerY}" text-anchor="middle" fill="#8b949e" font-family="'IBM Plex Mono', monospace" font-size="9" letter-spacing="0.5">

@@ -312,3 +312,83 @@ export function legendStops(scale: ColorScale, steps = 5): { label: string; colo
     };
   });
 }
+
+export interface GitHubLanguage {
+  name: string;
+  color: string;
+  percentage: number;
+}
+
+const LANGUAGES_QUERY = /* graphql */ `
+query($login:String!) {
+  user(login:$login) {
+    repositories(first:100, ownerAffiliations:[OWNER], isFork:false) {
+      nodes {
+        name
+        languages(first:10) {
+          edges {
+            size
+            node { name color }
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+/**
+ * Aggregate language byte counts across a user's repositories (GraphQL),
+ * returning a sorted percentage breakdown. Mirrors the web viewer's fetch.
+ */
+export async function fetchLanguages(
+  username: string,
+  token: string
+): Promise<GitHubLanguage[]> {
+  try {
+    const response = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: LANGUAGES_QUERY, variables: { login: username } }),
+    });
+    if (!response.ok) return [];
+
+    const json = await response.json() as {
+      data?: { user?: { repositories?: { nodes?: {
+        languages?: { edges?: { size: number; node: { name: string; color: string | null } }[] };
+      }[] } } };
+      errors?: { message: string }[];
+    };
+    if (json.errors?.length) return [];
+
+    const repos = json.data?.user?.repositories?.nodes ?? [];
+    const sizes = new Map<string, { size: number; color: string }>();
+    let total = 0;
+    for (const repo of repos) {
+      for (const edge of repo?.languages?.edges ?? []) {
+        const name = edge?.node?.name;
+        if (!name) continue;
+        const color = edge.node.color || '#8b949e';
+        const size = edge.size || 0;
+        const cur = sizes.get(name);
+        if (cur) {
+          cur.size += size;
+          if (cur.color === '#8b949e' && color !== '#8b949e') cur.color = color;
+        } else {
+          sizes.set(name, { size, color });
+        }
+        total += size;
+      }
+    }
+    if (total === 0) return [];
+
+    return Array.from(sizes.entries())
+      .map(([name, { size, color }]) => ({ name, color, percentage: (size / total) * 100 }))
+      .sort((a, b) => b.percentage - a.percentage);
+  } catch {
+    return [];
+  }
+}

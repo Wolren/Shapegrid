@@ -47,4 +47,14 @@ export declare function legendStops(scale: ColorScale, steps?: number): {
     label: string;
     color: string;
 }[];
+export interface GitHubLanguage {
+    name: string;
+    color: string;
+    percentage: number;
+}
+/**
+ * Aggregate language byte counts across a user's repositories (GraphQL),
+ * returning a sorted percentage breakdown. Mirrors the web viewer's fetch.
+ */
+export declare function fetchLanguages(username: string, token: string): Promise<GitHubLanguage[]>;
 //# sourceMappingURL=github.d.ts.map

@@ -14,7 +14,7 @@ import chalk from 'chalk';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { generateSvg } from './svg-render.js';
-import { loadBoundary, loadBoundaryFromContent, generateGrid, fetchContributions, mapContributionsToCells, lastNDays, } from '@shapegrid/core';
+import { loadBoundary, loadBoundaryFromContent, generateGrid, fetchContributions, fetchLanguages, mapContributionsToCells, lastNDays, } from '@shapegrid/core';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function loadConfig(path) {
     const configPath = resolve(path);
@@ -70,6 +70,14 @@ async function runGenerate(cfg, configDir) {
     log(`Fetching contributions for @${username}…`);
     const contributions = await fetchContributions(username, start, end, token);
     ok(`${contributions.totalContributions} total contributions`);
+    // 3b. Fetch language breakdown when the languages widget is enabled
+    let languages = [];
+    const wantsLanguages = cfg.dashboard?.widgets?.some(w => w.id === 'languages' && w.visible !== false);
+    if (wantsLanguages) {
+        log(`Fetching language breakdown for @${username}…`);
+        languages = await fetchLanguages(username, token);
+        ok(`${languages.length} languages`);
+    }
     // 4. Load boundary
     log('Loading boundary…');
     const boundary = resolveBoundary(cfg.boundary, configDir);
@@ -111,6 +119,8 @@ async function runGenerate(cfg, configDir) {
             })),
         },
         boundary: boundary,
+        days: contributions.days.map(d => ({ date: d.date, contributionCount: d.contributionCount })),
+        languages,
         config: {
             camera: cfg.camera,
             render: cfg.render,
