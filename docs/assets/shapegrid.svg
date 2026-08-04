@@ -38433,7 +38433,7 @@
     <circle cx="6" cy="60.0" r="4" fill="#3178c6" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
     <text x="16" y="63.0" fill="#6e7681" font-family="system-ui, sans-serif" font-size="15.0">TypeScript</text>
     <rect x="82" y="56.5" width="210.0" height="12.0" rx="4" fill="rgba(255,255,255,0.08)"/>
-    <rect x="82" y="56.5" width="27.9" height="12.0" rx="4" fill="#3178c6"/>
+    <rect x="82" y="56.5" width="28.0" height="12.0" rx="4" fill="#3178c6"/>
     <text x="296.0" y="63.0" text-anchor="end" fill="#6e768173" font-family="'IBM Plex Mono', monospace" font-size="13.5">13.3%</text>
     <circle cx="6" cy="87.0" r="4" fill="#A97BFF" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
     <text x="16" y="90.0" fill="#6e7681" font-family="system-ui, sans-serif" font-size="15.0">Kotlin</text>
