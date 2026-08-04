@@ -130,9 +130,13 @@ function widgetFrame(ctx, bodySvg, wPx, hPx, bodyYOffset) {
     const origin = widgetOrigin(ctx, wPx, hPx + bodyYOffset);
     if (!origin)
         return '';
-    const { x, y } = origin;
-    const titleY = y + 10 * scale;
+    // Clamp into canvas: keep the configured position when the widget fits,
+    // nudge inside when it would clip (tall widgets at small canvas heights).
     const headerH = 22 * scale;
+    const totalH = headerH + hPx;
+    let x = Math.min(Math.max(origin.x, 4), Math.max(ctx.W - wPx - 4, 4));
+    let y = Math.min(Math.max(origin.y, 4), Math.max(ctx.H - totalH - 4, 4));
+    const titleY = y + 10 * scale;
     const bodyX = x;
     const bodyY = y + headerH;
     const bodyH = hPx;
