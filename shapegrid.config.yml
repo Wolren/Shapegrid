@@ -69,14 +69,14 @@ grid:
 # ─── Camera / projection ──────────────────────────────────────────────────────
 camera:
   # Horizontal rotation in degrees (-180 to 180, 0 = front, 90 = right side)
-  yaw: 31.2
+  yaw: 36.4
 
   # Vertical tilt in degrees (5 to 89, 0 = top-down flat, 60 = steep isometric, 90 = side)
-  pitch: 40.1
+  pitch: 37.4
 
   # Zoom level for SVG/PNG export (lower = more zoomed in)
   # 0.3 = tight crop, 0.5 = moderate, 1.0 = full view
-  zoom: 0.8290339464282099
+  zoom: 0.8037343250633696
 
 # ─── Visual style / Theme ─────────────────────────────────────────────────────
 theme:
@@ -194,7 +194,10 @@ dashboard:
     - id: legend
       title: "Legend"
       visible: false
-      position: bottomLeft
+      position: custom
+      customPos:
+        x: 22.9878
+        y: 75.0154
       order: 0
       settings:
         locked: false
@@ -203,11 +206,13 @@ dashboard:
         scale: 1.3
         accent: "#c9d1d9"
         secondary: "#8b949e"
-      customPos: { x: 22.98780487804878, y: 75.01537494593425 }
     - id: stats
       title: "Statistics"
-      visible: true
-      position: topRight
+      visible: false
+      position: custom
+      customPos:
+        x: 67.56
+        y: 3.69089
       order: 1
       settings:
         locked: false
@@ -216,7 +221,6 @@ dashboard:
         scale: 1.35
         accent: "#e6edf3"
         secondary: "#8b949e"
-      customPos: { x: 68.7794755144817, y: 6.897347526154303 }
     - id: distribution
       title: "Distribution"
       visible: false
@@ -225,28 +229,29 @@ dashboard:
       settings:
         locked: false
         opacity: 1
-        bins: 8
         width: 200
         height: 130
         scale: 1
+        bins: 8
         accent: "#b6c2cf"
         secondary: "#6e7681"
-      customPos: null
     - id: timeline
       title: "Timeline"
       visible: false
-      position: left
+      position: custom
+      customPos:
+        x: 23.4756
+        y: 76.2361
       order: 3
       settings:
         locked: false
         opacity: 1
-        days: 90
         width: 180
         height: 110
         scale: 1.15
+        days: 90
         accent: "#e6edf3"
         secondary: "#8b949e"
-      customPos: { x: 23.47560975609756, y: 76.23606399131344 }
     - id: activity
       title: "Activity"
       visible: false
@@ -255,13 +260,12 @@ dashboard:
       settings:
         locked: false
         opacity: 1
-        days: 49
         width: 180
         height: 110
         scale: 1
+        days: 49
         accent: "#c9d1d9"
         secondary: "#6e7681"
-      customPos: null
     - id: topCells
       title: "Top Cells"
       visible: false
@@ -276,25 +280,29 @@ dashboard:
         scale: 1
         accent: "#d0d7de"
         secondary: "#6e7681"
-      customPos: null
     - id: languages
       title: "Languages"
       visible: true
-      position: bottomRight
+      position: custom
+      customPos:
+        x: 10.9756
+        y: 69.3233
       order: 6
       settings:
         locked: false
         opacity: 1
-        maxItems: 10
+        maxItems: 6
         width: 200
-        scale: 1.5
+        scale: 1.6
         accent: "#d0d7de"
         secondary: "#6e7681"
-      customPos: { x: 13.292682926829269, y: 61.34564004829873 }
     - id: cellInfo
       title: "Cell Info"
       visible: false
-      position: bottomLeft
+      position: custom
+      customPos:
+        x: 0.243902
+        y: 79.5848
       order: 7
       settings:
         locked: false
@@ -303,7 +311,6 @@ dashboard:
         scale: 1
         accent: "#c9d1d9"
         secondary: "#6e7681"
-      customPos: { x: 0.24390243902439024, y: 79.58477508650519 }
     - id: scaleBar
       title: "Scale"
       visible: false
@@ -316,7 +323,6 @@ dashboard:
         scale: 1
         accent: "#c9d1d9"
         secondary: "#8b949e"
-      customPos: null
     - id: coordinates
       title: "Coordinates"
       visible: false
@@ -325,16 +331,17 @@ dashboard:
       settings:
         locked: false
         opacity: 1
-        decimals: 2
         width: 160
         scale: 1
         accent: "#9da7b3"
         secondary: "#6e7681"
-      customPos: null
     - id: weekday
       title: "Weekday"
       visible: false
-      position: bottomRight
+      position: custom
+      customPos:
+        x: 80.6098
+        y: 72.6701
       order: 10
       settings:
         locked: false
@@ -344,20 +351,21 @@ dashboard:
         scale: 1
         accent: "#c9d1d9"
         secondary: "#8b949e"
-      customPos: { x: 80.60975609756098, y: 72.67012546631703 }
     - id: streak
       title: "Streak"
       visible: false
-      position: topRight
+      position: custom
+      customPos:
+        x: 23.1972
+        y: 59.2657
       order: 11
       settings:
         locked: false
         opacity: 1
-        fontSize: 10
         scale: 1.2
+        fontSize: 10
         accent: "#e6edf3"
         secondary: "#8b949e"
-      customPos: { x: 23.19715546398628, y: 59.26566470453071 }
     - id: monthly
       title: "Monthly"
       visible: false
@@ -370,7 +378,6 @@ dashboard:
         scale: 1
         accent: "#d0d7de"
         secondary: "#6e7681"
-      customPos: null
     - id: geo
       title: "Geo Info"
       visible: false
@@ -379,11 +386,10 @@ dashboard:
       settings:
         locked: false
         opacity: 1
-        fontSize: 10
         scale: 1
+        fontSize: 10
         accent: "#c9d1d9"
         secondary: "#6e7681"
-      customPos: null
     - id: minimap
       title: "Mini Map"
       visible: false
@@ -396,4 +402,3 @@ dashboard:
         scale: 1
         accent: "#c9d1d9"
         secondary: "#8b949e"
-      customPos: null

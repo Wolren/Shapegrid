@@ -14,6 +14,19 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
   const wrap = document.getElementById('canvas-wrap')!;
   const wrapRect = wrap.getBoundingClientRect();
   if (wrapRect.width < 10 || wrapRect.height < 10) return null;
+  // Grid world-space AABB (cells centered at cx-0.5, cy-0.5, raised to h).
+  let gridAabb: { minX: number; maxX: number; minZ: number; maxZ: number; maxY: number } | null = null;
+  if (state.grid && state.grid.cells.length > 0) {
+    const xs = state.grid.cells.map(c => c.cx - 0.5);
+    const zs = state.grid.cells.map(c => c.cy - 0.5);
+    let maxY = 0.008;
+    state.grid.cells.forEach((_cell, i) => {
+      const d = state.cellData[i] || { intensity: 0, count: 0 };
+      const h = Math.max(0.008, scaleIntensity(d.intensity) * state.heightScale * 0.12 + 0.008);
+      if (h > maxY) maxY = h;
+    });
+    gridAabb = { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs), maxY };
+  }
   // Default export resolution = the webview's own canvas size, so the
   // export matches what the user sees (blank inputs fall back to it).
   const wIn = (document.getElementById('inp-export-w') as HTMLInputElement).value;
@@ -42,19 +55,8 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
   document.body.classList.add('export-mode');
 
   try {
-    if (autocrop && state.grid && state.grid.cells.length > 0) {
-      // Grid world-space AABB. Cells are centered at (cx - 0.5, cy - 0.5)
-      // and raised to h in Y (same math as buildMesh).
-      const xs = state.grid.cells.map(c => c.cx - 0.5);
-      const zs = state.grid.cells.map(c => c.cy - 0.5);
-      const minX = Math.min(...xs), maxX = Math.max(...xs);
-      const minZ = Math.min(...zs), maxZ = Math.max(...zs);
-      let maxY = 0.008;
-      state.grid.cells.forEach((_cell, i) => {
-        const d = state.cellData[i] || { intensity: 0, count: 0 };
-        const h = Math.max(0.008, scaleIntensity(d.intensity) * state.heightScale * 0.12 + 0.008);
-        if (h > maxY) maxY = h;
-      });
+    if (autocrop && gridAabb) {
+      const { minX, maxX, minZ, maxZ, maxY } = gridAabb;
       const center = new THREE.Vector3((minX + maxX) / 2, maxY / 2, (minZ + maxZ) / 2);
 
       // Keep the current orbit orientation (yaw/pitch); only the fit changes.
@@ -128,16 +130,44 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
     // Widgets: capture each widget DOM subtree and draw it at its position
     const widgets = wrap.querySelectorAll<HTMLElement>('.dashboard-widget');
     const widgetScale = Math.min(Math.max(w / wrapRect.width, 0.5), 3);
-    // Union bounding box of grid + widgets, used to trim the export from all
-    // sides so the output tightly fits the content (grid AABB is the camera
-    // view; widgets extend it to their own rects).
+    // The trim bounding box applies to the render itself: seed with the
+    // grid's projected screen-space AABB (computed from the fitted camera),
+    // then union every visible widget rect so nothing clips.
     let bbox: { x0: number; y0: number; x1: number; y1: number } = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
-    let hasWidgets = false;
     const union = (x0: number, y0: number, x1: number, y1: number) => {
-      hasWidgets = true;
       bbox.x0 = Math.min(bbox.x0, x0); bbox.y0 = Math.min(bbox.y0, y0);
       bbox.x1 = Math.max(bbox.x1, x1); bbox.y1 = Math.max(bbox.y1, y1);
     };
+    // Seed: the grid's projected AABB through the current ortho camera.
+    if (gridAabb) {
+      camera.updateMatrixWorld();
+      const f = new THREE.Vector3();
+      camera.getWorldDirection(f);
+      let right = new THREE.Vector3().crossVectors(f, camera.up);
+      if (right.lengthSq() < 1e-8) right.set(1, 0, 0);
+      right.normalize();
+      const up = new THREE.Vector3().crossVectors(right, f);
+      const { minX, maxX, minZ, maxZ, maxY } = gridAabb;
+      const toScreen = (wx: number, wy: number, wz: number) => {
+        const eye = camera.position;
+        const dx = wx - eye.x, dy = wy - eye.y, dz = wz - eye.z;
+        const vx = dx * right.x + dy * right.y + dz * right.z;
+        const vy = dx * up.x + dy * up.y + dz * up.z;
+        const sx = ((vx - camera.left) / (camera.right - camera.left)) * w;
+        const sy = ((camera.top - vy) / (camera.top - camera.bottom)) * h;
+        return { sx, sy };
+      };
+      for (const wx of [minX, maxX]) {
+        for (const wy of [0, maxY]) {
+          for (const wz of [minZ, maxZ]) {
+            const p = toScreen(wx, wy, wz);
+            union(p.sx, p.sy, p.sx, p.sy);
+          }
+        }
+      }
+    } else {
+      union(0, 0, w, h);
+    }
     for (const el of widgets) {
       const r = el.getBoundingClientRect();
       // Skip widgets outside the visible wrap area
@@ -174,8 +204,8 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
       ctx.fillText(titleText, w / 2, 56 * w / 1200);
     }
 
-    // ── Trim: crop the output to the widget bounding box (all sides) ─────
-    if (hasWidgets) {
+    // ── Trim: crop the output to the union bounding box (all sides) ──────
+    {
       const x0 = Math.max(0, Math.floor(bbox.x0));
       const y0 = Math.max(0, Math.floor(bbox.y0));
       const x1 = Math.min(w, Math.ceil(bbox.x1));

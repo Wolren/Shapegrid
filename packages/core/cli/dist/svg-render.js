@@ -287,11 +287,46 @@ export function generateSvg(data, cfg) {
     const cellCount = data.grid.cells.length;
     const dateRange = getDateRange(data);
     // ── Trim: bounding box from all sides ────────────────────────────────
-    // Trim the SVG viewBox to the dashboard widget frames (the webview export
-    // trims to the widget bounding box from all sides; the grid stays behind
-    // them, cropped to the same box). Falls back to the full canvas when no
-    // widgets are rendered.
-    const trim = dashboardWidgets.bbox ?? { x0: 0, y0: 0, x1: W, y1: H };
+    // The trim applies to the render itself: union of the grid's projected
+    // screen AABB (the 3D render content) and the dashboard widget frames,
+    // so the viewBox tightly fits grid + widgets from all sides. Falls back
+    // to the full canvas when the grid is absent.
+    let trim = { x0: 0, y0: 0, x1: W, y1: H };
+    if (cells.length > 0) {
+        const corners = [];
+        const gMinX = minX - 0.5, gMaxX = maxX - 0.5;
+        const gMinZ = minY - 0.5, gMaxZ = maxY - 0.5;
+        let gMaxH = 0.008;
+        for (const cd of cellRenderData) {
+            const h = cellHeight(cd.intensity);
+            if (h > gMaxH)
+                gMaxH = h;
+        }
+        for (const wx of [gMinX, gMaxX]) {
+            for (const wy of [0, gMaxH]) {
+                for (const wz of [gMinZ, gMaxZ])
+                    corners.push(toScreen(wx, wy, wz));
+            }
+        }
+        let cx0 = Infinity, cy0 = Infinity, cx1 = -Infinity, cy1 = -Infinity;
+        for (const [px, py] of corners) {
+            if (px < cx0)
+                cx0 = px;
+            if (py < cy0)
+                cy0 = py;
+            if (px > cx1)
+                cx1 = px;
+            if (py > cy1)
+                cy1 = py;
+        }
+        trim = { x0: cx0, y0: cy0, x1: cx1, y1: cy1 };
+    }
+    if (dashboardWidgets.bbox) {
+        trim.x0 = Math.min(trim.x0, dashboardWidgets.bbox.x0);
+        trim.y0 = Math.min(trim.y0, dashboardWidgets.bbox.y0);
+        trim.x1 = Math.max(trim.x1, dashboardWidgets.bbox.x1);
+        trim.y1 = Math.max(trim.y1, dashboardWidgets.bbox.y1);
+    }
     const tX0 = Math.max(0, Math.floor(trim.x0));
     const tY0 = Math.max(0, Math.floor(trim.y0));
     const tX1 = Math.min(W, Math.ceil(trim.x1));
