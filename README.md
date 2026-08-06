@@ -1,7 +1,5 @@
 <div align="center">
 
-![Shapegrid web viewer](docs/assets/shapegrid.png)
-
 # Shapegrid
 
 Fit exact-count square or hexagonal grids inside any boundary: 3D isometric activity maps with a GIS dashboard.
@@ -15,6 +13,8 @@ Fit exact-count square or hexagonal grids inside any boundary: 3D isometric acti
 [![CI][ci-badge]][ci-url]
 
 </div>
+
+![Shapegrid web viewer](docs/assets/shapegrid.png)
 
 ## Problem
 
