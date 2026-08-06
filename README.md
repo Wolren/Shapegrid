@@ -1,6 +1,6 @@
 <div align="center">
 
-![Shapegrid output](dist/shapegrid.svg)
+![Shapegrid web viewer](docs/assets/shapegrid.png)
 
 # Shapegrid
 
@@ -44,12 +44,6 @@ The core CLI fetches contributions through the GitHub GraphQL API, packs an exac
 - **GIS dashboard**: 15 draggable overlay widgets (legend, statistics, distribution, timeline, activity, top cells, languages, cell info, scale bar, coordinates, weekday, streak, monthly, geo info, mini map)
 - **Day borders**: empty days render as outline-only cells on light backgrounds
 - **GitHub Actions CI**: regenerates the grid daily or on config change and deploys to GitHub Pages
-
-## Screenshots
-
-| Web viewer with dashboard widgets |
-|---|
-| ![Shapegrid web viewer](docs/assets/shapegrid.png) |
 
 ## Quick start
 
