@@ -22,8 +22,8 @@ importers:
         version: 18.1.0
     devDependencies:
       '@types/node':
-        specifier: ^26.1.2
-        version: 26.1.2
+        specifier: ^26.2.0
+        version: 26.2.0
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -98,7 +98,7 @@ importers:
         version: 7.0.2
       vite:
         specifier: ^8.2.0
-        version: 8.2.0(@types/node@26.1.2)
+        version: 8.2.0(@types/node@26.2.0)
 
 packages:
 
@@ -246,8 +246,8 @@ packages:
   '@types/js-yaml@4.0.9':
     resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
-  '@types/node@26.1.2':
-    resolution: {integrity: sha512-Vu4a5UFA9rIIFJ7rB/Vaafh9lrCQszopTCx6KjFboXTGQbPNasehVR5TEiithSDGyd1DEiUByggTZsg8jukeIg==}
+  '@types/node@26.2.0':
+    resolution: {integrity: sha512-5IviulTZeRNp2vAJ514cc/HUlY5nZ9fCbq9DMyC52BrhFZACo3nI0R7qBxhQmo/d27NFe96ur/b7Wwxklda+kg==}
 
   '@types/stats.js@0.17.4':
     resolution: {integrity: sha512-jIBvWWShCvlBqBNIZt0KAshWpvSjhkwkEu4ZUcASoAvhmrgAUI2t1dXrjSL4xXVLB4FznPrIsX3nKXFl/Dt4vA==}
@@ -833,7 +833,7 @@ snapshots:
 
   '@types/js-yaml@4.0.9': {}
 
-  '@types/node@26.1.2':
+  '@types/node@26.2.0':
     dependencies:
       undici-types: 8.3.0
 
@@ -1174,7 +1174,7 @@ snapshots:
 
   vanilla-colorful@0.7.2: {}
 
-  vite@8.2.0(@types/node@26.1.2):
+  vite@8.2.0(@types/node@26.2.0):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.5
@@ -1182,7 +1182,7 @@ snapshots:
       rolldown: 1.2.1
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 26.1.2
+      '@types/node': 26.2.0
       fsevents: 2.3.3
 
   webdriver-bidi-protocol@0.4.2: {}
