@@ -16,7 +16,7 @@
     "clean": "rm -rf dist"
   },
   "devDependencies": {
-    "@types/three": "^0.185.1",
+    "@types/three": "^0.185.4",
     "@types/topojson-client": "^3.1.5",
     "typescript": "^7.0.2",
     "vite": "^8.2.0"
