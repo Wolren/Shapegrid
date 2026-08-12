@@ -13,6 +13,7 @@ Fit exact-count square or hexagonal grids inside any boundary: 3D isometric acti
 [![TypeScript][ts-badge]][ts-url]
 [![Three.js][three-badge]][web-url]
 [![CI][ci-badge]][ci-url]
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Wolren-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/wolren)
 
 </div>
 
