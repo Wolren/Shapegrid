@@ -16,14 +16,14 @@
     "clean": "rm -rf dist"
   },
   "devDependencies": {
-    "@types/three": "^0.185.1",
+    "@types/three": "^0.186.0",
     "@types/topojson-client": "^3.1.5",
     "typescript": "^7.0.2",
     "vite": "^8.2.0"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",
-    "three": "^0.185.1",
+    "three": "^0.186.0",
     "three-gpu-pathtracer": "^0.0.24",
     "topojson-client": "^3.1.0",
     "vanilla-colorful": "^0.7.2"
