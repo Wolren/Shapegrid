@@ -78,8 +78,8 @@ importers:
         specifier: ^0.185.1
         version: 0.185.1
       three-gpu-pathtracer:
-        specifier: ^0.0.24
-        version: 0.0.24(three-mesh-bvh@0.9.13(three@0.185.1))(three@0.185.1)(xatlas-web@0.1.0)
+        specifier: ^0.0.26
+        version: 0.0.26(three-mesh-bvh@0.9.15(three@0.185.1))(three@0.185.1)(xatlas-web@0.1.0)
       topojson-client:
         specifier: ^3.1.0
         version: 3.1.0
@@ -609,15 +609,15 @@ packages:
   text-segmentation@1.0.3:
     resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
 
-  three-gpu-pathtracer@0.0.24:
-    resolution: {integrity: sha512-fHQ7g7ywvSwRAQywhsfech2/kspQKinfFNOcNDTJS2Q34CzcF1kpESlOVvJH8kX/bGlCnxMI+Qo16kWGAy7zCA==}
+  three-gpu-pathtracer@0.0.26:
+    resolution: {integrity: sha512-LtLnv7xu39HjwvH9JGD5a0PISLOBcPHBYp6BcxE2+Unp5xhUGxC0U0UWhlE3dZSk32fBN3K2BnjtNjHE7ayvkQ==}
     peerDependencies:
-      three: '>=0.180.0'
-      three-mesh-bvh: '>=0.7.4'
+      three: '>=0.185.0'
+      three-mesh-bvh: '>=0.9.15'
       xatlas-web: ^0.1.0
 
-  three-mesh-bvh@0.9.13:
-    resolution: {integrity: sha512-2zRh4iTFDmiTISanSVFofIw6J92DxFSqWn2qsQTtKp2ko5Ebk/JaI/wpMqNaBJ3F0qx7/NuP9GPK4jGDX99J2Q==}
+  three-mesh-bvh@0.9.15:
+    resolution: {integrity: sha512-9xdEDkCzFoT8VPFH9DznwFSdbaIEjMvM106Iqq7TJurrIheUKDcdW4prfJTCxryih4XS/UxWs0H3K4MLMRFyOQ==}
     peerDependencies:
       three: '>= 0.159.0'
 
@@ -1117,13 +1117,13 @@ snapshots:
     dependencies:
       utrie: 1.0.2
 
-  three-gpu-pathtracer@0.0.24(three-mesh-bvh@0.9.13(three@0.185.1))(three@0.185.1)(xatlas-web@0.1.0):
+  three-gpu-pathtracer@0.0.26(three-mesh-bvh@0.9.15(three@0.185.1))(three@0.185.1)(xatlas-web@0.1.0):
     dependencies:
       three: 0.185.1
-      three-mesh-bvh: 0.9.13(three@0.185.1)
+      three-mesh-bvh: 0.9.15(three@0.185.1)
       xatlas-web: 0.1.0
 
-  three-mesh-bvh@0.9.13(three@0.185.1):
+  three-mesh-bvh@0.9.15(three@0.185.1):
     dependencies:
       three: 0.185.1
 
