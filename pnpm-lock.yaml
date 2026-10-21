@@ -15,8 +15,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2
       three:
-        specifier: ^0.185.1
-        version: 0.185.1
+        specifier: ^0.186.1
+        version: 0.186.1
       yargs:
         specifier: ^18.1.0
         version: 18.1.0
@@ -53,8 +53,8 @@ importers:
         specifier: ^25.4.0
         version: 25.4.0(yauzl@2.10.0)
       three:
-        specifier: ^0.185.1
-        version: 0.185.1
+        specifier: ^0.186.1
+        version: 0.186.1
       yargs:
         specifier: ^18.1.0
         version: 18.1.0
@@ -75,11 +75,11 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1
       three:
-        specifier: ^0.185.1
-        version: 0.185.1
+        specifier: ^0.186.1
+        version: 0.186.1
       three-gpu-pathtracer:
         specifier: ^0.0.24
-        version: 0.0.24(three-mesh-bvh@0.9.13(three@0.185.1))(three@0.185.1)(xatlas-web@0.1.0)
+        version: 0.0.24(three-mesh-bvh@0.9.13(three@0.186.1))(three@0.186.1)(xatlas-web@0.1.0)
       topojson-client:
         specifier: ^3.1.0
         version: 3.1.0
@@ -621,8 +621,8 @@ packages:
     peerDependencies:
       three: '>= 0.159.0'
 
-  three@0.185.1:
-    resolution: {integrity: sha512-5aojFCXKwnjBRZvUnt3WFfEcvUJgkN5LlijRFN95hMy8WVkG4I0QNcJE+OuWvuJ0bOdStrbfXn0pkd6/QyiAlg==}
+  three@0.186.1:
+    resolution: {integrity: sha512-blFeqb49wRCSGUGj7gtpfnSGHy2lwDk94RhUmS1c/hTby70kvChbWpkJ4Pm1390LqzzvTmzgXKHPEafJwCb8jA==}
 
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
@@ -1117,17 +1117,17 @@ snapshots:
     dependencies:
       utrie: 1.0.2
 
-  three-gpu-pathtracer@0.0.24(three-mesh-bvh@0.9.13(three@0.185.1))(three@0.185.1)(xatlas-web@0.1.0):
+  three-gpu-pathtracer@0.0.24(three-mesh-bvh@0.9.13(three@0.186.1))(three@0.186.1)(xatlas-web@0.1.0):
     dependencies:
-      three: 0.185.1
-      three-mesh-bvh: 0.9.13(three@0.185.1)
+      three: 0.186.1
+      three-mesh-bvh: 0.9.13(three@0.186.1)
       xatlas-web: 0.1.0
 
-  three-mesh-bvh@0.9.13(three@0.185.1):
+  three-mesh-bvh@0.9.13(three@0.186.1):
     dependencies:
-      three: 0.185.1
+      three: 0.186.1
 
-  three@0.185.1: {}
+  three@0.186.1: {}
 
   tinyglobby@0.2.17:
     dependencies:
