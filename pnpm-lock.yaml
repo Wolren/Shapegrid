@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       chalk:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.0.1
+        version: 6.0.1
       js-yaml:
         specifier: ^5.2.2
         version: 5.2.2
@@ -44,8 +44,8 @@ importers:
         specifier: workspace:*
         version: link:..
       chalk:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^6.0.1
+        version: 6.0.1
       js-yaml:
         specifier: ^5.2.2
         version: 5.2.2
@@ -408,8 +408,8 @@ packages:
   buffer-crc32@0.2.13:
     resolution: {integrity: sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==}
 
-  chalk@6.0.0:
-    resolution: {integrity: sha512-2uNTXIuTTxk7ciZgAU1BQcgnchcG0xXnrs6jzkQfj9SsRa9M2s5zE8WT96hS6KmG4MzWHSrvH43DF1m4XRkrFg==}
+  chalk@6.0.1:
+    resolution: {integrity: sha512-/Ce6KNm3vIbWdMlNna6RVIZ/ICQxnJxCicet5LBKK9ZffBkqzDw0xh9EiKSljdRtiIQ1S1z4YgcscUUGzNCWrA==}
     engines: {node: '>=22'}
 
   chromium-bidi@17.0.2:
@@ -936,7 +936,7 @@ snapshots:
   buffer-crc32@0.2.13:
     optional: true
 
-  chalk@6.0.0: {}
+  chalk@6.0.1: {}
 
   chromium-bidi@17.0.2(devtools-protocol@0.0.1653615):
     dependencies:
