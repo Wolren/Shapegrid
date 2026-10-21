@@ -12,8 +12,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       js-yaml:
-        specifier: ^5.2.2
-        version: 5.2.2
+        specifier: ^5.5.0
+        version: 5.5.0
       three:
         specifier: ^0.185.1
         version: 0.185.1
@@ -47,8 +47,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       js-yaml:
-        specifier: ^5.2.2
-        version: 5.2.2
+        specifier: ^5.5.0
+        version: 5.5.0
       puppeteer-core:
         specifier: ^25.4.0
         version: 25.4.0(yauzl@2.10.0)
@@ -398,8 +398,8 @@ packages:
     resolution: {integrity: sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==}
     engines: {node: '>=12'}
 
-  argparse@2.0.1:
-    resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
+  argparse@3.0.3:
+    resolution: {integrity: sha512-Sn98ftV3KfsO8xfLPHG6oT8y+b0yvbrLgZjgPDXsharNY15tTAjqIsIju4S32nl6/iEUNNE4v+yL2Zhm8ooP3w==}
 
   base64-arraybuffer@1.0.2:
     resolution: {integrity: sha512-I3yl4r9QB5ZRY3XuJVEPfc2XhZO6YweFPI+UovAzn+8/hb3oJ6lnysaFcjVpkCPfVWFUDvoZ8kmVDP7WyRtYtQ==}
@@ -474,8 +474,8 @@ packages:
     resolution: {integrity: sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==}
     engines: {node: '>=8.0.0'}
 
-  js-yaml@5.2.2:
-    resolution: {integrity: sha512-dayzUzKkJ1MkuUtZglSebU43utNXH0OWQByK9rKOOuYIO8M5TV1y+n8ALMdG0rdzBnfNkOmZEqrURepb0ejqBw==}
+  js-yaml@5.5.0:
+    resolution: {integrity: sha512-paNr4LFIFPjeeSmwNYdrb8FafLLG/Cr2Af3GjbsHJ5CxIjH4r0c2emlmRdAtpPAieP1gRVzk6buBbVP5gBMGAg==}
     hasBin: true
 
   lightningcss-android-arm64@1.33.0:
@@ -929,7 +929,7 @@ snapshots:
 
   ansi-styles@6.2.3: {}
 
-  argparse@2.0.1: {}
+  argparse@3.0.3: {}
 
   base64-arraybuffer@1.0.2: {}
 
@@ -987,9 +987,9 @@ snapshots:
       css-line-break: 2.1.0
       text-segmentation: 1.0.3
 
-  js-yaml@5.2.2:
+  js-yaml@5.5.0:
     dependencies:
-      argparse: 2.0.1
+      argparse: 3.0.3
 
   lightningcss-android-arm64@1.33.0:
     optional: true
