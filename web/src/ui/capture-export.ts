@@ -8,7 +8,31 @@ import html2canvas from 'html2canvas';
 import { state } from './state';
 import { renderer, camera, scene, composer, posCamera, scaleIntensity } from './scene';
 import { notifyRTViewChanged, ensureRTSamples, isRTAvailable } from './rt';
+import { renderAllWidgets } from './dashboard';
 import { showExportModal } from './export-modal';
+
+/** Rail reserved by docked widgets (position left|right), in canvas px. */
+function measureWidgetRail(
+  wrap: HTMLElement,
+  sx: number,
+  sy: number,
+): { side: 'left' | 'right' | null; width: number; x: number; y: number; w: number; h: number } {
+  const empty = { side: null as null, width: 0, x: 0, y: 0, w: 0, h: 0 };
+  const el = wrap.querySelector<HTMLElement>('.dashboard-widget[data-zone="left"], .dashboard-widget[data-zone="right"]');
+  if (!el) return empty;
+  const r = el.getBoundingClientRect();
+  const wr = wrap.getBoundingClientRect();
+  const side = el.dataset.zone === 'right' ? 'right' : 'left';
+  const pad = side === 'left' ? r.left - wr.left : wr.right - r.right;
+  return {
+    side,
+    width: (r.width + 2 * pad) * sx,
+    x: (r.left - wr.left) * sx,
+    y: (r.top - wr.top) * sy,
+    w: r.width * sx,
+    h: r.height * sy,
+  };
+}
 
 export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement; w: number; h: number; format: string; scale: number } | null> {
   const wrap = document.getElementById('canvas-wrap')!;
@@ -53,8 +77,15 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
 
   // Strip editor chrome (toolbar, tooltip, measure overlay, widget close buttons)
   document.body.classList.add('export-mode');
+  let railed = false;
+  let docked: { side: 'left' | 'right' | null; width: number; x: number; y: number; w: number; h: number } | null = null;
 
   try {
+    // Panels size from the canvas width, which grows when export drops the panel.
+    renderAllWidgets();
+    void wrap.offsetWidth;
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+
     if (autocrop && gridAabb) {
       const { minX, maxX, minZ, maxZ, maxY } = gridAabb;
       const center = new THREE.Vector3((minX + maxX) / 2, maxY / 2, (minZ + maxZ) / 2);
@@ -80,28 +111,56 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
       right.normalize();
       const up = new THREE.Vector3().crossVectors(right, f);
 
+      // Project every cell's silhouette onto the camera axes: the world AABB
+      // corners overstate the plate and leave visible margins in the column.
       let halfW = 0, halfH = 0;
-      for (const cx of [minX, maxX]) {
-        for (const cy of [0, maxY]) {
-          for (const cz of [minZ, maxZ]) {
-            const d = new THREE.Vector3(cx - center.x, cy - center.y, cz - center.z);
-            halfW = Math.max(halfW, Math.abs(d.dot(right)));
-            halfH = Math.max(halfH, Math.abs(d.dot(up)));
+      const cellHalf = ((state.grid?.cellSize ?? 1) * (1 - (state.gap ?? 0))) / 2;
+      state.grid!.cells.forEach((c, i) => {
+        const d = state.cellData[i] || { intensity: 0, count: 0 };
+        const ch = Math.max(0.008, scaleIntensity(d.intensity) * state.heightScale * 0.12 + 0.008);
+        for (const ox of [-cellHalf, cellHalf]) {
+          for (const oz of [-cellHalf, cellHalf]) {
+            for (const wy of [0, ch]) {
+              const dx = c.cx - 0.5 + ox - center.x;
+              const dy = wy - center.y;
+              const dz = c.cy - 0.5 + oz - center.z;
+              halfW = Math.max(halfW, Math.abs(dx * right.x + dy * right.y + dz * right.z));
+              halfH = Math.max(halfH, Math.abs(dx * up.x + dy * up.y + dz * up.z));
+            }
           }
         }
-      }
+      });
 
-      const asp = w / h;
-      const padW = (padding / w) * (halfW * 2);
-      const padH = (padding / h) * (halfH * 2);
+      // Docked panels reserve a rail; the map fits the column that remains.
+      const rail = measureWidgetRail(wrap, w / wrapRect.width, h / wrapRect.height);
+      docked = rail;
+      const rect = rail.side === 'left'
+        ? { x0: rail.width, y0: 0, x1: w, y1: h }
+        : rail.side === 'right'
+          ? { x0: 0, y0: 0, x1: w - rail.width, y1: h }
+          : { x0: 0, y0: 0, x1: w, y1: h };
+      const rectW = rect.x1 - rect.x0, rectH = rect.y1 - rect.y0;
+
+      const asp = rectW / rectH;
+      // A rail column is already padded by the panel, so keep its own gap small.
+      const fitPad = rail.side ? 12 : padding;
+      const padW = (fitPad / rectW) * (halfW * 2);
+      const padH = (fitPad / rectH) * (halfH * 2);
       let viewW = halfW + padW, viewH = halfH + padH;
       if (viewW / viewH > asp) viewH = viewW / asp;
       else viewW = viewH * asp;
 
-      camera.left = -viewW; camera.right = viewW;
-      camera.top = viewH; camera.bottom = -viewH;
+      // Asymmetric frustum: the column carries the map, so scale world units by w/rectW.
+      const halfX = (viewW * w) / rectW;
+      const halfY = (viewH * h) / rectH;
+      const colCx = (rect.x0 + rect.x1) / 2, colCy = (rect.y0 + rect.y1) / 2;
+      camera.left = (-2 * halfX * colCx) / w;
+      camera.right = camera.left + 2 * halfX;
+      camera.top = (2 * halfY * colCy) / h;
+      camera.bottom = camera.top - 2 * halfY;
       camera.updateProjectionMatrix();
       notifyRTViewChanged();
+      railed = rail.side !== null;
     } else {
       renderer.setSize(w, h, false);
       posCamera();
@@ -193,6 +252,21 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
       }
     }
 
+    // Rail caption - mirrors the SVG card header: name and caption.
+    if (docked && docked.side) {
+      const s = w / 1350;
+      const cx = docked.x + docked.w / 2;
+      const total = (state.contributions?.total ?? 0).toLocaleString();
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#f0f4f8';
+      ctx.font = `600 ${Math.round(36 * s)}px system-ui, -apple-system, sans-serif`;
+      ctx.fillText(`@${state.contributions?.username ?? ''}`, cx, 76 * s);
+      ctx.fillStyle = '#c3ccd8';
+      ctx.font = `400 ${Math.round(20 * s)}px system-ui, -apple-system, sans-serif`;
+      ctx.fillText(`${total} contributions · ${state.grid?.cells.length ?? 0} days`, cx, 108 * s);
+    }
+
     // Optional title text - drawn on top of the composite, scaled with the render
     if (exportTitle) {
       const titleText = exportTitle.length > 60 ? exportTitle.slice(0, 60) + '…' : exportTitle;
@@ -204,12 +278,13 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
       ctx.fillText(titleText, w / 2, 56 * w / 1200);
     }
 
-    // ── Trim: crop the output to the union bounding box (all sides) ──────
-    {
-      const x0 = Math.max(0, Math.floor(bbox.x0));
-      const y0 = Math.max(0, Math.floor(bbox.y0));
-      const x1 = Math.min(w, Math.ceil(bbox.x1));
-      const y1 = Math.min(h, Math.ceil(bbox.y1));
+    // ── Trim to the union bbox + 12 px; a rail layout keeps the full canvas ──
+    if (!railed) {
+      const pad = 12;
+      const x0 = Math.max(0, Math.floor(bbox.x0) - pad);
+      const y0 = Math.max(0, Math.floor(bbox.y0) - pad);
+      const x1 = Math.min(w, Math.ceil(bbox.x1) + pad);
+      const y1 = Math.min(h, Math.ceil(bbox.y1) + pad);
       const tw = x1 - x0, th = y1 - y0;
       if (tw > 0 && th > 0 && (tw !== w || th !== h)) {
         const trimmed = document.createElement('canvas');
@@ -229,6 +304,7 @@ export async function captureFinalRender(): Promise<{ canvas: HTMLCanvasElement;
     camera.position.x = 0; camera.position.y = 0; camera.position.z = 0;
     camera.updateProjectionMatrix();
     posCamera();
+    renderAllWidgets();
   }
 }
 

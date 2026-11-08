@@ -187,6 +187,9 @@ effects:
 # Mirrors the web viewer export (config.dashboard.widgets). The CLI
 # renders the visible supported widgets: legend, stats, timeline,
 # languages, streak.
+#
+# Widget panels size against the canvas width (1000 units = canvas
+# width), so type stays legible when the PNG is shown small.
 dashboard:
   collapsed: false
   layout: floating
@@ -283,17 +286,15 @@ dashboard:
     - id: languages
       title: "Languages"
       visible: true
-      position: custom
-      customPos:
-        x: 10.9756
-        y: 69.3233
+      position: left
+      customPos: null
       order: 6
       settings:
         locked: false
         opacity: 1
-        maxItems: 6
-        width: 200
-        scale: 1.6
+        maxItems: 5
+        width: 260
+        scale: 1
         accent: "#d0d7de"
         secondary: "#6e7681"
     - id: cellInfo

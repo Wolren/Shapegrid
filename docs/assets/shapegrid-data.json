@@ -12912,18 +12912,15 @@
           "id": "languages",
           "title": "Languages",
           "visible": true,
-          "position": "custom",
-          "customPos": {
-            "x": 10.9756,
-            "y": 69.3233
-          },
+          "position": "left",
+          "customPos": null,
           "order": 6,
           "settings": {
             "locked": false,
             "opacity": 1,
-            "maxItems": 6,
-            "width": 200,
-            "scale": 1.6,
+            "maxItems": 5,
+            "width": 260,
+            "scale": 1,
             "accent": "#d0d7de",
             "secondary": "#6e7681"
           }

@@ -3,7 +3,10 @@
 // Extracted from index.ts (file-size governance)
 // ══════════════════════════════════════════════════════════════════════════════
 import { intensityToColor } from '@shapegrid/core';
-import { renderDashboardWidgets } from './svg-widgets.js';
+import { dashboardRail, renderDashboardWidgets } from './svg-widgets.js';
+/** Pixels of air added around the trimmed viewBox: edge panels keep their
+ *  rounded corners and the grid shadow is not cut. */
+const TRIM_PAD = 12;
 /** Unit vectors for the 6 pointy-top hex corners (angles -30..270 deg).
  *  Hoisted: per-cell corner offsets are then a multiply, not a cos/sin. */
 const HEX_CORNER_DIRS = Array.from({ length: 6 }, (_, i) => {
@@ -265,7 +268,48 @@ export function generateSvg(data, cfg) {
         }
         return pts;
     }
-    // Build SVG content
+    // Build SVG content. A docked panel reserves a rail; the map is fitted into
+    // the remaining column so widget frames never sit on top of cells.
+    const rail = dashboardRail(cfg.dashboard?.widgets, W);
+    const gridBox = (() => {
+        let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+        for (const cd of cellRenderData) {
+            const h = cellHeight(scaleIntensity(cd.intensity));
+            const wx = cd.cx - 0.5, wz = cd.cy - 0.5;
+            for (const ox of [-halfSize, halfSize]) {
+                for (const oz of [-halfSize, halfSize]) {
+                    for (const wy of [0, h]) {
+                        const [px, py] = toScreen(wx + ox, wy, wz + oz);
+                        if (px < bx0)
+                            bx0 = px;
+                        if (py < by0)
+                            by0 = py;
+                        if (px > bx1)
+                            bx1 = px;
+                        if (py > by1)
+                            by1 = py;
+                    }
+                }
+            }
+        }
+        return { x0: bx0, y0: by0, x1: bx1, y1: by1 };
+    })();
+    const RAIL_SIDE_PAD = 22 * (W / 1000);
+    const RAIL_TOP_PAD = 24;
+    const RAIL_BOTTOM_PAD = 24;
+    const gridRect = rail
+        ? (rail.side === 'left'
+            ? { x0: rail.width, y0: RAIL_TOP_PAD, x1: W - RAIL_SIDE_PAD, y1: H - RAIL_BOTTOM_PAD }
+            : { x0: RAIL_SIDE_PAD, y0: RAIL_TOP_PAD, x1: W - rail.width, y1: H - RAIL_BOTTOM_PAD })
+        : { x0: 0, y0: 0, x1: W, y1: H };
+    // Uniform scale: the isometric projection must not stretch.
+    const fitS = rail
+        ? Math.min((gridRect.x1 - gridRect.x0) / (gridBox.x1 - gridBox.x0), (gridRect.y1 - gridRect.y0) / (gridBox.y1 - gridBox.y0))
+        : 1;
+    const fitTx = rail ? (gridRect.x0 + gridRect.x1) / 2 - fitS * (gridBox.x0 + gridBox.x1) / 2 : 0;
+    const fitTy = rail ? (gridRect.y0 + gridRect.y1) / 2 - fitS * (gridBox.y0 + gridBox.y1) / 2 : 0;
+    const fitAttr = rail ? ` transform="translate(${fitTx.toFixed(1)} ${fitTy.toFixed(1)}) scale(${fitS.toFixed(4)})"` : '';
+    const gridCx = (gridRect.x0 + gridRect.x1) / 2;
     const cellsSvg = cellRenderData.map(renderCell3D).join('\n    ');
     // Legend gradient stops (shared defs, hoisted out of the legend group)
     const legendStops = Array.from({ length: 20 }, (_, i) => {
@@ -279,47 +323,27 @@ export function generateSvg(data, cfg) {
     const legend = dashboardWidgets.svg ? '' : generateLegend(colorScale, W, H);
     // Generate coordinate axes
     const coordAxes = generateCoordAxes(data, cfg, minX, maxX, minY, maxY, W, H, zoom, ISO_YAW, ISO_PITCH);
-    // Title and metadata
-    const titleY = 35;
-    const subtitleY = 52;
+    // Title and metadata. With a docked rail they belong to the info column.
+    const railBox = rail ? dashboardWidgets.bbox : null;
+    const titleX = railBox ? (railBox.x0 + railBox.x1) / 2 : gridCx;
+    const titleY = railBox ? 76 : 35;
+    const subtitleY = railBox ? 108 : 52;
+    const footerX = gridCx;
     const footerY = H - 15;
     const totalContribs = data.totalContributions;
     const cellCount = data.grid.cells.length;
     const dateRange = getDateRange(data);
     // ── Trim: bounding box from all sides ────────────────────────────────
-    // The trim applies to the render itself: union of the grid's projected
-    // screen AABB (the 3D render content) and the dashboard widget frames,
-    // so the viewBox tightly fits grid + widgets from all sides. Falls back
-    // to the full canvas when the grid is absent.
+    // Union of the fitted grid AABB and the dashboard widget frames, so the
+    // viewBox tightly fits grid + widgets from all sides.
     let trim = { x0: 0, y0: 0, x1: W, y1: H };
     if (cells.length > 0) {
-        const corners = [];
-        const gMinX = minX - 0.5, gMaxX = maxX - 0.5;
-        const gMinZ = minY - 0.5, gMaxZ = maxY - 0.5;
-        let gMaxH = 0.008;
-        for (const cd of cellRenderData) {
-            const h = cellHeight(cd.intensity);
-            if (h > gMaxH)
-                gMaxH = h;
-        }
-        for (const wx of [gMinX, gMaxX]) {
-            for (const wy of [0, gMaxH]) {
-                for (const wz of [gMinZ, gMaxZ])
-                    corners.push(toScreen(wx, wy, wz));
-            }
-        }
-        let cx0 = Infinity, cy0 = Infinity, cx1 = -Infinity, cy1 = -Infinity;
-        for (const [px, py] of corners) {
-            if (px < cx0)
-                cx0 = px;
-            if (py < cy0)
-                cy0 = py;
-            if (px > cx1)
-                cx1 = px;
-            if (py > cy1)
-                cy1 = py;
-        }
-        trim = { x0: cx0, y0: cy0, x1: cx1, y1: cy1 };
+        trim = {
+            x0: fitTx + fitS * gridBox.x0,
+            y0: fitTy + fitS * gridBox.y0,
+            x1: fitTx + fitS * gridBox.x1,
+            y1: fitTy + fitS * gridBox.y1,
+        };
     }
     if (dashboardWidgets.bbox) {
         trim.x0 = Math.min(trim.x0, dashboardWidgets.bbox.x0);
@@ -327,13 +351,19 @@ export function generateSvg(data, cfg) {
         trim.x1 = Math.max(trim.x1, dashboardWidgets.bbox.x1);
         trim.y1 = Math.max(trim.y1, dashboardWidgets.bbox.y1);
     }
-    const tX0 = Math.max(0, Math.floor(trim.x0));
-    const tY0 = Math.max(0, Math.floor(trim.y0));
-    const tX1 = Math.min(W, Math.ceil(trim.x1));
-    const tY1 = Math.min(H, Math.ceil(trim.y1));
-    const tW = tX1 - tX0, tH = tY1 - tY0;
+    if (railBox) {
+        trim.y0 = Math.min(trim.y0, titleY - 26);
+        trim.y1 = Math.max(trim.y1, footerY + 6);
+    }
+    const tX0 = Math.max(0, Math.floor(trim.x0) - TRIM_PAD);
+    const tY0 = Math.max(0, Math.floor(trim.y0) - TRIM_PAD);
+    const tX1 = Math.min(W, Math.ceil(trim.x1) + TRIM_PAD);
+    const tY1 = Math.min(H, Math.ceil(trim.y1) + TRIM_PAD);
+    // A rail layout keeps the configured canvas: the card aspect stays fixed and
+    // the map column carries its own air instead of being cropped to the cells.
+    const tW = rail ? W : tX1 - tX0, tH = rail ? H : tY1 - tY0;
     const viewBox = (tW > 0 && tH > 0 && (tW !== W || tH !== H))
-        ? `${tX0} ${tY0} ${tW} ${tH}`
+        ? `${rail ? 0 : tX0} ${rail ? 0 : tY0} ${tW} ${tH}`
         : `0 0 ${W} ${H}`;
     const outW = tW > 0 && tH > 0 ? tW : W;
     const outH = tW > 0 && tH > 0 ? tH : H;
@@ -368,16 +398,16 @@ ${bgColor ? `
 ` : ''}
   <!-- Title Section -->
   <g id="title" filter="url(#glow)">
-    <text x="${W / 2}" y="${titleY}" text-anchor="middle" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" letter-spacing="0.5">
+    <text x="${titleX}" y="${titleY}" text-anchor="middle" fill="#f0f4f8" font-family="system-ui, -apple-system, sans-serif" font-size="${rail ? 36 : 24}" font-weight="600" letter-spacing="0.5">
       @${data.username}
     </text>
   </g>
-  <text x="${W / 2}" y="${subtitleY}" text-anchor="middle" fill="#8b949e" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="300" letter-spacing="0.3">
-    ${totalContribs} contributions · ${cellCount} days · ${dateRange}
+  <text x="${titleX}" y="${subtitleY}" text-anchor="middle" fill="${rail ? '#c3ccd8' : '#8b949e'}" font-family="system-ui, -apple-system, sans-serif" font-size="${rail ? 20 : 11}" font-weight="400" letter-spacing="0.3">
+    ${totalContribs} contributions · ${cellCount} days${rail ? '' : ` · ${dateRange}`}
   </text>
-${coordAxes}
+${rail ? `<g${fitAttr}>${coordAxes}</g>` : coordAxes}
   <!-- Grid Cells -->
-  <g id="cells" shape-rendering="geometricPrecision" filter="url(#cell-shadow)">
+  <g id="cells" shape-rendering="geometricPrecision" filter="url(#cell-shadow)"${fitAttr}>
     ${cellsSvg}
   </g>
 
@@ -386,11 +416,11 @@ ${coordAxes}
 
   <!-- Dashboard widgets -->
   ${dashboardWidgets.svg}
-
+${rail ? '' : `
   <!-- Footer -->
-  <text x="${W / 2}" y="${footerY}" text-anchor="middle" fill="#8b949e" font-family="'IBM Plex Mono', monospace" font-size="9" letter-spacing="0.5">
+  <text x="${footerX}" y="${footerY}" text-anchor="middle" fill="#8b949e" font-family="'IBM Plex Mono', monospace" font-size="9" letter-spacing="0.5">
     Generated by shapegrid · ${new Date().toISOString().split('T')[0]}
-  </text>
+  </text>`}
 </svg>`;
 }
 // ─── Legend generator ────────────────────────────────────────────────────────

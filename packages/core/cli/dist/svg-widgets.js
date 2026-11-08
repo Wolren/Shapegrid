@@ -86,6 +86,8 @@ const ZONE_ANCHORS = {
     left: { x: 4, y: 50, align: 'start' },
     right: { x: 96, y: 50, align: 'end' },
 };
+/** Design units of air between a docked panel and the canvas edge. */
+const RAIL_PAD = 18;
 function widgetSetting(w, key, fallback) {
     const s = w.settings ?? {};
     return s[key] !== undefined ? s[key] : fallback;
@@ -116,8 +118,15 @@ function widgetOrigin(ctx, wPx, hPx) {
     const anchor = ZONE_ANCHORS[ctx.w.position ?? 'bottomLeft'];
     if (!anchor)
         return null;
+    // Docked widgets (left/right rail) own a reserved column, so they sit at the
+    // rail pad and centre vertically instead of hugging the canvas edge.
+    const docked = ctx.w.position === 'left' || ctx.w.position === 'right';
     let x;
-    if (anchor.align === 'end')
+    if (docked) {
+        const pad = RAIL_PAD * (ctx.W / 1000) * ctx.scale;
+        x = ctx.w.position === 'left' ? pad : ctx.W - pad - wPx;
+    }
+    else if (anchor.align === 'end')
         x = (anchor.x / 100) * ctx.W - wPx;
     else if (anchor.align === 'center')
         x = (anchor.x / 100) * ctx.W - wPx / 2;
@@ -125,8 +134,8 @@ function widgetOrigin(ctx, wPx, hPx) {
         x = (anchor.x / 100) * ctx.W;
     const contH = ctx.H - WIDGET_CONTAINER_TOP_INSET;
     let y;
-    if (ctx.w.position === 'left' || ctx.w.position === 'right')
-        y = WIDGET_CONTAINER_TOP_INSET + (anchor.y / 100) * contH - hPx / 2;
+    if (docked)
+        y = (ctx.H - hPx) / 2;
     else if (ctx.w.position === 'bottomLeft' || ctx.w.position === 'bottomRight')
         y = WIDGET_CONTAINER_TOP_INSET + (anchor.y / 100) * contH - hPx;
     else
@@ -151,7 +160,8 @@ function widgetFrame(ctx, bodySvg, wPx, hPx, bodyYOffset) {
     const x = origin.x;
     const y = origin.y;
     widgetBBoxes.push({ x0: x, y0: y, x1: x + wPx, y1: y + headerH + hPx + bodyYOffset });
-    const titleY = y + 10 * scale;
+    // Local coords: the group is already translated to (x, y).
+    const titleY = 10 * scale;
     const bodyX = x;
     const bodyY = y + headerH;
     const bodyH = hPx;
@@ -294,29 +304,84 @@ function renderTimeline(ctx, data) {
     return widgetFrame(ctx, body, bodyW, 60 * scale, 34 * scale);
 }
 // ─── Languages ────────────────────────────────────────────────────────────────
+// Design units: 1000 units span the canvas width, so 26 unit names stay legible
+// at profile-card width; the old 10 px CSS type collapsed to 6 px there.
+const LANG_PANEL_W = 260;
+const LANG_PAD = 16;
+const LANG_HEADER_H = 30;
+const LANG_ROW_H = 46;
+const LANG_CHIP = 13;
+const LANG_NAME_PX = 26;
+const LANG_PCT_PX = 20;
+const LANG_BAR_H = 9;
+const LANG_TITLE_PX = 15;
+/**
+ * Rail reserved by a docked panel (position left|right), in canvas px. The grid
+ * renderer fits the map into the remaining column, so panels never cover cells.
+ */
+export function dashboardRail(widgets, W) {
+    const docked = widgets?.find(w => w.visible !== false && w.id === 'languages' && (w.position === 'left' || w.position === 'right'));
+    if (!docked)
+        return null;
+    const scale = (typeof docked.settings?.scale === 'number' && docked.settings.scale > 0) ? docked.settings.scale : 1;
+    const u = (W / 1000) * scale;
+    return { side: docked.position === 'right' ? 'right' : 'left', width: (LANG_PANEL_W + RAIL_PAD * 2) * u };
+}
 function renderLanguages(ctx, data) {
-    const secondary = ctx.secondary;
-    const scale = ctx.scale;
-    const maxItems = widgetSetting(ctx.w, 'maxItems', 5) || 5;
+    const accent = ctx.accent;
+    const u = (ctx.W / 1000) * ctx.scale;
+    const maxItems = widgetSetting(ctx.w, 'maxItems', 4) || 4;
     const langs = (data.languages ?? []).slice(0, maxItems);
-    const bodyW = 200 * scale;
+    const panelW = LANG_PANEL_W * u;
+    const headerH = LANG_HEADER_H * u;
+    const opacityAttr = ctx.opacity < 1 ? ` opacity="${ctx.opacity.toFixed(2)}"` : '';
+    const titleY = (LANG_HEADER_H / 2 + LANG_TITLE_PX * 0.36) * u;
     if (langs.length === 0) {
-        const body = `<text x="${(bodyW / 2).toFixed(1)}" y="24" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-style="italic" font-family="system-ui, sans-serif" font-size="${(10 * scale).toFixed(1)}">No language data</text>`;
-        return widgetFrame(ctx, body, bodyW, 60 * scale, 34 * scale);
-    }
-    const rowH = 18 * scale;
-    const rows = langs.map((lang, i) => {
-        const y = i * rowH;
-        const barW = (lang.percentage / 100) * (bodyW - 90);
+        const panelH = headerH + (LANG_PAD * 2 + LANG_ROW_H) * u;
+        const origin = widgetOrigin(ctx, panelW, panelH);
+        if (!origin)
+            return '';
+        widgetBBoxes.push({ x0: origin.x, y0: origin.y, x1: origin.x + panelW, y1: origin.y + panelH });
         return `
-    <circle cx="6" cy="${(y + 6).toFixed(1)}" r="4" fill="${escAttr(lang.color)}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-    <text x="16" y="${(y + 9).toFixed(1)}" fill="${escAttr(secondary)}" font-family="system-ui, sans-serif" font-size="${(10 * scale).toFixed(1)}">${esc(lang.name)}</text>
-    <rect x="82" y="${(y + 2.5).toFixed(1)}" width="${(bodyW - 90).toFixed(1)}" height="${(8 * scale).toFixed(1)}" rx="4" fill="rgba(255,255,255,0.08)"/>
-    <rect x="82" y="${(y + 2.5).toFixed(1)}" width="${barW.toFixed(1)}" height="${(8 * scale).toFixed(1)}" rx="4" fill="${escAttr(lang.color)}"/>
-    <text x="${(bodyW - 4).toFixed(1)}" y="${(y + 9).toFixed(1)}" text-anchor="end" fill="${escAttr(secondary)}73" font-family="'IBM Plex Mono', monospace" font-size="${(9 * scale).toFixed(1)}">${lang.percentage.toFixed(1)}%</text>`;
+  <g id="widget-languages" transform="translate(${origin.x.toFixed(1)} ${origin.y.toFixed(1)})"${opacityAttr}>
+    <rect x="0" y="0" width="${panelW.toFixed(1)}" height="${panelH.toFixed(1)}" rx="${(8 * u).toFixed(1)}" fill="rgba(13,17,23,0.94)" stroke="${hexToRgba(accent, 0.38)}" stroke-width="${u.toFixed(1)}"/>
+    <text x="${(LANG_PAD * u).toFixed(1)}" y="${titleY.toFixed(1)}" fill="${escAttr(accent)}" font-family="'IBM Plex Mono', monospace" font-size="${(LANG_TITLE_PX * u).toFixed(1)}" font-weight="600" letter-spacing="${(1.4 * u).toFixed(1)}">LANGUAGES</text>
+    <text x="${(panelW / 2).toFixed(1)}" y="${(headerH + LANG_PAD * u + LANG_ROW_H * 0.5 * u).toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-style="italic" font-family="system-ui, sans-serif" font-size="${(LANG_PCT_PX * 0.6 * u).toFixed(1)}">No language data</text>
+  </g>`;
+    }
+    const bodyH = (LANG_PAD * 2 + langs.length * LANG_ROW_H) * u;
+    const panelH = headerH + bodyH;
+    const origin = widgetOrigin(ctx, panelW, panelH);
+    if (!origin)
+        return '';
+    widgetBBoxes.push({ x0: origin.x, y0: origin.y, x1: origin.x + panelW, y1: origin.y + panelH });
+    const rowX = LANG_PAD * u;
+    const nameX = rowX + (LANG_CHIP + 10) * u;
+    const pctX = panelW - LANG_PAD * u;
+    const barX = nameX;
+    const barW = pctX - nameX;
+    const rows = langs.map((lang, i) => {
+        const rowY = headerH + LANG_PAD * u + i * LANG_ROW_H * u;
+        const textBase = rowY + 22 * u;
+        const chipY = rowY + 9 * u;
+        const barY = rowY + 31 * u;
+        const fillW = Math.max(LANG_BAR_H * u, (lang.percentage / 100) * barW);
+        return `
+    <rect x="${rowX.toFixed(1)}" y="${chipY.toFixed(1)}" width="${(LANG_CHIP * u).toFixed(1)}" height="${(LANG_CHIP * u).toFixed(1)}" rx="${(3 * u).toFixed(1)}" fill="${escAttr(lang.color)}" stroke="rgba(255,255,255,0.18)" stroke-width="${u.toFixed(1)}"/>
+    <text x="${nameX.toFixed(1)}" y="${textBase.toFixed(1)}" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="${(LANG_NAME_PX * u).toFixed(1)}" font-weight="600">${esc(lang.name)}</text>
+    <text x="${pctX.toFixed(1)}" y="${textBase.toFixed(1)}" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="${(LANG_PCT_PX * u).toFixed(1)}" font-weight="500">${lang.percentage.toFixed(1)}%</text>
+    <rect x="${barX.toFixed(1)}" y="${barY.toFixed(1)}" width="${barW.toFixed(1)}" height="${(LANG_BAR_H * u).toFixed(1)}" rx="${(LANG_BAR_H / 2 * u).toFixed(1)}" fill="rgba(255,255,255,0.12)"/>
+    <rect x="${barX.toFixed(1)}" y="${barY.toFixed(1)}" width="${fillW.toFixed(1)}" height="${(LANG_BAR_H * u).toFixed(1)}" rx="${(LANG_BAR_H / 2 * u).toFixed(1)}" fill="${escAttr(lang.color)}"/>`;
     }).join('');
-    const bodyH = langs.length * rowH;
-    return widgetFrame(ctx, rows, bodyW, bodyH, 34 * scale);
+    return `
+  <g id="widget-languages" transform="translate(${origin.x.toFixed(1)} ${origin.y.toFixed(1)})"${opacityAttr}>
+    <rect x="0" y="0" width="${panelW.toFixed(1)}" height="${panelH.toFixed(1)}" rx="${(8 * u).toFixed(1)}" fill="rgba(13,17,23,0.94)" stroke="${hexToRgba(accent, 0.38)}" stroke-width="${u.toFixed(1)}"/>
+    <rect x="0" y="0" width="${panelW.toFixed(1)}" height="${headerH.toFixed(1)}" rx="${(8 * u).toFixed(1)}" fill="${hexToRgba(accent, 0.12)}"/>
+    <rect x="0" y="${(headerH - 8 * u).toFixed(1)}" width="${panelW.toFixed(1)}" height="${(8 * u).toFixed(1)}" fill="${hexToRgba(accent, 0.12)}"/>
+    <rect x="0" y="${(headerH - u).toFixed(1)}" width="${panelW.toFixed(1)}" height="${u.toFixed(1)}" fill="${hexToRgba(accent, 0.32)}"/>
+    <text x="${rowX.toFixed(1)}" y="${titleY.toFixed(1)}" fill="${escAttr(accent)}" font-family="'IBM Plex Mono', monospace" font-size="${(LANG_TITLE_PX * u).toFixed(1)}" font-weight="600" letter-spacing="${(1.4 * u).toFixed(1)}">LANGUAGES</text>
+    ${rows}
+  </g>`;
 }
 // ─── Streak ───────────────────────────────────────────────────────────────────
 function renderStreak(ctx, data) {

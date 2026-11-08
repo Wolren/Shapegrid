@@ -85,6 +85,17 @@ export function widgetFontScale(id: WidgetId): number {
   return widgetFont(id, 10) / 10;
 }
 
+/**
+ * Px per design unit for canvas-relative widgets. Design units span the canvas
+ * at 1000 units wide, so a widget holds its proportion when the export is shown
+ * small (profile card ≈ 440 px). Already includes the widget's scale setting.
+ */
+export function widgetUnit(id: WidgetId): number {
+  const wrap = document.getElementById('canvas-wrap');
+  const canvasW = wrap?.clientWidth || window.innerWidth || 1000;
+  return (canvasW / 1000) * widgetScaleOf(id);
+}
+
 const HEX_RE = /^#([0-9a-f]{6})$/i;
 
 /** '#rrggbb' + alpha -> 'rgba(r, g, b, a)'. Used for widget frame tints. */
@@ -464,6 +475,13 @@ export function renderAllWidgets(): void {
       wrapper.style.right = 'auto';
       wrapper.style.bottom = 'auto';
       wrapper.style.transform = 'none';
+    } else if (w.position === 'left' || w.position === 'right') {
+      // Docked rail: sits at the rail pad; pass 3 centres it once height is known.
+      const pad = Math.round((container.clientWidth / 1000) * 24 * widgetScaleOf(w.id));
+      wrapper.style.transform = 'none';
+      wrapper.style.top = '0px';
+      wrapper.style.left = w.position === 'left' ? pad + 'px' : 'auto';
+      wrapper.style.right = w.position === 'right' ? pad + 'px' : 'auto';
     } else {
       // Zone-based anchor (exact anchor; pass 2 handles vertical stacking)
       const anchor = ZONE_ANCHORS[w.position];
@@ -516,6 +534,12 @@ export function renderAllWidgets(): void {
 
     // Let widget fill body
     render(body, w.id);
+
+    // Pass 3: docked panels centre against the container now that they have height.
+    if (w.position === 'left' || w.position === 'right') {
+      const h = wrapper.offsetHeight;
+      wrapper.style.top = Math.max(0, Math.round((container.clientHeight - h) / 2)) + 'px';
+    }
 
     // Init drag (skipped for locked widgets)
     if (!locked) {
