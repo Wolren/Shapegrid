@@ -292,7 +292,7 @@ dashboard:
       settings:
         locked: false
         opacity: 1
-        maxItems: 5
+        maxItems: 7
         width: 260
         scale: 1
         accent: "#d0d7de"

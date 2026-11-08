@@ -38390,8 +38390,8 @@
 
   <!-- Dashboard widgets -->
   
-  <g id="widget-languages" transform="translate(24.3 219.4)">
-    <rect x="0" y="0" width="351.0" height="394.2" rx="10.8" fill="rgba(13,17,23,0.94)" stroke="rgba(208,215,222,0.38)" stroke-width="1.4"/>
+  <g id="widget-languages" transform="translate(24.3 157.3)">
+    <rect x="0" y="0" width="351.0" height="518.4" rx="10.8" fill="rgba(13,17,23,0.94)" stroke="rgba(208,215,222,0.38)" stroke-width="1.4"/>
     <rect x="0" y="0" width="351.0" height="40.5" rx="10.8" fill="rgba(208,215,222,0.12)"/>
     <rect x="0" y="29.7" width="351.0" height="10.8" fill="rgba(208,215,222,0.12)"/>
     <rect x="0" y="39.1" width="351.0" height="1.4" fill="rgba(208,215,222,0.32)"/>
@@ -38422,6 +38422,16 @@
     <text x="329.4" y="340.2" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">7.3%</text>
     <rect x="52.7" y="352.4" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
     <rect x="52.7" y="352.4" width="20.2" height="12.2" rx="6.1" fill="#e34c26"/>
+    <rect x="21.6" y="384.8" width="17.6" height="17.6" rx="4.1" fill="#3178c6" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
+    <text x="52.7" y="402.3" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">TypeScript</text>
+    <text x="329.4" y="402.3" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">6.5%</text>
+    <rect x="52.7" y="414.5" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <rect x="52.7" y="414.5" width="18.0" height="12.2" rx="6.1" fill="#3178c6"/>
+    <rect x="21.6" y="446.9" width="17.6" height="17.6" rx="4.1" fill="#3D6117" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
+    <text x="52.7" y="464.4" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">TeX</text>
+    <text x="329.4" y="464.4" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">3.5%</text>
+    <rect x="52.7" y="476.6" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <rect x="52.7" y="476.6" width="12.2" height="12.2" rx="6.1" fill="#3D6117"/>
   </g>
 
 </svg>
