@@ -306,7 +306,7 @@ function renderTimeline(ctx, data) {
 // ─── Languages ────────────────────────────────────────────────────────────────
 // Design units: 1000 units span the canvas width, so 26 unit names stay legible
 // at profile-card width; the old 10 px CSS type collapsed to 6 px there.
-const LANG_PANEL_W = 260;
+const LANG_PANEL_W = 280;
 const LANG_PAD = 16;
 const LANG_HEADER_H = 30;
 const LANG_ROW_H = 46;

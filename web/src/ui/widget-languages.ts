@@ -7,7 +7,7 @@ import { state } from './state';
 import { registerWidget, getWidgetSetting, renderAllWidgets, widgetAccent, widgetUnit } from './dashboard';
 import type { WidgetId, GitHubLanguage } from '../types';
 
-const PANEL_W = 260;
+const PANEL_W = 280;
 const PAD = 16;
 const HEADER_H = 30;
 const ROW_H = 46;

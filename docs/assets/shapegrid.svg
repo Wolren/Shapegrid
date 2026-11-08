@@ -48,16 +48,16 @@
 
   <!-- Title Section -->
   <g id="title" filter="url(#glow)">
-    <text x="199.8" y="76" text-anchor="middle" fill="#f0f4f8" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" letter-spacing="0.5">
+    <text x="213.3" y="76" text-anchor="middle" fill="#f0f4f8" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" letter-spacing="0.5">
       @Wolren
     </text>
   </g>
-  <text x="199.8" y="108" text-anchor="middle" fill="#c3ccd8" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="400" letter-spacing="0.3">
+  <text x="213.3" y="108" text-anchor="middle" fill="#c3ccd8" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="400" letter-spacing="0.3">
     5780 contributions · 1095 days
   </text>
-<g transform="translate(185.1 64.2) scale(0.8839)"></g>
+<g transform="translate(218.4 74.5) scale(0.8580)"></g>
   <!-- Grid Cells -->
-  <g id="cells" shape-rendering="geometricPrecision" filter="url(#cell-shadow)" transform="translate(185.1 64.2) scale(0.8839)">
+  <g id="cells" shape-rendering="geometricPrecision" filter="url(#cell-shadow)" transform="translate(218.4 74.5) scale(0.8580)">
     <g>
   <title>2024-02-04: 12 contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
@@ -38391,46 +38391,46 @@
   <!-- Dashboard widgets -->
   
   <g id="widget-languages" transform="translate(24.3 157.3)">
-    <rect x="0" y="0" width="351.0" height="518.4" rx="10.8" fill="rgba(13,17,23,0.94)" stroke="rgba(208,215,222,0.38)" stroke-width="1.4"/>
-    <rect x="0" y="0" width="351.0" height="40.5" rx="10.8" fill="rgba(208,215,222,0.12)"/>
-    <rect x="0" y="29.7" width="351.0" height="10.8" fill="rgba(208,215,222,0.12)"/>
-    <rect x="0" y="39.1" width="351.0" height="1.4" fill="rgba(208,215,222,0.32)"/>
+    <rect x="0" y="0" width="378.0" height="518.4" rx="10.8" fill="rgba(13,17,23,0.94)" stroke="rgba(208,215,222,0.38)" stroke-width="1.4"/>
+    <rect x="0" y="0" width="378.0" height="40.5" rx="10.8" fill="rgba(208,215,222,0.12)"/>
+    <rect x="0" y="29.7" width="378.0" height="10.8" fill="rgba(208,215,222,0.12)"/>
+    <rect x="0" y="39.1" width="378.0" height="1.4" fill="rgba(208,215,222,0.32)"/>
     <text x="21.6" y="27.5" fill="#d0d7de" font-family="'IBM Plex Mono', monospace" font-size="20.3" font-weight="600" letter-spacing="1.9">LANGUAGES</text>
     
     <rect x="21.6" y="74.3" width="17.6" height="17.6" rx="4.1" fill="#b07219" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="91.8" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">Java</text>
-    <text x="329.4" y="91.8" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">23.4%</text>
-    <rect x="52.7" y="104.0" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="104.0" width="64.7" height="12.2" rx="6.1" fill="#b07219"/>
+    <text x="356.4" y="91.8" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">23.4%</text>
+    <rect x="52.7" y="104.0" width="303.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <rect x="52.7" y="104.0" width="71.0" height="12.2" rx="6.1" fill="#b07219"/>
     <rect x="21.6" y="136.3" width="17.6" height="17.6" rx="4.1" fill="#dea584" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="153.9" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">Rust</text>
-    <text x="329.4" y="153.9" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">21.2%</text>
-    <rect x="52.7" y="166.1" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="166.1" width="58.8" height="12.2" rx="6.1" fill="#dea584"/>
+    <text x="356.4" y="153.9" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">21.2%</text>
+    <rect x="52.7" y="166.1" width="303.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <rect x="52.7" y="166.1" width="64.5" height="12.2" rx="6.1" fill="#dea584"/>
     <rect x="21.6" y="198.5" width="17.6" height="17.6" rx="4.1" fill="#3572A5" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="216.0" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">Python</text>
-    <text x="329.4" y="216.0" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">20.5%</text>
-    <rect x="52.7" y="228.2" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="228.2" width="56.7" height="12.2" rx="6.1" fill="#3572A5"/>
+    <text x="356.4" y="216.0" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">20.5%</text>
+    <rect x="52.7" y="228.2" width="303.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <rect x="52.7" y="228.2" width="62.2" height="12.2" rx="6.1" fill="#3572A5"/>
     <rect x="21.6" y="260.6" width="17.6" height="17.6" rx="4.1" fill="#A97BFF" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="278.1" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">Kotlin</text>
-    <text x="329.4" y="278.1" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">9.1%</text>
-    <rect x="52.7" y="290.3" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="290.3" width="25.3" height="12.2" rx="6.1" fill="#A97BFF"/>
+    <text x="356.4" y="278.1" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">9.1%</text>
+    <rect x="52.7" y="290.3" width="303.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <rect x="52.7" y="290.3" width="27.8" height="12.2" rx="6.1" fill="#A97BFF"/>
     <rect x="21.6" y="322.6" width="17.6" height="17.6" rx="4.1" fill="#e34c26" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="340.2" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">HTML</text>
-    <text x="329.4" y="340.2" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">7.3%</text>
-    <rect x="52.7" y="352.4" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="352.4" width="20.2" height="12.2" rx="6.1" fill="#e34c26"/>
+    <text x="356.4" y="340.2" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">7.3%</text>
+    <rect x="52.7" y="352.4" width="303.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <rect x="52.7" y="352.4" width="22.2" height="12.2" rx="6.1" fill="#e34c26"/>
     <rect x="21.6" y="384.8" width="17.6" height="17.6" rx="4.1" fill="#3178c6" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="402.3" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">TypeScript</text>
-    <text x="329.4" y="402.3" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">6.5%</text>
-    <rect x="52.7" y="414.5" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="414.5" width="18.0" height="12.2" rx="6.1" fill="#3178c6"/>
+    <text x="356.4" y="402.3" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">6.5%</text>
+    <rect x="52.7" y="414.5" width="303.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <rect x="52.7" y="414.5" width="19.7" height="12.2" rx="6.1" fill="#3178c6"/>
     <rect x="21.6" y="446.9" width="17.6" height="17.6" rx="4.1" fill="#3D6117" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="464.4" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">TeX</text>
-    <text x="329.4" y="464.4" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">3.5%</text>
-    <rect x="52.7" y="476.6" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
+    <text x="356.4" y="464.4" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">3.5%</text>
+    <rect x="52.7" y="476.6" width="303.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
     <rect x="52.7" y="476.6" width="12.2" height="12.2" rx="6.1" fill="#3D6117"/>
   </g>
 
