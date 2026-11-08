@@ -53,7 +53,7 @@
     </text>
   </g>
   <text x="199.8" y="108" text-anchor="middle" fill="#c3ccd8" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="400" letter-spacing="0.3">
-    5760 contributions · 1095 days
+    5776 contributions · 1095 days
   </text>
 <g transform="translate(185.1 64.2) scale(0.8839)"></g>
   <!-- Grid Cells -->
@@ -37614,36 +37614,36 @@
   />
 </g>
     <g>
-  <title>2026-08-12: 13 contributions</title>
+  <title>2026-08-12: 14 contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
   <polygon
     points="856.7,697.3,876.7,706.2,862.0,718.3,842.0,709.4"
-    fill="#3c2e48"
-    stroke="#3c2e48"
+    fill="#3d2f49"
+    stroke="#3d2f49"
     stroke-width="0.35"
     stroke-linejoin="round"
   />
   <!-- +x face (shadow) -->
   <polygon
-    points="876.7,663.6 876.7,706.2 862.0,718.3 862.0,675.7"
-    fill="#523f63"
-    stroke="#523f63"
+    points="876.7,662.7 876.7,706.2 862.0,718.3 862.0,674.8"
+    fill="#544065"
+    stroke="#544065"
     stroke-width="0.4"
     stroke-linejoin="round"
   />
   <!-- +z face (lit) -->
   <polygon
-    points="862.0,675.7 862.0,718.3 842.0,709.4 842.0,666.8"
-    fill="#74598c"
-    stroke="#74598c"
+    points="862.0,674.8 862.0,718.3 842.0,709.4 842.0,665.9"
+    fill="#775b8f"
+    stroke="#775b8f"
     stroke-width="0.4"
     stroke-linejoin="round"
   />
   <!-- Top face -->
   <polygon
-    points="856.7,654.7,876.7,663.6,862.0,675.7,842.0,666.8"
-    fill="#9572b4"
-    stroke="#ab83cf"
+    points="856.7,653.8,876.7,662.7,862.0,674.8,842.0,665.9"
+    fill="#9975b7"
+    stroke="#b087d2"
     stroke-width="0.6"
     stroke-linejoin="round"
   />
@@ -38349,36 +38349,36 @@
   />
 </g>
     <g>
-  <title>2026-11-08: 0 contributions</title>
+  <title>2026-11-08: 15 contributions</title>
   <!-- Floor/base face (visible through transparent empty cells) -->
   <polygon
     points="706.5,767.7,726.5,776.6,711.8,788.7,691.8,779.8"
-    fill="#0a0a12"
-    stroke="#0a0a12"
+    fill="#3e304a"
+    stroke="#3e304a"
     stroke-width="0.35"
     stroke-linejoin="round"
   />
   <!-- +x face (shadow) -->
   <polygon
-    points="726.5,770.0 726.5,776.6 711.8,788.7 711.8,782.1"
-    fill="#0e0e19"
-    stroke="#0e0e19"
+    points="726.5,732.3 726.5,776.6 711.8,788.7 711.8,744.4"
+    fill="#564266"
+    stroke="#564266"
     stroke-width="0.4"
     stroke-linejoin="round"
   />
   <!-- +z face (lit) -->
   <polygon
-    points="711.8,782.1 711.8,788.7 691.8,779.8 691.8,773.2"
-    fill="#141424"
-    stroke="#141424"
+    points="711.8,744.4 711.8,788.7 691.8,779.8 691.8,735.5"
+    fill="#7a5e91"
+    stroke="#7a5e91"
     stroke-width="0.4"
     stroke-linejoin="round"
   />
   <!-- Top face -->
   <polygon
-    points="706.5,761.1,726.5,770.0,711.8,782.1,691.8,773.2"
-    fill="#1a1a2e"
-    stroke="#1e1e35"
+    points="706.5,723.4,726.5,732.3,711.8,744.4,691.8,735.5"
+    fill="#9c78ba"
+    stroke="#b38ad6"
     stroke-width="0.6"
     stroke-linejoin="round"
   />
@@ -38399,29 +38399,29 @@
     
     <rect x="21.6" y="74.3" width="17.6" height="17.6" rx="4.1" fill="#b07219" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="91.8" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">Java</text>
-    <text x="329.4" y="91.8" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">23.5%</text>
+    <text x="329.4" y="91.8" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">23.4%</text>
     <rect x="52.7" y="104.0" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="104.0" width="64.9" height="12.2" rx="6.1" fill="#b07219"/>
+    <rect x="52.7" y="104.0" width="64.7" height="12.2" rx="6.1" fill="#b07219"/>
     <rect x="21.6" y="136.3" width="17.6" height="17.6" rx="4.1" fill="#dea584" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="153.9" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">Rust</text>
-    <text x="329.4" y="153.9" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">21.1%</text>
+    <text x="329.4" y="153.9" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">21.3%</text>
     <rect x="52.7" y="166.1" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="166.1" width="58.3" height="12.2" rx="6.1" fill="#dea584"/>
+    <rect x="52.7" y="166.1" width="58.8" height="12.2" rx="6.1" fill="#dea584"/>
     <rect x="21.6" y="198.5" width="17.6" height="17.6" rx="4.1" fill="#3572A5" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="216.0" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">Python</text>
-    <text x="329.4" y="216.0" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">20.5%</text>
+    <text x="329.4" y="216.0" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">20.4%</text>
     <rect x="52.7" y="228.2" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="228.2" width="56.6" height="12.2" rx="6.1" fill="#3572A5"/>
+    <rect x="52.7" y="228.2" width="56.5" height="12.2" rx="6.1" fill="#3572A5"/>
     <rect x="21.6" y="260.6" width="17.6" height="17.6" rx="4.1" fill="#A97BFF" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="278.1" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">Kotlin</text>
-    <text x="329.4" y="278.1" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">9.2%</text>
+    <text x="329.4" y="278.1" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">9.1%</text>
     <rect x="52.7" y="290.3" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="290.3" width="25.4" height="12.2" rx="6.1" fill="#A97BFF"/>
+    <rect x="52.7" y="290.3" width="25.3" height="12.2" rx="6.1" fill="#A97BFF"/>
     <rect x="21.6" y="322.6" width="17.6" height="17.6" rx="4.1" fill="#e34c26" stroke="rgba(255,255,255,0.18)" stroke-width="1.4"/>
     <text x="52.7" y="340.2" fill="#e6edf3" font-family="system-ui, -apple-system, sans-serif" font-size="35.1" font-weight="600">HTML</text>
     <text x="329.4" y="340.2" text-anchor="end" fill="#c9d1d9" font-family="'IBM Plex Mono', monospace" font-size="27.0" font-weight="500">7.3%</text>
     <rect x="52.7" y="352.4" width="276.8" height="12.2" rx="6.1" fill="rgba(255,255,255,0.12)"/>
-    <rect x="52.7" y="352.4" width="20.3" height="12.2" rx="6.1" fill="#e34c26"/>
+    <rect x="52.7" y="352.4" width="20.2" height="12.2" rx="6.1" fill="#e34c26"/>
   </g>
 
 </svg>
