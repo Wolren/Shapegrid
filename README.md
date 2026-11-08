@@ -1,7 +1,5 @@
 <div align="center">
 
-![Shapegrid output](dist/shapegrid.svg)
-
 # Shapegrid
 
 Fit exact-count square or hexagonal grids inside any boundary: 3D isometric activity maps with a GIS dashboard.
@@ -16,6 +14,8 @@ Fit exact-count square or hexagonal grids inside any boundary: 3D isometric acti
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Wolren-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/wolren)
 
 </div>
+
+![Shapegrid web viewer](docs/assets/shapegrid.png)
 
 ## Problem
 
@@ -45,12 +45,6 @@ The core CLI fetches contributions through the GitHub GraphQL API, packs an exac
 - **GIS dashboard**: 15 draggable overlay widgets (legend, statistics, distribution, timeline, activity, top cells, languages, cell info, scale bar, coordinates, weekday, streak, monthly, geo info, mini map)
 - **Day borders**: empty days render as outline-only cells on light backgrounds
 - **GitHub Actions CI**: regenerates the grid daily or on config change and deploys to GitHub Pages
-
-## Screenshots
-
-| Web viewer with dashboard widgets |
-|---|
-| ![Shapegrid web viewer](docs/assets/shapegrid.png) |
 
 ## Quick start
 
