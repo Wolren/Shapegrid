@@ -99,7 +99,7 @@ function renderLanguages(container: HTMLElement, id: string): void {
     name.style.position = 'absolute';
     name.style.left = Math.round((PAD + CHIP + 10) * u) + 'px';
     name.style.top = Math.round(2 * u) + 'px';
-    name.style.right = Math.round((PAD + 66) * u) + 'px';
+    name.style.right = Math.round((PAD + 56) * u) + 'px';
     name.style.color = '#e6edf3';
     name.style.fontSize = (NAME_PX * u).toFixed(1) + 'px';
     name.style.fontWeight = '600';
