@@ -238,7 +238,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-GNU General Public License v3.0: see [LICENSE](LICENSE).
+MIT License: see [LICENSE](LICENSE).
 
 [license-badge]: https://img.shields.io/github/license/Wolren/Shapegrid
 [license-url]: LICENSE

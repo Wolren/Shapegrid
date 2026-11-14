@@ -28,4 +28,4 @@ web/               - @shapegrid/web: Three.js interactive viewer
 
 ## License
 
-GPL-3.0 - see [LICENSE](LICENSE)
+MIT License: see [LICENSE](LICENSE)
